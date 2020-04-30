@@ -37,9 +37,10 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { NotConnectedError } from '../errors';
-import { logError } from '../logger';
+import { logError, RootLogger } from '../logger';
 import { ConsoleMessageLocation } from '../console';
 import { JSHandle } from '../javascript';
+import { VideoRecorder } from './videoRecorder';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -67,6 +68,8 @@ export class WKPage implements PageDelegate {
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: ConsoleMessageLocation; } | null = null;
+  private _screencastCallback: ((frame: string) => void) | null = null;
+  private _videoRecorder: VideoRecorder | null = null;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -84,6 +87,7 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+      helper.addEventListener(this._pageProxySession, 'Screencast.frame', this._onScreencastFrame.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pagePromiseCallback = f);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
@@ -331,6 +335,8 @@ export class WKPage implements PageDelegate {
       helper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(e)),
       helper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       helper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(e)),
+      // On WPE and Windows Screencast agent lives in Web Process.
+      helper.addEventListener(this._session, 'Screencast.frame', this._onScreencastFrame.bind(this)),
     ];
   }
 
@@ -677,6 +683,36 @@ export class WKPage implements PageDelegate {
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
+  }
+
+  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+    assert(!this._videoRecorder, 'Already started');
+    this._videoRecorder = new VideoRecorder('v.mp4');
+    await this._videoRecorder.launch(new RootLogger(undefined));
+    const format = 'jpeg';
+    // const format = 'png';
+    const quality = 90;
+    // await this._pageProxySession.send('Screencast.start', {format, quality});
+    await this._session.send('Screencast.start', {format, quality});
+  }
+
+  async stopVideoRecording(): Promise<void> {
+    if (!this._videoRecorder)
+      return;
+    const recorder = this._videoRecorder;
+    this._videoRecorder = null;
+    // await this._pageProxySession.send('Screencast.stop');
+    await this._session.send('Screencast.stop');
+    await recorder.stop();
+  }
+
+  _onScreencastFrame(payload: any) {
+    if (!this._videoRecorder)
+      return;
+    const buffer = Buffer.from(payload.data, 'base64');
+    this._videoRecorder.writeFrame(buffer);
+    this._session.send('Screencast.frameAck');
+    // this._pageProxySession.send('Screencast.frameAck');
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {

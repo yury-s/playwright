@@ -62,7 +62,7 @@ export class WKConnection {
 
   private _dispatchMessage(message: ProtocolResponse) {
     if (this._logger._isLogEnabled(protocolLog))
-      this._logger._log(protocolLog, '◀ RECV ' + JSON.stringify(message));
+      this._logger._log(protocolLog, '◀ RECV ' + rewriteScreencastFrameLog(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.pageProxyId) {
@@ -190,5 +190,18 @@ function rewriteInjectedScriptEvaluationLog(message: any): string {
   // To increase development velocity, we skip replace it with short description in the log.
   if (message.params && message.params.message && message.params.message.includes('Runtime.evaluate') && message.params.message.includes('src/injected/injected.ts'))
     return `{"id":${message.id},"method":"${message.method}","params":{"message":[evaluate injected script],"targetId":"${message.params.targetId}"},"pageProxyId":${message.pageProxyId}}`;
+  return JSON.stringify(message);
+}
+
+function rewriteScreencastFrameLog(message: any): string {
+  // Screencast frames are long base64 strings cluttering logs. To increase development
+  // velocity, we skip replace it with short description in the log.
+  if (message.method === 'Screencast.frame') {
+    return JSON.stringify(message, (key, value) => {
+      if (key === 'data')
+        return `[data len=${value.length}]`;
+      return value;
+    });
+  }
   return JSON.stringify(message);
 }

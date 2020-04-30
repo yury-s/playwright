@@ -16,10 +16,37 @@
  */
 
 const utils = require('./utils');
+const util = require('util');
 const path = require('path');
+const fs = require('fs');
 const {FFOX, CHROMIUM, WEBKIT} = utils.testOptions(browserType);
 
 describe('Page.evaluate', function() {
+  fit('should screencast', async({page, server}) => {
+    // const response = await page.goto(server.PREFIX + '/animation.html');
+    const response = await page.goto(server.PREFIX + '/poster-circle.html');
+    expect(response.status()).toBe(200);
+    console.log('\n\nwill start screecast\n\n');
+    await page._delegate.startVideoRecording({outputFile: 'v.mp4'});
+    await new Promise(r => setTimeout(r, 1000));
+    await page._delegate.stopVideoRecording();
+    console.log('Did stop screencast');
+    // await new Promise(r => setTimeout(r, 10000));
+  });
+  it('screenshots', async({page, server}) => {
+    const response = await page.goto(server.PREFIX + '/poster-circle.html');
+    // const response = await page.goto('http://localhost:2020/red.html');
+    expect(response.status()).toBe(200);
+    await new Promise(r => setTimeout(r, 100));
+    console.log('\n\n\n\n');
+    for (let frameNum = 0; frameNum < 3; ++frameNum) {
+      const fileName = `frame_${frameNum}.png`;
+      console.log(`will take screenshot ${fileName}`);
+      await page.screenshot({path: fileName});
+      console.log(`    done. waiting...`);
+      await new Promise(r => setTimeout(r, 300));
+    }
+  });
   it('should work', async({page, server}) => {
     const result = await page.evaluate(() => 7 * 3);
     expect(result).toBe(21);

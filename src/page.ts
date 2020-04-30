@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as util from 'util';
 import * as dom from './dom';
 import * as frames from './frames';
 import { assert, helper, Listener, assertMaxArguments } from './helper';
@@ -57,6 +59,8 @@ export interface PageDelegate {
   canScreenshotOutsideViewport(): boolean;
   resetViewport(): Promise<void>; // Only called if canScreenshotOutsideViewport() returns false.
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
+  startVideoRecording(options: types.VideoRecordingOptions): Promise<void>;
+  stopVideoRecording(): Promise<void>;
   takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer>;
 
   isElementHandle(remoteObject: any): boolean;
