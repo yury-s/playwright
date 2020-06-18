@@ -61,6 +61,8 @@ RUN apt-get install -y xvfb
 #                       gstreamer1.0-plugins-bad
 
 
+RUN apt-get install -y unzip
+
 RUN echo 'root:p' | chpasswd
 
 # Run everything after as non-privileged user.
@@ -71,6 +73,10 @@ RUN mkdir /home/pwuser/playwright
 COPY --chown=pwuser:pwuser . /home/pwuser/playwright
 
 WORKDIR /home/pwuser/playwright
+RUN mkdir browser-wpe && unzip wk-wpe.zip -d browser-wpe
 
 # Make sure playwright uses browsers from local folder
 ENV PLAYWRIGHT_BROWSERS_PATH=0
+
+# Use custom WPE build
+ENV WKPATH=~/playwright/browser-wpe/pw_run.sh
