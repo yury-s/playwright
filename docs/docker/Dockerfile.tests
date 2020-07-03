@@ -58,7 +58,13 @@ RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
 # 8. (Optional) Install XVFB if there's a need to run browsers in headful mode
 RUN apt-get update && apt-get install -y xvfb
 
+
+# This is a new dependency for jhbuild.minimal
+RUN apt-get install -y libharfbuzz-icu0
+
 RUN apt-get install -y unzip
+
+
 
 RUN echo 'root:p' | chpasswd
 
@@ -71,12 +77,12 @@ COPY --chown=pwuser:pwuser . /home/pwuser/playwright
 
 
 WORKDIR /home/pwuser/playwright/browsers
-RUN mkdir minibrowser-wpe && unzip wk-wpe.zip -d minibrowser-wpe
-RUN mkdir minibrowser-gtk && unzip wk-gtk.zip -d minibrowser-gtk
+RUN mkdir minibrowser-wpe && unzip minibrowser-wpe.zip -d minibrowser-wpe
+RUN mkdir minibrowser-gtk && unzip minibrowser-gtk.zip -d minibrowser-gtk
 
 # Make sure playwright uses browsers from local folder
 ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 # Use custom WPE build
-ENV WKPATH=~/playwright/browsers/pw_run.sh
+ENV WKPATH=/home/pwuser/playwright/browsers/pw_run.sh
 WORKDIR /home/pwuser/playwright
