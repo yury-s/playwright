@@ -22,6 +22,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
   echo "ac_add_options --disable-av1" > .mozconfig
+  echo "ac_add_options --with-ccache=${HOME}/.mozbuild/sccache/sccache" >> .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
   if [[ $1 == "--win64" ]]; then
     echo "-- building win64 build on MINGW"
@@ -37,6 +38,7 @@ fi
 
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
+echo "ac_add_options --disable-tests" >> .mozconfig
 
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
