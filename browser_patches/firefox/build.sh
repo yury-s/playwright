@@ -17,6 +17,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   else
     echo "-- configuting .mozconfig with 10.11 SDK path"
     echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX10.11.sdk/" > .mozconfig
+    echo "ac_add_options --with-ccache=${HOME}/.mozbuild/sccache/sccache" >> .mozconfig
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
