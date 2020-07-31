@@ -427,6 +427,507 @@ export module Protocol {
   }
   
   /**
+   * Canvas domain allows tracking of canvases that have an associated graphics context. Tracks canvases in the DOM and CSS canvases created with -webkit-canvas.
+   */
+  export module Canvas {
+    /**
+     * Unique canvas identifier.
+     */
+    export type CanvasId = string;
+    /**
+     * Unique shader program identifier.
+     */
+    export type ProgramId = string;
+    /**
+     * The type of rendering context backing the canvas element.
+     */
+    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2"|"webgpu";
+    export type ProgramType = "compute"|"render";
+    export type ShaderType = "compute"|"fragment"|"vertex";
+    /**
+     * Drawing surface attributes.
+     */
+    export interface ContextAttributes {
+      /**
+       * WebGL, WebGL2, ImageBitmapRenderingContext
+       */
+      alpha?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      depth?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      stencil?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      antialias?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      premultipliedAlpha?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      preserveDrawingBuffer?: boolean;
+      /**
+       * WebGL, WebGL2
+       */
+      failIfMajorPerformanceCaveat?: boolean;
+      /**
+       * WebGL, WebGL2, WebGPU
+       */
+      powerPreference?: string;
+    }
+    /**
+     * Information about a canvas for which a rendering context has been created.
+     */
+    export interface Canvas {
+      /**
+       * Canvas identifier.
+       */
+      canvasId: CanvasId;
+      /**
+       * The type of rendering context backing the canvas.
+       */
+      contextType: ContextType;
+      /**
+       * The corresponding DOM node id.
+       */
+      nodeId?: DOM.NodeId;
+      /**
+       * The CSS canvas identifier, for canvases created with <code>document.getCSSCanvasContext</code>.
+       */
+      cssCanvasName?: string;
+      /**
+       * Context attributes for rendering contexts.
+       */
+      contextAttributes?: ContextAttributes;
+      /**
+       * Memory usage of the canvas in bytes.
+       */
+      memoryCost?: number;
+      /**
+       * Backtrace that was captured when this canvas context was created.
+       */
+      backtrace?: Console.CallFrame[];
+    }
+    /**
+     * Information about a WebGL/WebGL2 shader program or WebGPU shader pipeline.
+     */
+    export interface ShaderProgram {
+      programId: ProgramId;
+      programType: ProgramType;
+      canvasId: CanvasId;
+      /**
+       * Indicates whether the vertex and fragment shader modules are the same object for a render shader pipleine for a WebGPU device.
+       */
+      sharesVertexFragmentShader?: boolean;
+    }
+    
+    export type canvasAddedPayload = {
+      /**
+       * Canvas object.
+       */
+      canvas: Canvas;
+    }
+    export type canvasRemovedPayload = {
+      /**
+       * Removed canvas identifier.
+       */
+      canvasId: CanvasId;
+    }
+    export type canvasMemoryChangedPayload = {
+      /**
+       * Identifier of canvas that changed.
+       */
+      canvasId: CanvasId;
+      /**
+       * New memory cost value for the canvas in bytes.
+       */
+      memoryCost: number;
+    }
+    export type extensionEnabledPayload = {
+      canvasId: CanvasId;
+      /**
+       * Name of the extension that was enabled.
+       */
+      extension: string;
+    }
+    export type clientNodesChangedPayload = {
+      /**
+       * Identifier of canvas that changed.
+       */
+      canvasId: CanvasId;
+    }
+    export type recordingStartedPayload = {
+      canvasId: CanvasId;
+      initiator: Recording.Initiator;
+    }
+    export type recordingProgressPayload = {
+      canvasId: CanvasId;
+      frames: Recording.Frame[];
+      /**
+       * Total memory size in bytes of all data recorded since the recording began.
+       */
+      bufferUsed: number;
+    }
+    export type recordingFinishedPayload = {
+      canvasId: CanvasId;
+      recording?: Recording.Recording;
+    }
+    export type programCreatedPayload = {
+      shaderProgram: ShaderProgram;
+    }
+    export type programDeletedPayload = {
+      programId: ProgramId;
+    }
+    
+    /**
+     * Enables Canvas domain events.
+     */
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    /**
+     * Disables Canvas domain events.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    /**
+     * Gets the NodeId for the canvas node with the given CanvasId.
+     */
+    export type requestNodeParameters = {
+      /**
+       * Canvas identifier.
+       */
+      canvasId: CanvasId;
+    }
+    export type requestNodeReturnValue = {
+      /**
+       * Node identifier for given canvas.
+       */
+      nodeId: DOM.NodeId;
+    }
+    /**
+     * Gets the data for the canvas node with the given CanvasId.
+     */
+    export type requestContentParameters = {
+      /**
+       * Canvas identifier.
+       */
+      canvasId: CanvasId;
+    }
+    export type requestContentReturnValue = {
+      /**
+       * Base64-encoded data of the canvas' contents.
+       */
+      content: string;
+    }
+    /**
+     * Gets all <code>-webkit-canvas</code> nodes or active <code>HTMLCanvasElement</code> for a <code>WebGPUDevice</code>.
+     */
+    export type requestClientNodesParameters = {
+      canvasId: CanvasId;
+    }
+    export type requestClientNodesReturnValue = {
+      clientNodeIds: DOM.NodeId[];
+    }
+    /**
+     * Resolves JavaScript canvas/device context object for given canvasId.
+     */
+    export type resolveContextParameters = {
+      /**
+       * Canvas identifier.
+       */
+      canvasId: CanvasId;
+      /**
+       * Symbolic group name that can be used to release multiple objects.
+       */
+      objectGroup?: string;
+    }
+    export type resolveContextReturnValue = {
+      /**
+       * JavaScript object wrapper for given canvas context.
+       */
+      object: Runtime.RemoteObject;
+    }
+    /**
+     * Tells the backend to record `count` frames whenever a new context is created.
+     */
+    export type setRecordingAutoCaptureFrameCountParameters = {
+      /**
+       * Number of frames to record (0 means don't record anything).
+       */
+      count: number;
+    }
+    export type setRecordingAutoCaptureFrameCountReturnValue = {
+    }
+    /**
+     * Record the next frame, or up to the given number of bytes of data, for the given canvas.
+     */
+    export type startRecordingParameters = {
+      canvasId: CanvasId;
+      /**
+       * Number of frames to record (unlimited when not specified).
+       */
+      frameCount?: number;
+      /**
+       * Memory limit of recorded data (100MB when not specified).
+       */
+      memoryLimit?: number;
+    }
+    export type startRecordingReturnValue = {
+    }
+    /**
+     * Stop recording the given canvas.
+     */
+    export type stopRecordingParameters = {
+      canvasId: CanvasId;
+    }
+    export type stopRecordingReturnValue = {
+    }
+    /**
+     * Requests the source of the shader of the given type from the program with the given id.
+     */
+    export type requestShaderSourceParameters = {
+      programId: ProgramId;
+      shaderType: ShaderType;
+    }
+    export type requestShaderSourceReturnValue = {
+      source: string;
+    }
+    /**
+     * Compiles and links the shader with identifier and type with the given source code.
+     */
+    export type updateShaderParameters = {
+      programId: ProgramId;
+      shaderType: ShaderType;
+      source: string;
+    }
+    export type updateShaderReturnValue = {
+    }
+    /**
+     * Enable/disable the visibility of the given shader program.
+     */
+    export type setShaderProgramDisabledParameters = {
+      programId: ProgramId;
+      disabled: boolean;
+    }
+    export type setShaderProgramDisabledReturnValue = {
+    }
+    /**
+     * Enable/disable highlighting of the given shader program.
+     */
+    export type setShaderProgramHighlightedParameters = {
+      programId: ProgramId;
+      highlighted: boolean;
+    }
+    export type setShaderProgramHighlightedReturnValue = {
+    }
+  }
+  
+  /**
+   * Console domain defines methods and events for interaction with the JavaScript console. Console collects messages created by means of the <a href='http://getfirebug.com/wiki/index.php/Console_API'>JavaScript Console API</a>. One needs to enable this domain using <code>enable</code> command in order to start receiving the console messages. Browser collects messages issued while console domain is not enabled as well and reports them using <code>messageAdded</code> notification upon enabling.
+   */
+  export module Console {
+    /**
+     * Channels for different types of log messages.
+     */
+    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"ad-click-attribution"|"other";
+    /**
+     * Level of logging.
+     */
+    export type ChannelLevel = "off"|"basic"|"verbose";
+    /**
+     * Logging channel.
+     */
+    export interface Channel {
+      source: ChannelSource;
+      level: ChannelLevel;
+    }
+    /**
+     * Console message.
+     */
+    export interface ConsoleMessage {
+      source: ChannelSource;
+      /**
+       * Message severity.
+       */
+      level: "log"|"info"|"warning"|"error"|"debug";
+      /**
+       * Message text.
+       */
+      text: string;
+      /**
+       * Console message type.
+       */
+      type?: "log"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"timing"|"profile"|"profileEnd"|"image";
+      /**
+       * URL of the message origin.
+       */
+      url?: string;
+      /**
+       * Line number in the resource that generated this message.
+       */
+      line?: number;
+      /**
+       * Column number on the line in the resource that generated this message.
+       */
+      column?: number;
+      /**
+       * Repeat count for repeated messages.
+       */
+      repeatCount?: number;
+      /**
+       * Message parameters in case of the formatted message.
+       */
+      parameters?: Runtime.RemoteObject[];
+      /**
+       * JavaScript stack trace for assertions and error messages.
+       */
+      stackTrace?: CallFrame[];
+      /**
+       * Identifier of the network request associated with this message.
+       */
+      networkRequestId?: Network.RequestId;
+    }
+    /**
+     * Stack entry for console errors and assertions.
+     */
+    export interface CallFrame {
+      /**
+       * JavaScript function name.
+       */
+      functionName: string;
+      /**
+       * JavaScript script name or url.
+       */
+      url: string;
+      /**
+       * Script identifier.
+       */
+      scriptId: Debugger.ScriptId;
+      /**
+       * JavaScript script line number.
+       */
+      lineNumber: number;
+      /**
+       * JavaScript script column number.
+       */
+      columnNumber: number;
+    }
+    /**
+     * Call frames for async function calls, console assertions, and error messages.
+     */
+    export interface StackTrace {
+      callFrames: CallFrame[];
+      /**
+       * Whether the first item in <code>callFrames</code> is the native function that scheduled the asynchronous operation (e.g. setTimeout).
+       */
+      topCallFrameIsBoundary?: boolean;
+      /**
+       * Whether one or more frames have been truncated from the bottom of the stack.
+       */
+      truncated?: boolean;
+      /**
+       * Parent StackTrace.
+       */
+      parentStackTrace?: StackTrace;
+    }
+    
+    /**
+     * Issued when new console message is added.
+     */
+    export type messageAddedPayload = {
+      /**
+       * Console message that has been added.
+       */
+      message: ConsoleMessage;
+    }
+    /**
+     * Issued when subsequent message(s) are equal to the previous one(s).
+     */
+    export type messageRepeatCountUpdatedPayload = {
+      /**
+       * New repeat count value.
+       */
+      count: number;
+    }
+    /**
+     * Issued when console is cleared. This happens either upon <code>clearMessages</code> command or after page navigation.
+     */
+    export type messagesClearedPayload = void;
+    /**
+     * Issued from console.takeHeapSnapshot.
+     */
+    export type heapSnapshotPayload = {
+      timestamp: number;
+      /**
+       * Snapshot at the end of tracking.
+       */
+      snapshotData: Heap.HeapSnapshotData;
+      /**
+       * Optional title provided to console.takeHeapSnapshot.
+       */
+      title?: string;
+    }
+    
+    /**
+     * Enables console domain, sends the messages collected so far to the client by means of the <code>messageAdded</code> notification.
+     */
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    /**
+     * Disables console domain, prevents further console messages from being reported to the client.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    /**
+     * Clears console messages collected in the browser.
+     */
+    export type clearMessagesParameters = {
+    }
+    export type clearMessagesReturnValue = {
+    }
+    /**
+     * List of the different message sources that are non-default logging channels.
+     */
+    export type getLoggingChannelsParameters = {
+    }
+    export type getLoggingChannelsReturnValue = {
+      /**
+       * Logging channels.
+       */
+      channels: Channel[];
+    }
+    /**
+     * Modify the level of a channel.
+     */
+    export type setLoggingChannelLevelParameters = {
+      /**
+       * Logging channel to modify.
+       */
+      source: ChannelSource;
+      /**
+       * New level.
+       */
+      level: ChannelLevel;
+    }
+    export type setLoggingChannelLevelReturnValue = {
+    }
+  }
+  
+  /**
    * CPUProfiler domain exposes cpu usage tracking.
    */
   export module CPUProfiler {
@@ -1102,504 +1603,802 @@ export module Protocol {
     }
   }
   
-  /**
-   * Canvas domain allows tracking of canvases that have an associated graphics context. Tracks canvases in the DOM and CSS canvases created with -webkit-canvas.
-   */
-  export module Canvas {
+  export module Database {
     /**
-     * Unique canvas identifier.
+     * Unique identifier of Database object.
      */
-    export type CanvasId = string;
+    export type DatabaseId = string;
     /**
-     * Unique shader program identifier.
+     * Database object.
      */
-    export type ProgramId = string;
-    /**
-     * The type of rendering context backing the canvas element.
-     */
-    export type ContextType = "canvas-2d"|"bitmaprenderer"|"webgl"|"webgl2"|"webgpu";
-    export type ProgramType = "compute"|"render";
-    export type ShaderType = "compute"|"fragment"|"vertex";
-    /**
-     * Drawing surface attributes.
-     */
-    export interface ContextAttributes {
+    export interface Database {
       /**
-       * WebGL, WebGL2, ImageBitmapRenderingContext
+       * Database ID.
        */
-      alpha?: boolean;
+      id: DatabaseId;
       /**
-       * WebGL, WebGL2
+       * Database domain.
        */
-      depth?: boolean;
+      domain: string;
       /**
-       * WebGL, WebGL2
+       * Database name.
        */
-      stencil?: boolean;
+      name: string;
       /**
-       * WebGL, WebGL2
+       * Database version.
        */
-      antialias?: boolean;
-      /**
-       * WebGL, WebGL2
-       */
-      premultipliedAlpha?: boolean;
-      /**
-       * WebGL, WebGL2
-       */
-      preserveDrawingBuffer?: boolean;
-      /**
-       * WebGL, WebGL2
-       */
-      failIfMajorPerformanceCaveat?: boolean;
-      /**
-       * WebGL, WebGL2, WebGPU
-       */
-      powerPreference?: string;
+      version: string;
     }
     /**
-     * Information about a canvas for which a rendering context has been created.
+     * Database error.
      */
-    export interface Canvas {
+    export interface Error {
       /**
-       * Canvas identifier.
+       * Error message.
        */
-      canvasId: CanvasId;
+      message: string;
       /**
-       * The type of rendering context backing the canvas.
+       * Error code.
        */
-      contextType: ContextType;
-      /**
-       * The corresponding DOM node id.
-       */
-      nodeId?: DOM.NodeId;
-      /**
-       * The CSS canvas identifier, for canvases created with <code>document.getCSSCanvasContext</code>.
-       */
-      cssCanvasName?: string;
-      /**
-       * Context attributes for rendering contexts.
-       */
-      contextAttributes?: ContextAttributes;
-      /**
-       * Memory usage of the canvas in bytes.
-       */
-      memoryCost?: number;
-      /**
-       * Backtrace that was captured when this canvas context was created.
-       */
-      backtrace?: Console.CallFrame[];
-    }
-    /**
-     * Information about a WebGL/WebGL2 shader program or WebGPU shader pipeline.
-     */
-    export interface ShaderProgram {
-      programId: ProgramId;
-      programType: ProgramType;
-      canvasId: CanvasId;
-      /**
-       * Indicates whether the vertex and fragment shader modules are the same object for a render shader pipleine for a WebGPU device.
-       */
-      sharesVertexFragmentShader?: boolean;
+      code: number;
     }
     
-    export type canvasAddedPayload = {
-      /**
-       * Canvas object.
-       */
-      canvas: Canvas;
-    }
-    export type canvasRemovedPayload = {
-      /**
-       * Removed canvas identifier.
-       */
-      canvasId: CanvasId;
-    }
-    export type canvasMemoryChangedPayload = {
-      /**
-       * Identifier of canvas that changed.
-       */
-      canvasId: CanvasId;
-      /**
-       * New memory cost value for the canvas in bytes.
-       */
-      memoryCost: number;
-    }
-    export type extensionEnabledPayload = {
-      canvasId: CanvasId;
-      /**
-       * Name of the extension that was enabled.
-       */
-      extension: string;
-    }
-    export type clientNodesChangedPayload = {
-      /**
-       * Identifier of canvas that changed.
-       */
-      canvasId: CanvasId;
-    }
-    export type recordingStartedPayload = {
-      canvasId: CanvasId;
-      initiator: Recording.Initiator;
-    }
-    export type recordingProgressPayload = {
-      canvasId: CanvasId;
-      frames: Recording.Frame[];
-      /**
-       * Total memory size in bytes of all data recorded since the recording began.
-       */
-      bufferUsed: number;
-    }
-    export type recordingFinishedPayload = {
-      canvasId: CanvasId;
-      recording?: Recording.Recording;
-    }
-    export type programCreatedPayload = {
-      shaderProgram: ShaderProgram;
-    }
-    export type programDeletedPayload = {
-      programId: ProgramId;
+    export type addDatabasePayload = {
+      database: Database;
     }
     
     /**
-     * Enables Canvas domain events.
+     * Enables database tracking, database events will now be delivered to the client.
      */
     export type enableParameters = {
     }
     export type enableReturnValue = {
     }
     /**
-     * Disables Canvas domain events.
+     * Disables database tracking, prevents database events from being sent to the client.
      */
     export type disableParameters = {
     }
     export type disableReturnValue = {
     }
-    /**
-     * Gets the NodeId for the canvas node with the given CanvasId.
-     */
-    export type requestNodeParameters = {
-      /**
-       * Canvas identifier.
-       */
-      canvasId: CanvasId;
+    export type getDatabaseTableNamesParameters = {
+      databaseId: DatabaseId;
     }
-    export type requestNodeReturnValue = {
-      /**
-       * Node identifier for given canvas.
-       */
-      nodeId: DOM.NodeId;
+    export type getDatabaseTableNamesReturnValue = {
+      tableNames: string[];
     }
-    /**
-     * Gets the data for the canvas node with the given CanvasId.
-     */
-    export type requestContentParameters = {
-      /**
-       * Canvas identifier.
-       */
-      canvasId: CanvasId;
+    export type executeSQLParameters = {
+      databaseId: DatabaseId;
+      query: string;
     }
-    export type requestContentReturnValue = {
-      /**
-       * Base64-encoded data of the canvas' contents.
-       */
-      content: string;
-    }
-    /**
-     * Gets all <code>-webkit-canvas</code> nodes or active <code>HTMLCanvasElement</code> for a <code>WebGPUDevice</code>.
-     */
-    export type requestClientNodesParameters = {
-      canvasId: CanvasId;
-    }
-    export type requestClientNodesReturnValue = {
-      clientNodeIds: DOM.NodeId[];
-    }
-    /**
-     * Resolves JavaScript canvas/device context object for given canvasId.
-     */
-    export type resolveContextParameters = {
-      /**
-       * Canvas identifier.
-       */
-      canvasId: CanvasId;
-      /**
-       * Symbolic group name that can be used to release multiple objects.
-       */
-      objectGroup?: string;
-    }
-    export type resolveContextReturnValue = {
-      /**
-       * JavaScript object wrapper for given canvas context.
-       */
-      object: Runtime.RemoteObject;
-    }
-    /**
-     * Tells the backend to record `count` frames whenever a new context is created.
-     */
-    export type setRecordingAutoCaptureFrameCountParameters = {
-      /**
-       * Number of frames to record (0 means don't record anything).
-       */
-      count: number;
-    }
-    export type setRecordingAutoCaptureFrameCountReturnValue = {
-    }
-    /**
-     * Record the next frame, or up to the given number of bytes of data, for the given canvas.
-     */
-    export type startRecordingParameters = {
-      canvasId: CanvasId;
-      /**
-       * Number of frames to record (unlimited when not specified).
-       */
-      frameCount?: number;
-      /**
-       * Memory limit of recorded data (100MB when not specified).
-       */
-      memoryLimit?: number;
-    }
-    export type startRecordingReturnValue = {
-    }
-    /**
-     * Stop recording the given canvas.
-     */
-    export type stopRecordingParameters = {
-      canvasId: CanvasId;
-    }
-    export type stopRecordingReturnValue = {
-    }
-    /**
-     * Requests the source of the shader of the given type from the program with the given id.
-     */
-    export type requestShaderSourceParameters = {
-      programId: ProgramId;
-      shaderType: ShaderType;
-    }
-    export type requestShaderSourceReturnValue = {
-      source: string;
-    }
-    /**
-     * Compiles and links the shader with identifier and type with the given source code.
-     */
-    export type updateShaderParameters = {
-      programId: ProgramId;
-      shaderType: ShaderType;
-      source: string;
-    }
-    export type updateShaderReturnValue = {
-    }
-    /**
-     * Enable/disable the visibility of the given shader program.
-     */
-    export type setShaderProgramDisabledParameters = {
-      programId: ProgramId;
-      disabled: boolean;
-    }
-    export type setShaderProgramDisabledReturnValue = {
-    }
-    /**
-     * Enable/disable highlighting of the given shader program.
-     */
-    export type setShaderProgramHighlightedParameters = {
-      programId: ProgramId;
-      highlighted: boolean;
-    }
-    export type setShaderProgramHighlightedReturnValue = {
+    export type executeSQLReturnValue = {
+      columnNames?: string[];
+      values?: any[];
+      sqlError?: Error;
     }
   }
   
   /**
-   * Console domain defines methods and events for interaction with the JavaScript console. Console collects messages created by means of the <a href='http://getfirebug.com/wiki/index.php/Console_API'>JavaScript Console API</a>. One needs to enable this domain using <code>enable</code> command in order to start receiving the console messages. Browser collects messages issued while console domain is not enabled as well and reports them using <code>messageAdded</code> notification upon enabling.
+   * Debugger domain exposes JavaScript debugging capabilities. It allows setting and removing breakpoints, stepping through execution, exploring stack traces, etc.
    */
-  export module Console {
+  export module Debugger {
     /**
-     * Channels for different types of log messages.
+     * Breakpoint identifier.
      */
-    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"ad-click-attribution"|"other";
+    export type BreakpointId = string;
     /**
-     * Level of logging.
+     * Breakpoint action identifier.
      */
-    export type ChannelLevel = "off"|"basic"|"verbose";
+    export type BreakpointActionIdentifier = number;
     /**
-     * Logging channel.
+     * Unique script identifier.
      */
-    export interface Channel {
-      source: ChannelSource;
-      level: ChannelLevel;
-    }
+    export type ScriptId = string;
     /**
-     * Console message.
+     * Call frame identifier.
      */
-    export interface ConsoleMessage {
-      source: ChannelSource;
-      /**
-       * Message severity.
-       */
-      level: "log"|"info"|"warning"|"error"|"debug";
-      /**
-       * Message text.
-       */
-      text: string;
-      /**
-       * Console message type.
-       */
-      type?: "log"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"timing"|"profile"|"profileEnd"|"image";
-      /**
-       * URL of the message origin.
-       */
-      url?: string;
-      /**
-       * Line number in the resource that generated this message.
-       */
-      line?: number;
-      /**
-       * Column number on the line in the resource that generated this message.
-       */
-      column?: number;
-      /**
-       * Repeat count for repeated messages.
-       */
-      repeatCount?: number;
-      /**
-       * Message parameters in case of the formatted message.
-       */
-      parameters?: Runtime.RemoteObject[];
-      /**
-       * JavaScript stack trace for assertions and error messages.
-       */
-      stackTrace?: CallFrame[];
-      /**
-       * Identifier of the network request associated with this message.
-       */
-      networkRequestId?: Network.RequestId;
-    }
+    export type CallFrameId = string;
     /**
-     * Stack entry for console errors and assertions.
+     * Location in the source code.
      */
-    export interface CallFrame {
+    export interface Location {
       /**
-       * JavaScript function name.
+       * Script identifier as reported in the <code>Debugger.scriptParsed</code>.
        */
-      functionName: string;
+      scriptId: ScriptId;
       /**
-       * JavaScript script name or url.
-       */
-      url: string;
-      /**
-       * Script identifier.
-       */
-      scriptId: Debugger.ScriptId;
-      /**
-       * JavaScript script line number.
+       * Line number in the script (0-based).
        */
       lineNumber: number;
       /**
-       * JavaScript script column number.
+       * Column number in the script (0-based).
        */
-      columnNumber: number;
+      columnNumber?: number;
     }
     /**
-     * Call frames for async function calls, console assertions, and error messages.
+     * Action to perform when a breakpoint is triggered.
      */
-    export interface StackTrace {
-      callFrames: CallFrame[];
+    export interface BreakpointAction {
       /**
-       * Whether the first item in <code>callFrames</code> is the native function that scheduled the asynchronous operation (e.g. setTimeout).
+       * Different kinds of breakpoint actions.
        */
-      topCallFrameIsBoundary?: boolean;
+      type: "log"|"evaluate"|"sound"|"probe";
       /**
-       * Whether one or more frames have been truncated from the bottom of the stack.
+       * Data associated with this breakpoint type (e.g. for type "eval" this is the JavaScript string to evaluate).
        */
-      truncated?: boolean;
+      data?: string;
       /**
-       * Parent StackTrace.
+       * A frontend-assigned identifier for this breakpoint action.
        */
-      parentStackTrace?: StackTrace;
-    }
-    
-    /**
-     * Issued when new console message is added.
-     */
-    export type messageAddedPayload = {
-      /**
-       * Console message that has been added.
-       */
-      message: ConsoleMessage;
+      id?: BreakpointActionIdentifier;
     }
     /**
-     * Issued when subsequent message(s) are equal to the previous one(s).
+     * Extra options that modify breakpoint behavior.
      */
-    export type messageRepeatCountUpdatedPayload = {
+    export interface BreakpointOptions {
       /**
-       * New repeat count value.
+       * Expression to use as a breakpoint condition. When specified, debugger will only stop on the breakpoint if this expression evaluates to true.
        */
-      count: number;
+      condition?: string;
+      /**
+       * Actions to perform automatically when the breakpoint is triggered.
+       */
+      actions?: BreakpointAction[];
+      /**
+       * Automatically continue after hitting this breakpoint and running actions.
+       */
+      autoContinue?: boolean;
+      /**
+       * Number of times to ignore this breakpoint, before stopping on the breakpoint and running actions.
+       */
+      ignoreCount?: number;
     }
     /**
-     * Issued when console is cleared. This happens either upon <code>clearMessages</code> command or after page navigation.
+     * Information about the function.
      */
-    export type messagesClearedPayload = void;
+    export interface FunctionDetails {
+      /**
+       * Location of the function.
+       */
+      location: Location;
+      /**
+       * Name of the function. Not present for anonymous functions.
+       */
+      name?: string;
+      /**
+       * Display name of the function(specified in 'displayName' property on the function object).
+       */
+      displayName?: string;
+      /**
+       * Scope chain for this closure.
+       */
+      scopeChain?: Scope[];
+    }
     /**
-     * Issued from console.takeHeapSnapshot.
+     * JavaScript call frame. Array of call frames form the call stack.
      */
-    export type heapSnapshotPayload = {
+    export interface CallFrame {
+      /**
+       * Call frame identifier. This identifier is only valid while the virtual machine is paused.
+       */
+      callFrameId: CallFrameId;
+      /**
+       * Name of the JavaScript function called on this call frame.
+       */
+      functionName: string;
+      /**
+       * Location in the source code.
+       */
+      location: Location;
+      /**
+       * Scope chain for this call frame.
+       */
+      scopeChain: Scope[];
+      /**
+       * <code>this</code> object for this call frame.
+       */
+      this: Runtime.RemoteObject;
+      /**
+       * Is the current frame tail deleted from a tail call.
+       */
+      isTailDeleted: boolean;
+    }
+    /**
+     * Scope description.
+     */
+    export interface Scope {
+      /**
+       * Object representing the scope. For <code>global</code> and <code>with</code> scopes it represents the actual object; for the rest of the scopes, it is artificial transient object enumerating scope variables as its properties.
+       */
+      object: Runtime.RemoteObject;
+      /**
+       * Scope type.
+       */
+      type: "global"|"with"|"closure"|"catch"|"functionName"|"globalLexicalEnvironment"|"nestedLexical";
+      /**
+       * Name associated with the scope.
+       */
+      name?: string;
+      /**
+       * Location if available of the scope definition.
+       */
+      location?: Location;
+      /**
+       * Whether the scope has any variables.
+       */
+      empty?: boolean;
+    }
+    /**
+     * A sample collected by evaluating a probe breakpoint action.
+     */
+    export interface ProbeSample {
+      /**
+       * Identifier of the probe breakpoint action that created the sample.
+       */
+      probeId: BreakpointActionIdentifier;
+      /**
+       * Unique identifier for this sample.
+       */
+      sampleId: number;
+      /**
+       * A batch identifier which is the same for all samples taken at the same breakpoint hit.
+       */
+      batchId: number;
+      /**
+       * Timestamp of when the sample was taken.
+       */
       timestamp: number;
       /**
-       * Snapshot at the end of tracking.
+       * Contents of the sample.
        */
-      snapshotData: Heap.HeapSnapshotData;
+      payload: Runtime.RemoteObject;
+    }
+    /**
+     * The pause reason auxiliary data when paused because of an assertion.
+     */
+    export interface AssertPauseReason {
       /**
-       * Optional title provided to console.takeHeapSnapshot.
+       * The console.assert message string if provided.
        */
-      title?: string;
+      message?: string;
+    }
+    /**
+     * The pause reason auxiliary data when paused because of hitting a breakpoint.
+     */
+    export interface BreakpointPauseReason {
+      /**
+       * The identifier of the breakpoint causing the pause.
+       */
+      breakpointId: string;
+    }
+    /**
+     * The pause reason auxiliary data when paused because of a Content Security Policy directive.
+     */
+    export interface CSPViolationPauseReason {
+      /**
+       * The CSP directive that blocked script execution.
+       */
+      directive: string;
     }
     
     /**
-     * Enables console domain, sends the messages collected so far to the client by means of the <code>messageAdded</code> notification.
+     * Called when global has been cleared and debugger client should reset its state. Happens upon navigation or reload.
+     */
+    export type globalObjectClearedPayload = void;
+    /**
+     * Fired when virtual machine parses script. This event is also fired for all known and uncollected scripts upon enabling debugger.
+     */
+    export type scriptParsedPayload = {
+      /**
+       * Identifier of the script parsed.
+       */
+      scriptId: ScriptId;
+      /**
+       * URL of the script parsed (if any).
+       */
+      url: string;
+      /**
+       * Line offset of the script within the resource with given URL (for script tags).
+       */
+      startLine: number;
+      /**
+       * Column offset of the script within the resource with given URL.
+       */
+      startColumn: number;
+      /**
+       * Last line of the script.
+       */
+      endLine: number;
+      /**
+       * Length of the last line of the script.
+       */
+      endColumn: number;
+      /**
+       * Determines whether this script is a user extension script.
+       */
+      isContentScript?: boolean;
+      /**
+       * sourceURL name of the script (if any).
+       */
+      sourceURL?: string;
+      /**
+       * URL of source map associated with script (if any).
+       */
+      sourceMapURL?: string;
+      /**
+       * True if this script was parsed as a module.
+       */
+      module?: boolean;
+    }
+    /**
+     * Fired when virtual machine fails to parse the script.
+     */
+    export type scriptFailedToParsePayload = {
+      /**
+       * URL of the script that failed to parse.
+       */
+      url: string;
+      /**
+       * Source text of the script that failed to parse.
+       */
+      scriptSource: string;
+      /**
+       * Line offset of the script within the resource.
+       */
+      startLine: number;
+      /**
+       * Line with error.
+       */
+      errorLine: number;
+      /**
+       * Parse error message.
+       */
+      errorMessage: string;
+    }
+    /**
+     * Fired when breakpoint is resolved to an actual script and location.
+     */
+    export type breakpointResolvedPayload = {
+      /**
+       * Breakpoint unique identifier.
+       */
+      breakpointId: BreakpointId;
+      /**
+       * Actual breakpoint location.
+       */
+      location: Location;
+    }
+    /**
+     * Fired when the virtual machine stopped on breakpoint or exception or any other stop criteria.
+     */
+    export type pausedPayload = {
+      /**
+       * Call stack the virtual machine stopped on.
+       */
+      callFrames: CallFrame[];
+      /**
+       * Pause reason.
+       */
+      reason: "XHR"|"Fetch"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"BlackboxedScript"|"other";
+      /**
+       * Object containing break-specific auxiliary properties.
+       */
+      data?: { [key: string]: string };
+      /**
+       * Linked list of asynchronous StackTraces.
+       */
+      asyncStackTrace?: Console.StackTrace;
+    }
+    /**
+     * Fired when the virtual machine resumed execution.
+     */
+    export type resumedPayload = void;
+    /**
+     * Fires when a new probe sample is collected.
+     */
+    export type didSampleProbePayload = {
+      /**
+       * A collected probe sample.
+       */
+      sample: ProbeSample;
+    }
+    /**
+     * Fired when a "sound" breakpoint action is triggered on a breakpoint.
+     */
+    export type playBreakpointActionSoundPayload = {
+      /**
+       * Breakpoint action identifier.
+       */
+      breakpointActionId: BreakpointActionIdentifier;
+    }
+    
+    /**
+     * Enables debugger for the given page. Clients should not assume that the debugging has been enabled until the result for this command is received.
      */
     export type enableParameters = {
     }
     export type enableReturnValue = {
     }
     /**
-     * Disables console domain, prevents further console messages from being reported to the client.
+     * Disables debugger for given page.
      */
     export type disableParameters = {
     }
     export type disableReturnValue = {
     }
     /**
-     * Clears console messages collected in the browser.
+     * Set the async stack trace depth for the page. A value of zero disables recording of async stack traces.
      */
-    export type clearMessagesParameters = {
+    export type setAsyncStackTraceDepthParameters = {
+      /**
+       * Async stack trace depth.
+       */
+      depth: number;
     }
-    export type clearMessagesReturnValue = {
+    export type setAsyncStackTraceDepthReturnValue = {
     }
     /**
-     * List of the different message sources that are non-default logging channels.
+     * Activates / deactivates all breakpoints on the page.
      */
-    export type getLoggingChannelsParameters = {
-    }
-    export type getLoggingChannelsReturnValue = {
+    export type setBreakpointsActiveParameters = {
       /**
-       * Logging channels.
+       * New value for breakpoints active state.
        */
-      channels: Channel[];
+      active: boolean;
+    }
+    export type setBreakpointsActiveReturnValue = {
     }
     /**
-     * Modify the level of a channel.
+     * Sets JavaScript breakpoint at given location specified either by URL or URL regex. Once this command is issued, all existing parsed scripts will have breakpoints resolved and returned in <code>locations</code> property. Further matching script parsing will result in subsequent <code>breakpointResolved</code> events issued. This logical breakpoint will survive page reloads.
      */
-    export type setLoggingChannelLevelParameters = {
+    export type setBreakpointByUrlParameters = {
       /**
-       * Logging channel to modify.
+       * Line number to set breakpoint at.
        */
-      source: ChannelSource;
+      lineNumber: number;
       /**
-       * New level.
+       * URL of the resources to set breakpoint on.
        */
-      level: ChannelLevel;
+      url?: string;
+      /**
+       * Regex pattern for the URLs of the resources to set breakpoints on. Either <code>url</code> or <code>urlRegex</code> must be specified.
+       */
+      urlRegex?: string;
+      /**
+       * Offset in the line to set breakpoint at.
+       */
+      columnNumber?: number;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
     }
-    export type setLoggingChannelLevelReturnValue = {
+    export type setBreakpointByUrlReturnValue = {
+      /**
+       * Id of the created breakpoint for further reference.
+       */
+      breakpointId: BreakpointId;
+      /**
+       * List of the locations this breakpoint resolved into upon addition.
+       */
+      locations: Location[];
+    }
+    /**
+     * Sets JavaScript breakpoint at a given location.
+     */
+    export type setBreakpointParameters = {
+      /**
+       * Location to set breakpoint in.
+       */
+      location: Location;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
+    }
+    export type setBreakpointReturnValue = {
+      /**
+       * Id of the created breakpoint for further reference.
+       */
+      breakpointId: BreakpointId;
+      /**
+       * Location this breakpoint resolved into.
+       */
+      actualLocation: Location;
+    }
+    /**
+     * Removes JavaScript breakpoint.
+     */
+    export type removeBreakpointParameters = {
+      breakpointId: BreakpointId;
+    }
+    export type removeBreakpointReturnValue = {
+    }
+    /**
+     * Continues execution until the current evaluation completes. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type continueUntilNextRunLoopParameters = {
+    }
+    export type continueUntilNextRunLoopReturnValue = {
+    }
+    /**
+     * Continues execution until specific location is reached. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type continueToLocationParameters = {
+      /**
+       * Location to continue to.
+       */
+      location: Location;
+    }
+    export type continueToLocationReturnValue = {
+    }
+    /**
+     * Steps over the expression. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type stepNextParameters = {
+    }
+    export type stepNextReturnValue = {
+    }
+    /**
+     * Steps over the statement. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type stepOverParameters = {
+    }
+    export type stepOverReturnValue = {
+    }
+    /**
+     * Steps into the function call. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type stepIntoParameters = {
+    }
+    export type stepIntoReturnValue = {
+    }
+    /**
+     * Steps out of the function call. This will trigger either a Debugger.paused or Debugger.resumed event.
+     */
+    export type stepOutParameters = {
+    }
+    export type stepOutReturnValue = {
+    }
+    /**
+     * Stops on the next JavaScript statement.
+     */
+    export type pauseParameters = {
+    }
+    export type pauseReturnValue = {
+    }
+    /**
+     * Resumes JavaScript execution. This will trigger a Debugger.resumed event.
+     */
+    export type resumeParameters = {
+    }
+    export type resumeReturnValue = {
+    }
+    /**
+     * Searches for given string in script content.
+     */
+    export type searchInContentParameters = {
+      /**
+       * Id of the script to search in.
+       */
+      scriptId: ScriptId;
+      /**
+       * String to search for.
+       */
+      query: string;
+      /**
+       * If true, search is case sensitive.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treats string parameter as regex.
+       */
+      isRegex?: boolean;
+    }
+    export type searchInContentReturnValue = {
+      /**
+       * List of search matches.
+       */
+      result: GenericTypes.SearchMatch[];
+    }
+    /**
+     * Returns source for the script with given id.
+     */
+    export type getScriptSourceParameters = {
+      /**
+       * Id of the script to get source for.
+       */
+      scriptId: ScriptId;
+    }
+    export type getScriptSourceReturnValue = {
+      /**
+       * Script source.
+       */
+      scriptSource: string;
+    }
+    /**
+     * Returns detailed information on given function.
+     */
+    export type getFunctionDetailsParameters = {
+      /**
+       * Id of the function to get location for.
+       */
+      functionId: Runtime.RemoteObjectId;
+    }
+    export type getFunctionDetailsReturnValue = {
+      /**
+       * Information about the function.
+       */
+      details: FunctionDetails;
+    }
+    /**
+     * Control whether the debugger pauses execution before `debugger` statements.
+     */
+    export type setPauseOnDebuggerStatementsParameters = {
+      enabled: boolean;
+    }
+    export type setPauseOnDebuggerStatementsReturnValue = {
+    }
+    /**
+     * Defines pause on exceptions state. Can be set to stop on all exceptions, uncaught exceptions or no exceptions. Initial pause on exceptions state is <code>none</code>.
+     */
+    export type setPauseOnExceptionsParameters = {
+      /**
+       * Pause on exceptions mode.
+       */
+      state: "none"|"uncaught"|"all";
+    }
+    export type setPauseOnExceptionsReturnValue = {
+    }
+    /**
+     * Set pause on assertions state. Assertions are console.assert assertions.
+     */
+    export type setPauseOnAssertionsParameters = {
+      enabled: boolean;
+    }
+    export type setPauseOnAssertionsReturnValue = {
+    }
+    /**
+     * Pause when running the next JavaScript microtask.
+     */
+    export type setPauseOnMicrotasksParameters = {
+      enabled: boolean;
+    }
+    export type setPauseOnMicrotasksReturnValue = {
+    }
+    /**
+     * Change whether to pause in the debugger for internal scripts. The default value is false.
+     */
+    export type setPauseForInternalScriptsParameters = {
+      shouldPause: boolean;
+    }
+    export type setPauseForInternalScriptsReturnValue = {
+    }
+    /**
+     * Evaluates expression on a given call frame.
+     */
+    export type evaluateOnCallFrameParameters = {
+      /**
+       * Call frame identifier to evaluate on.
+       */
+      callFrameId: CallFrameId;
+      /**
+       * Expression to evaluate.
+       */
+      expression: string;
+      /**
+       * String object group name to put result into (allows rapid releasing resulting object handles using <code>releaseObjectGroup</code>).
+       */
+      objectGroup?: string;
+      /**
+       * Specifies whether command line API should be available to the evaluated expression, defaults to false.
+       */
+      includeCommandLineAPI?: boolean;
+      /**
+       * Specifies whether evaluation should stop on exceptions and mute console. Overrides setPauseOnException state.
+       */
+      doNotPauseOnExceptionsAndMuteConsole?: boolean;
+      /**
+       * Whether the result is expected to be a JSON object that should be sent by value.
+       */
+      returnByValue?: boolean;
+      /**
+       * Whether preview should be generated for the result.
+       */
+      generatePreview?: boolean;
+      /**
+       * Whether the resulting value should be considered for saving in the $n history.
+       */
+      saveResult?: boolean;
+      /**
+       * Whether the expression should be considered to be in a user gesture or not.
+       */
+      emulateUserGesture?: boolean;
+    }
+    export type evaluateOnCallFrameReturnValue = {
+      /**
+       * Object wrapper for the evaluation result.
+       */
+      result: Runtime.RemoteObject;
+      /**
+       * True if the result was thrown during the evaluation.
+       */
+      wasThrown?: boolean;
+      /**
+       * If the result was saved, this is the $n index that can be used to access the value.
+       */
+      savedResultIndex?: number;
+    }
+    /**
+     * Sets whether the given URL should be in the list of blackboxed scripts, which are ignored when pausing/stepping/debugging.
+     */
+    export type setShouldBlackboxURLParameters = {
+      url: string;
+      shouldBlackbox: boolean;
+      /**
+       * If true, <code>url</code> is case sensitive.
+       */
+      caseSensitive?: boolean;
+      /**
+       * If true, treat <code>url</code> as regular expression.
+       */
+      isRegex?: boolean;
+    }
+    export type setShouldBlackboxURLReturnValue = {
+    }
+  }
+  
+  /**
+   * Actions and events related to alert boxes.
+   */
+  export module Dialog {
+    
+    /**
+     * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
+     */
+    export type javascriptDialogOpeningPayload = {
+      /**
+       * Dialog type.
+       */
+      type: string;
+      /**
+       * Message that will be displayed by the dialog.
+       */
+      message: string;
+      /**
+       * Default dialog prompt.
+       */
+      defaultPrompt?: string;
+    }
+    
+    /**
+     * Enables dialog domain notifications.
+     */
+    export type enableParameters = {
+    }
+    export type enableReturnValue = {
+    }
+    /**
+     * Disables dialog domain notifications.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
+    }
+    /**
+     * Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
+     */
+    export type handleJavaScriptDialogParameters = {
+      /**
+       * Whether to accept or dismiss the dialog.
+       */
+      accept: boolean;
+      /**
+       * The text to enter into the dialog prompt before accepting. Used only if this is a prompt dialog.
+       */
+      promptText?: string;
+    }
+    export type handleJavaScriptDialogReturnValue = {
     }
   }
   
@@ -3124,805 +3923,6 @@ might return multiple quads for inline nodes.
       storageId: StorageId;
     }
     export type clearDOMStorageItemsReturnValue = {
-    }
-  }
-  
-  export module Database {
-    /**
-     * Unique identifier of Database object.
-     */
-    export type DatabaseId = string;
-    /**
-     * Database object.
-     */
-    export interface Database {
-      /**
-       * Database ID.
-       */
-      id: DatabaseId;
-      /**
-       * Database domain.
-       */
-      domain: string;
-      /**
-       * Database name.
-       */
-      name: string;
-      /**
-       * Database version.
-       */
-      version: string;
-    }
-    /**
-     * Database error.
-     */
-    export interface Error {
-      /**
-       * Error message.
-       */
-      message: string;
-      /**
-       * Error code.
-       */
-      code: number;
-    }
-    
-    export type addDatabasePayload = {
-      database: Database;
-    }
-    
-    /**
-     * Enables database tracking, database events will now be delivered to the client.
-     */
-    export type enableParameters = {
-    }
-    export type enableReturnValue = {
-    }
-    /**
-     * Disables database tracking, prevents database events from being sent to the client.
-     */
-    export type disableParameters = {
-    }
-    export type disableReturnValue = {
-    }
-    export type getDatabaseTableNamesParameters = {
-      databaseId: DatabaseId;
-    }
-    export type getDatabaseTableNamesReturnValue = {
-      tableNames: string[];
-    }
-    export type executeSQLParameters = {
-      databaseId: DatabaseId;
-      query: string;
-    }
-    export type executeSQLReturnValue = {
-      columnNames?: string[];
-      values?: any[];
-      sqlError?: Error;
-    }
-  }
-  
-  /**
-   * Debugger domain exposes JavaScript debugging capabilities. It allows setting and removing breakpoints, stepping through execution, exploring stack traces, etc.
-   */
-  export module Debugger {
-    /**
-     * Breakpoint identifier.
-     */
-    export type BreakpointId = string;
-    /**
-     * Breakpoint action identifier.
-     */
-    export type BreakpointActionIdentifier = number;
-    /**
-     * Unique script identifier.
-     */
-    export type ScriptId = string;
-    /**
-     * Call frame identifier.
-     */
-    export type CallFrameId = string;
-    /**
-     * Location in the source code.
-     */
-    export interface Location {
-      /**
-       * Script identifier as reported in the <code>Debugger.scriptParsed</code>.
-       */
-      scriptId: ScriptId;
-      /**
-       * Line number in the script (0-based).
-       */
-      lineNumber: number;
-      /**
-       * Column number in the script (0-based).
-       */
-      columnNumber?: number;
-    }
-    /**
-     * Action to perform when a breakpoint is triggered.
-     */
-    export interface BreakpointAction {
-      /**
-       * Different kinds of breakpoint actions.
-       */
-      type: "log"|"evaluate"|"sound"|"probe";
-      /**
-       * Data associated with this breakpoint type (e.g. for type "eval" this is the JavaScript string to evaluate).
-       */
-      data?: string;
-      /**
-       * A frontend-assigned identifier for this breakpoint action.
-       */
-      id?: BreakpointActionIdentifier;
-    }
-    /**
-     * Extra options that modify breakpoint behavior.
-     */
-    export interface BreakpointOptions {
-      /**
-       * Expression to use as a breakpoint condition. When specified, debugger will only stop on the breakpoint if this expression evaluates to true.
-       */
-      condition?: string;
-      /**
-       * Actions to perform automatically when the breakpoint is triggered.
-       */
-      actions?: BreakpointAction[];
-      /**
-       * Automatically continue after hitting this breakpoint and running actions.
-       */
-      autoContinue?: boolean;
-      /**
-       * Number of times to ignore this breakpoint, before stopping on the breakpoint and running actions.
-       */
-      ignoreCount?: number;
-    }
-    /**
-     * Information about the function.
-     */
-    export interface FunctionDetails {
-      /**
-       * Location of the function.
-       */
-      location: Location;
-      /**
-       * Name of the function. Not present for anonymous functions.
-       */
-      name?: string;
-      /**
-       * Display name of the function(specified in 'displayName' property on the function object).
-       */
-      displayName?: string;
-      /**
-       * Scope chain for this closure.
-       */
-      scopeChain?: Scope[];
-    }
-    /**
-     * JavaScript call frame. Array of call frames form the call stack.
-     */
-    export interface CallFrame {
-      /**
-       * Call frame identifier. This identifier is only valid while the virtual machine is paused.
-       */
-      callFrameId: CallFrameId;
-      /**
-       * Name of the JavaScript function called on this call frame.
-       */
-      functionName: string;
-      /**
-       * Location in the source code.
-       */
-      location: Location;
-      /**
-       * Scope chain for this call frame.
-       */
-      scopeChain: Scope[];
-      /**
-       * <code>this</code> object for this call frame.
-       */
-      this: Runtime.RemoteObject;
-      /**
-       * Is the current frame tail deleted from a tail call.
-       */
-      isTailDeleted: boolean;
-    }
-    /**
-     * Scope description.
-     */
-    export interface Scope {
-      /**
-       * Object representing the scope. For <code>global</code> and <code>with</code> scopes it represents the actual object; for the rest of the scopes, it is artificial transient object enumerating scope variables as its properties.
-       */
-      object: Runtime.RemoteObject;
-      /**
-       * Scope type.
-       */
-      type: "global"|"with"|"closure"|"catch"|"functionName"|"globalLexicalEnvironment"|"nestedLexical";
-      /**
-       * Name associated with the scope.
-       */
-      name?: string;
-      /**
-       * Location if available of the scope definition.
-       */
-      location?: Location;
-      /**
-       * Whether the scope has any variables.
-       */
-      empty?: boolean;
-    }
-    /**
-     * A sample collected by evaluating a probe breakpoint action.
-     */
-    export interface ProbeSample {
-      /**
-       * Identifier of the probe breakpoint action that created the sample.
-       */
-      probeId: BreakpointActionIdentifier;
-      /**
-       * Unique identifier for this sample.
-       */
-      sampleId: number;
-      /**
-       * A batch identifier which is the same for all samples taken at the same breakpoint hit.
-       */
-      batchId: number;
-      /**
-       * Timestamp of when the sample was taken.
-       */
-      timestamp: number;
-      /**
-       * Contents of the sample.
-       */
-      payload: Runtime.RemoteObject;
-    }
-    /**
-     * The pause reason auxiliary data when paused because of an assertion.
-     */
-    export interface AssertPauseReason {
-      /**
-       * The console.assert message string if provided.
-       */
-      message?: string;
-    }
-    /**
-     * The pause reason auxiliary data when paused because of hitting a breakpoint.
-     */
-    export interface BreakpointPauseReason {
-      /**
-       * The identifier of the breakpoint causing the pause.
-       */
-      breakpointId: string;
-    }
-    /**
-     * The pause reason auxiliary data when paused because of a Content Security Policy directive.
-     */
-    export interface CSPViolationPauseReason {
-      /**
-       * The CSP directive that blocked script execution.
-       */
-      directive: string;
-    }
-    
-    /**
-     * Called when global has been cleared and debugger client should reset its state. Happens upon navigation or reload.
-     */
-    export type globalObjectClearedPayload = void;
-    /**
-     * Fired when virtual machine parses script. This event is also fired for all known and uncollected scripts upon enabling debugger.
-     */
-    export type scriptParsedPayload = {
-      /**
-       * Identifier of the script parsed.
-       */
-      scriptId: ScriptId;
-      /**
-       * URL of the script parsed (if any).
-       */
-      url: string;
-      /**
-       * Line offset of the script within the resource with given URL (for script tags).
-       */
-      startLine: number;
-      /**
-       * Column offset of the script within the resource with given URL.
-       */
-      startColumn: number;
-      /**
-       * Last line of the script.
-       */
-      endLine: number;
-      /**
-       * Length of the last line of the script.
-       */
-      endColumn: number;
-      /**
-       * Determines whether this script is a user extension script.
-       */
-      isContentScript?: boolean;
-      /**
-       * sourceURL name of the script (if any).
-       */
-      sourceURL?: string;
-      /**
-       * URL of source map associated with script (if any).
-       */
-      sourceMapURL?: string;
-      /**
-       * True if this script was parsed as a module.
-       */
-      module?: boolean;
-    }
-    /**
-     * Fired when virtual machine fails to parse the script.
-     */
-    export type scriptFailedToParsePayload = {
-      /**
-       * URL of the script that failed to parse.
-       */
-      url: string;
-      /**
-       * Source text of the script that failed to parse.
-       */
-      scriptSource: string;
-      /**
-       * Line offset of the script within the resource.
-       */
-      startLine: number;
-      /**
-       * Line with error.
-       */
-      errorLine: number;
-      /**
-       * Parse error message.
-       */
-      errorMessage: string;
-    }
-    /**
-     * Fired when breakpoint is resolved to an actual script and location.
-     */
-    export type breakpointResolvedPayload = {
-      /**
-       * Breakpoint unique identifier.
-       */
-      breakpointId: BreakpointId;
-      /**
-       * Actual breakpoint location.
-       */
-      location: Location;
-    }
-    /**
-     * Fired when the virtual machine stopped on breakpoint or exception or any other stop criteria.
-     */
-    export type pausedPayload = {
-      /**
-       * Call stack the virtual machine stopped on.
-       */
-      callFrames: CallFrame[];
-      /**
-       * Pause reason.
-       */
-      reason: "XHR"|"Fetch"|"DOM"|"AnimationFrame"|"Interval"|"Listener"|"Timeout"|"exception"|"assert"|"CSPViolation"|"DebuggerStatement"|"Breakpoint"|"PauseOnNextStatement"|"Microtask"|"BlackboxedScript"|"other";
-      /**
-       * Object containing break-specific auxiliary properties.
-       */
-      data?: { [key: string]: string };
-      /**
-       * Linked list of asynchronous StackTraces.
-       */
-      asyncStackTrace?: Console.StackTrace;
-    }
-    /**
-     * Fired when the virtual machine resumed execution.
-     */
-    export type resumedPayload = void;
-    /**
-     * Fires when a new probe sample is collected.
-     */
-    export type didSampleProbePayload = {
-      /**
-       * A collected probe sample.
-       */
-      sample: ProbeSample;
-    }
-    /**
-     * Fired when a "sound" breakpoint action is triggered on a breakpoint.
-     */
-    export type playBreakpointActionSoundPayload = {
-      /**
-       * Breakpoint action identifier.
-       */
-      breakpointActionId: BreakpointActionIdentifier;
-    }
-    
-    /**
-     * Enables debugger for the given page. Clients should not assume that the debugging has been enabled until the result for this command is received.
-     */
-    export type enableParameters = {
-    }
-    export type enableReturnValue = {
-    }
-    /**
-     * Disables debugger for given page.
-     */
-    export type disableParameters = {
-    }
-    export type disableReturnValue = {
-    }
-    /**
-     * Set the async stack trace depth for the page. A value of zero disables recording of async stack traces.
-     */
-    export type setAsyncStackTraceDepthParameters = {
-      /**
-       * Async stack trace depth.
-       */
-      depth: number;
-    }
-    export type setAsyncStackTraceDepthReturnValue = {
-    }
-    /**
-     * Activates / deactivates all breakpoints on the page.
-     */
-    export type setBreakpointsActiveParameters = {
-      /**
-       * New value for breakpoints active state.
-       */
-      active: boolean;
-    }
-    export type setBreakpointsActiveReturnValue = {
-    }
-    /**
-     * Sets JavaScript breakpoint at given location specified either by URL or URL regex. Once this command is issued, all existing parsed scripts will have breakpoints resolved and returned in <code>locations</code> property. Further matching script parsing will result in subsequent <code>breakpointResolved</code> events issued. This logical breakpoint will survive page reloads.
-     */
-    export type setBreakpointByUrlParameters = {
-      /**
-       * Line number to set breakpoint at.
-       */
-      lineNumber: number;
-      /**
-       * URL of the resources to set breakpoint on.
-       */
-      url?: string;
-      /**
-       * Regex pattern for the URLs of the resources to set breakpoints on. Either <code>url</code> or <code>urlRegex</code> must be specified.
-       */
-      urlRegex?: string;
-      /**
-       * Offset in the line to set breakpoint at.
-       */
-      columnNumber?: number;
-      /**
-       * Options to apply to this breakpoint to modify its behavior.
-       */
-      options?: BreakpointOptions;
-    }
-    export type setBreakpointByUrlReturnValue = {
-      /**
-       * Id of the created breakpoint for further reference.
-       */
-      breakpointId: BreakpointId;
-      /**
-       * List of the locations this breakpoint resolved into upon addition.
-       */
-      locations: Location[];
-    }
-    /**
-     * Sets JavaScript breakpoint at a given location.
-     */
-    export type setBreakpointParameters = {
-      /**
-       * Location to set breakpoint in.
-       */
-      location: Location;
-      /**
-       * Options to apply to this breakpoint to modify its behavior.
-       */
-      options?: BreakpointOptions;
-    }
-    export type setBreakpointReturnValue = {
-      /**
-       * Id of the created breakpoint for further reference.
-       */
-      breakpointId: BreakpointId;
-      /**
-       * Location this breakpoint resolved into.
-       */
-      actualLocation: Location;
-    }
-    /**
-     * Removes JavaScript breakpoint.
-     */
-    export type removeBreakpointParameters = {
-      breakpointId: BreakpointId;
-    }
-    export type removeBreakpointReturnValue = {
-    }
-    /**
-     * Continues execution until the current evaluation completes. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type continueUntilNextRunLoopParameters = {
-    }
-    export type continueUntilNextRunLoopReturnValue = {
-    }
-    /**
-     * Continues execution until specific location is reached. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type continueToLocationParameters = {
-      /**
-       * Location to continue to.
-       */
-      location: Location;
-    }
-    export type continueToLocationReturnValue = {
-    }
-    /**
-     * Steps over the expression. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type stepNextParameters = {
-    }
-    export type stepNextReturnValue = {
-    }
-    /**
-     * Steps over the statement. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type stepOverParameters = {
-    }
-    export type stepOverReturnValue = {
-    }
-    /**
-     * Steps into the function call. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type stepIntoParameters = {
-    }
-    export type stepIntoReturnValue = {
-    }
-    /**
-     * Steps out of the function call. This will trigger either a Debugger.paused or Debugger.resumed event.
-     */
-    export type stepOutParameters = {
-    }
-    export type stepOutReturnValue = {
-    }
-    /**
-     * Stops on the next JavaScript statement.
-     */
-    export type pauseParameters = {
-    }
-    export type pauseReturnValue = {
-    }
-    /**
-     * Resumes JavaScript execution. This will trigger a Debugger.resumed event.
-     */
-    export type resumeParameters = {
-    }
-    export type resumeReturnValue = {
-    }
-    /**
-     * Searches for given string in script content.
-     */
-    export type searchInContentParameters = {
-      /**
-       * Id of the script to search in.
-       */
-      scriptId: ScriptId;
-      /**
-       * String to search for.
-       */
-      query: string;
-      /**
-       * If true, search is case sensitive.
-       */
-      caseSensitive?: boolean;
-      /**
-       * If true, treats string parameter as regex.
-       */
-      isRegex?: boolean;
-    }
-    export type searchInContentReturnValue = {
-      /**
-       * List of search matches.
-       */
-      result: GenericTypes.SearchMatch[];
-    }
-    /**
-     * Returns source for the script with given id.
-     */
-    export type getScriptSourceParameters = {
-      /**
-       * Id of the script to get source for.
-       */
-      scriptId: ScriptId;
-    }
-    export type getScriptSourceReturnValue = {
-      /**
-       * Script source.
-       */
-      scriptSource: string;
-    }
-    /**
-     * Returns detailed information on given function.
-     */
-    export type getFunctionDetailsParameters = {
-      /**
-       * Id of the function to get location for.
-       */
-      functionId: Runtime.RemoteObjectId;
-    }
-    export type getFunctionDetailsReturnValue = {
-      /**
-       * Information about the function.
-       */
-      details: FunctionDetails;
-    }
-    /**
-     * Control whether the debugger pauses execution before `debugger` statements.
-     */
-    export type setPauseOnDebuggerStatementsParameters = {
-      enabled: boolean;
-    }
-    export type setPauseOnDebuggerStatementsReturnValue = {
-    }
-    /**
-     * Defines pause on exceptions state. Can be set to stop on all exceptions, uncaught exceptions or no exceptions. Initial pause on exceptions state is <code>none</code>.
-     */
-    export type setPauseOnExceptionsParameters = {
-      /**
-       * Pause on exceptions mode.
-       */
-      state: "none"|"uncaught"|"all";
-    }
-    export type setPauseOnExceptionsReturnValue = {
-    }
-    /**
-     * Set pause on assertions state. Assertions are console.assert assertions.
-     */
-    export type setPauseOnAssertionsParameters = {
-      enabled: boolean;
-    }
-    export type setPauseOnAssertionsReturnValue = {
-    }
-    /**
-     * Pause when running the next JavaScript microtask.
-     */
-    export type setPauseOnMicrotasksParameters = {
-      enabled: boolean;
-    }
-    export type setPauseOnMicrotasksReturnValue = {
-    }
-    /**
-     * Change whether to pause in the debugger for internal scripts. The default value is false.
-     */
-    export type setPauseForInternalScriptsParameters = {
-      shouldPause: boolean;
-    }
-    export type setPauseForInternalScriptsReturnValue = {
-    }
-    /**
-     * Evaluates expression on a given call frame.
-     */
-    export type evaluateOnCallFrameParameters = {
-      /**
-       * Call frame identifier to evaluate on.
-       */
-      callFrameId: CallFrameId;
-      /**
-       * Expression to evaluate.
-       */
-      expression: string;
-      /**
-       * String object group name to put result into (allows rapid releasing resulting object handles using <code>releaseObjectGroup</code>).
-       */
-      objectGroup?: string;
-      /**
-       * Specifies whether command line API should be available to the evaluated expression, defaults to false.
-       */
-      includeCommandLineAPI?: boolean;
-      /**
-       * Specifies whether evaluation should stop on exceptions and mute console. Overrides setPauseOnException state.
-       */
-      doNotPauseOnExceptionsAndMuteConsole?: boolean;
-      /**
-       * Whether the result is expected to be a JSON object that should be sent by value.
-       */
-      returnByValue?: boolean;
-      /**
-       * Whether preview should be generated for the result.
-       */
-      generatePreview?: boolean;
-      /**
-       * Whether the resulting value should be considered for saving in the $n history.
-       */
-      saveResult?: boolean;
-      /**
-       * Whether the expression should be considered to be in a user gesture or not.
-       */
-      emulateUserGesture?: boolean;
-    }
-    export type evaluateOnCallFrameReturnValue = {
-      /**
-       * Object wrapper for the evaluation result.
-       */
-      result: Runtime.RemoteObject;
-      /**
-       * True if the result was thrown during the evaluation.
-       */
-      wasThrown?: boolean;
-      /**
-       * If the result was saved, this is the $n index that can be used to access the value.
-       */
-      savedResultIndex?: number;
-    }
-    /**
-     * Sets whether the given URL should be in the list of blackboxed scripts, which are ignored when pausing/stepping/debugging.
-     */
-    export type setShouldBlackboxURLParameters = {
-      url: string;
-      shouldBlackbox: boolean;
-      /**
-       * If true, <code>url</code> is case sensitive.
-       */
-      caseSensitive?: boolean;
-      /**
-       * If true, treat <code>url</code> as regular expression.
-       */
-      isRegex?: boolean;
-    }
-    export type setShouldBlackboxURLReturnValue = {
-    }
-  }
-  
-  /**
-   * Actions and events related to alert boxes.
-   */
-  export module Dialog {
-    
-    /**
-     * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
-     */
-    export type javascriptDialogOpeningPayload = {
-      /**
-       * Dialog type.
-       */
-      type: string;
-      /**
-       * Message that will be displayed by the dialog.
-       */
-      message: string;
-      /**
-       * Default dialog prompt.
-       */
-      defaultPrompt?: string;
-    }
-    
-    /**
-     * Enables dialog domain notifications.
-     */
-    export type enableParameters = {
-    }
-    export type enableReturnValue = {
-    }
-    /**
-     * Disables dialog domain notifications.
-     */
-    export type disableParameters = {
-    }
-    export type disableReturnValue = {
-    }
-    /**
-     * Accepts or dismisses a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload).
-     */
-    export type handleJavaScriptDialogParameters = {
-      /**
-       * Whether to accept or dismiss the dialog.
-       */
-      accept: boolean;
-      /**
-       * The text to enter into the dialog prompt before accepting. Used only if this is a prompt dialog.
-       */
-      promptText?: string;
-    }
-    export type handleJavaScriptDialogReturnValue = {
     }
   }
   
@@ -8310,13 +8310,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "ApplicationCache.networkStateUpdated": ApplicationCache.networkStateUpdatedPayload;
     "Browser.extensionsEnabled": Browser.extensionsEnabledPayload;
     "Browser.extensionsDisabled": Browser.extensionsDisabledPayload;
-    "CPUProfiler.trackingStart": CPUProfiler.trackingStartPayload;
-    "CPUProfiler.trackingUpdate": CPUProfiler.trackingUpdatePayload;
-    "CPUProfiler.trackingComplete": CPUProfiler.trackingCompletePayload;
-    "CSS.mediaQueryResultChanged": CSS.mediaQueryResultChangedPayload;
-    "CSS.styleSheetChanged": CSS.styleSheetChangedPayload;
-    "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
-    "CSS.styleSheetRemoved": CSS.styleSheetRemovedPayload;
     "Canvas.canvasAdded": Canvas.canvasAddedPayload;
     "Canvas.canvasRemoved": Canvas.canvasRemovedPayload;
     "Canvas.canvasMemoryChanged": Canvas.canvasMemoryChangedPayload;
@@ -8331,6 +8324,23 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Console.messageRepeatCountUpdated": Console.messageRepeatCountUpdatedPayload;
     "Console.messagesCleared": Console.messagesClearedPayload;
     "Console.heapSnapshot": Console.heapSnapshotPayload;
+    "CPUProfiler.trackingStart": CPUProfiler.trackingStartPayload;
+    "CPUProfiler.trackingUpdate": CPUProfiler.trackingUpdatePayload;
+    "CPUProfiler.trackingComplete": CPUProfiler.trackingCompletePayload;
+    "CSS.mediaQueryResultChanged": CSS.mediaQueryResultChangedPayload;
+    "CSS.styleSheetChanged": CSS.styleSheetChangedPayload;
+    "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
+    "CSS.styleSheetRemoved": CSS.styleSheetRemovedPayload;
+    "Database.addDatabase": Database.addDatabasePayload;
+    "Debugger.globalObjectCleared": Debugger.globalObjectClearedPayload;
+    "Debugger.scriptParsed": Debugger.scriptParsedPayload;
+    "Debugger.scriptFailedToParse": Debugger.scriptFailedToParsePayload;
+    "Debugger.breakpointResolved": Debugger.breakpointResolvedPayload;
+    "Debugger.paused": Debugger.pausedPayload;
+    "Debugger.resumed": Debugger.resumedPayload;
+    "Debugger.didSampleProbe": Debugger.didSampleProbePayload;
+    "Debugger.playBreakpointActionSound": Debugger.playBreakpointActionSoundPayload;
+    "Dialog.javascriptDialogOpening": Dialog.javascriptDialogOpeningPayload;
     "DOM.documentUpdated": DOM.documentUpdatedPayload;
     "DOM.inspect": DOM.inspectPayload;
     "DOM.setChildNodes": DOM.setChildNodesPayload;
@@ -8354,16 +8364,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "DOMStorage.domStorageItemRemoved": DOMStorage.domStorageItemRemovedPayload;
     "DOMStorage.domStorageItemAdded": DOMStorage.domStorageItemAddedPayload;
     "DOMStorage.domStorageItemUpdated": DOMStorage.domStorageItemUpdatedPayload;
-    "Database.addDatabase": Database.addDatabasePayload;
-    "Debugger.globalObjectCleared": Debugger.globalObjectClearedPayload;
-    "Debugger.scriptParsed": Debugger.scriptParsedPayload;
-    "Debugger.scriptFailedToParse": Debugger.scriptFailedToParsePayload;
-    "Debugger.breakpointResolved": Debugger.breakpointResolvedPayload;
-    "Debugger.paused": Debugger.pausedPayload;
-    "Debugger.resumed": Debugger.resumedPayload;
-    "Debugger.didSampleProbe": Debugger.didSampleProbePayload;
-    "Debugger.playBreakpointActionSound": Debugger.playBreakpointActionSoundPayload;
-    "Dialog.javascriptDialogOpening": Dialog.javascriptDialogOpeningPayload;
     "Heap.garbageCollected": Heap.garbageCollectedPayload;
     "Heap.trackingStart": Heap.trackingStartPayload;
     "Heap.trackingComplete": Heap.trackingCompletePayload;
@@ -8444,24 +8444,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Audit.teardown": Audit.teardownParameters;
     "Browser.enable": Browser.enableParameters;
     "Browser.disable": Browser.disableParameters;
-    "CPUProfiler.startTracking": CPUProfiler.startTrackingParameters;
-    "CPUProfiler.stopTracking": CPUProfiler.stopTrackingParameters;
-    "CSS.enable": CSS.enableParameters;
-    "CSS.disable": CSS.disableParameters;
-    "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeParameters;
-    "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeParameters;
-    "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeParameters;
-    "CSS.getAllStyleSheets": CSS.getAllStyleSheetsParameters;
-    "CSS.getStyleSheet": CSS.getStyleSheetParameters;
-    "CSS.getStyleSheetText": CSS.getStyleSheetTextParameters;
-    "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
-    "CSS.setStyleText": CSS.setStyleTextParameters;
-    "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
-    "CSS.createStyleSheet": CSS.createStyleSheetParameters;
-    "CSS.addRule": CSS.addRuleParameters;
-    "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesParameters;
-    "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesParameters;
-    "CSS.forcePseudoState": CSS.forcePseudoStateParameters;
     "Canvas.enable": Canvas.enableParameters;
     "Canvas.disable": Canvas.disableParameters;
     "Canvas.requestNode": Canvas.requestNodeParameters;
@@ -8480,6 +8462,56 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.getLoggingChannels": Console.getLoggingChannelsParameters;
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelParameters;
+    "CPUProfiler.startTracking": CPUProfiler.startTrackingParameters;
+    "CPUProfiler.stopTracking": CPUProfiler.stopTrackingParameters;
+    "CSS.enable": CSS.enableParameters;
+    "CSS.disable": CSS.disableParameters;
+    "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeParameters;
+    "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeParameters;
+    "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeParameters;
+    "CSS.getAllStyleSheets": CSS.getAllStyleSheetsParameters;
+    "CSS.getStyleSheet": CSS.getStyleSheetParameters;
+    "CSS.getStyleSheetText": CSS.getStyleSheetTextParameters;
+    "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
+    "CSS.setStyleText": CSS.setStyleTextParameters;
+    "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
+    "CSS.createStyleSheet": CSS.createStyleSheetParameters;
+    "CSS.addRule": CSS.addRuleParameters;
+    "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesParameters;
+    "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesParameters;
+    "CSS.forcePseudoState": CSS.forcePseudoStateParameters;
+    "Database.enable": Database.enableParameters;
+    "Database.disable": Database.disableParameters;
+    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesParameters;
+    "Database.executeSQL": Database.executeSQLParameters;
+    "Debugger.enable": Debugger.enableParameters;
+    "Debugger.disable": Debugger.disableParameters;
+    "Debugger.setAsyncStackTraceDepth": Debugger.setAsyncStackTraceDepthParameters;
+    "Debugger.setBreakpointsActive": Debugger.setBreakpointsActiveParameters;
+    "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlParameters;
+    "Debugger.setBreakpoint": Debugger.setBreakpointParameters;
+    "Debugger.removeBreakpoint": Debugger.removeBreakpointParameters;
+    "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopParameters;
+    "Debugger.continueToLocation": Debugger.continueToLocationParameters;
+    "Debugger.stepNext": Debugger.stepNextParameters;
+    "Debugger.stepOver": Debugger.stepOverParameters;
+    "Debugger.stepInto": Debugger.stepIntoParameters;
+    "Debugger.stepOut": Debugger.stepOutParameters;
+    "Debugger.pause": Debugger.pauseParameters;
+    "Debugger.resume": Debugger.resumeParameters;
+    "Debugger.searchInContent": Debugger.searchInContentParameters;
+    "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
+    "Debugger.getFunctionDetails": Debugger.getFunctionDetailsParameters;
+    "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsParameters;
+    "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsParameters;
+    "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsParameters;
+    "Debugger.setPauseOnMicrotasks": Debugger.setPauseOnMicrotasksParameters;
+    "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsParameters;
+    "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
+    "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLParameters;
+    "Dialog.enable": Dialog.enableParameters;
+    "Dialog.disable": Dialog.disableParameters;
+    "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogParameters;
     "DOM.getDocument": DOM.getDocumentParameters;
     "DOM.requestChildNodes": DOM.requestChildNodesParameters;
     "DOM.querySelector": DOM.querySelectorParameters;
@@ -8539,38 +8571,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "DOMStorage.setDOMStorageItem": DOMStorage.setDOMStorageItemParameters;
     "DOMStorage.removeDOMStorageItem": DOMStorage.removeDOMStorageItemParameters;
     "DOMStorage.clearDOMStorageItems": DOMStorage.clearDOMStorageItemsParameters;
-    "Database.enable": Database.enableParameters;
-    "Database.disable": Database.disableParameters;
-    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesParameters;
-    "Database.executeSQL": Database.executeSQLParameters;
-    "Debugger.enable": Debugger.enableParameters;
-    "Debugger.disable": Debugger.disableParameters;
-    "Debugger.setAsyncStackTraceDepth": Debugger.setAsyncStackTraceDepthParameters;
-    "Debugger.setBreakpointsActive": Debugger.setBreakpointsActiveParameters;
-    "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlParameters;
-    "Debugger.setBreakpoint": Debugger.setBreakpointParameters;
-    "Debugger.removeBreakpoint": Debugger.removeBreakpointParameters;
-    "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopParameters;
-    "Debugger.continueToLocation": Debugger.continueToLocationParameters;
-    "Debugger.stepNext": Debugger.stepNextParameters;
-    "Debugger.stepOver": Debugger.stepOverParameters;
-    "Debugger.stepInto": Debugger.stepIntoParameters;
-    "Debugger.stepOut": Debugger.stepOutParameters;
-    "Debugger.pause": Debugger.pauseParameters;
-    "Debugger.resume": Debugger.resumeParameters;
-    "Debugger.searchInContent": Debugger.searchInContentParameters;
-    "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
-    "Debugger.getFunctionDetails": Debugger.getFunctionDetailsParameters;
-    "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsParameters;
-    "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsParameters;
-    "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsParameters;
-    "Debugger.setPauseOnMicrotasks": Debugger.setPauseOnMicrotasksParameters;
-    "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsParameters;
-    "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
-    "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLParameters;
-    "Dialog.enable": Dialog.enableParameters;
-    "Dialog.disable": Dialog.disableParameters;
-    "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogParameters;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideParameters;
     "Emulation.setJavaScriptEnabled": Emulation.setJavaScriptEnabledParameters;
     "Emulation.setAuthCredentials": Emulation.setAuthCredentialsParameters;
@@ -8727,24 +8727,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Audit.teardown": Audit.teardownReturnValue;
     "Browser.enable": Browser.enableReturnValue;
     "Browser.disable": Browser.disableReturnValue;
-    "CPUProfiler.startTracking": CPUProfiler.startTrackingReturnValue;
-    "CPUProfiler.stopTracking": CPUProfiler.stopTrackingReturnValue;
-    "CSS.enable": CSS.enableReturnValue;
-    "CSS.disable": CSS.disableReturnValue;
-    "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeReturnValue;
-    "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeReturnValue;
-    "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeReturnValue;
-    "CSS.getAllStyleSheets": CSS.getAllStyleSheetsReturnValue;
-    "CSS.getStyleSheet": CSS.getStyleSheetReturnValue;
-    "CSS.getStyleSheetText": CSS.getStyleSheetTextReturnValue;
-    "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
-    "CSS.setStyleText": CSS.setStyleTextReturnValue;
-    "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
-    "CSS.createStyleSheet": CSS.createStyleSheetReturnValue;
-    "CSS.addRule": CSS.addRuleReturnValue;
-    "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesReturnValue;
-    "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesReturnValue;
-    "CSS.forcePseudoState": CSS.forcePseudoStateReturnValue;
     "Canvas.enable": Canvas.enableReturnValue;
     "Canvas.disable": Canvas.disableReturnValue;
     "Canvas.requestNode": Canvas.requestNodeReturnValue;
@@ -8763,6 +8745,56 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.getLoggingChannels": Console.getLoggingChannelsReturnValue;
     "Console.setLoggingChannelLevel": Console.setLoggingChannelLevelReturnValue;
+    "CPUProfiler.startTracking": CPUProfiler.startTrackingReturnValue;
+    "CPUProfiler.stopTracking": CPUProfiler.stopTrackingReturnValue;
+    "CSS.enable": CSS.enableReturnValue;
+    "CSS.disable": CSS.disableReturnValue;
+    "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeReturnValue;
+    "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeReturnValue;
+    "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeReturnValue;
+    "CSS.getAllStyleSheets": CSS.getAllStyleSheetsReturnValue;
+    "CSS.getStyleSheet": CSS.getStyleSheetReturnValue;
+    "CSS.getStyleSheetText": CSS.getStyleSheetTextReturnValue;
+    "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
+    "CSS.setStyleText": CSS.setStyleTextReturnValue;
+    "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
+    "CSS.createStyleSheet": CSS.createStyleSheetReturnValue;
+    "CSS.addRule": CSS.addRuleReturnValue;
+    "CSS.getSupportedCSSProperties": CSS.getSupportedCSSPropertiesReturnValue;
+    "CSS.getSupportedSystemFontFamilyNames": CSS.getSupportedSystemFontFamilyNamesReturnValue;
+    "CSS.forcePseudoState": CSS.forcePseudoStateReturnValue;
+    "Database.enable": Database.enableReturnValue;
+    "Database.disable": Database.disableReturnValue;
+    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesReturnValue;
+    "Database.executeSQL": Database.executeSQLReturnValue;
+    "Debugger.enable": Debugger.enableReturnValue;
+    "Debugger.disable": Debugger.disableReturnValue;
+    "Debugger.setAsyncStackTraceDepth": Debugger.setAsyncStackTraceDepthReturnValue;
+    "Debugger.setBreakpointsActive": Debugger.setBreakpointsActiveReturnValue;
+    "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlReturnValue;
+    "Debugger.setBreakpoint": Debugger.setBreakpointReturnValue;
+    "Debugger.removeBreakpoint": Debugger.removeBreakpointReturnValue;
+    "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopReturnValue;
+    "Debugger.continueToLocation": Debugger.continueToLocationReturnValue;
+    "Debugger.stepNext": Debugger.stepNextReturnValue;
+    "Debugger.stepOver": Debugger.stepOverReturnValue;
+    "Debugger.stepInto": Debugger.stepIntoReturnValue;
+    "Debugger.stepOut": Debugger.stepOutReturnValue;
+    "Debugger.pause": Debugger.pauseReturnValue;
+    "Debugger.resume": Debugger.resumeReturnValue;
+    "Debugger.searchInContent": Debugger.searchInContentReturnValue;
+    "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
+    "Debugger.getFunctionDetails": Debugger.getFunctionDetailsReturnValue;
+    "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsReturnValue;
+    "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsReturnValue;
+    "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsReturnValue;
+    "Debugger.setPauseOnMicrotasks": Debugger.setPauseOnMicrotasksReturnValue;
+    "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsReturnValue;
+    "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
+    "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLReturnValue;
+    "Dialog.enable": Dialog.enableReturnValue;
+    "Dialog.disable": Dialog.disableReturnValue;
+    "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogReturnValue;
     "DOM.getDocument": DOM.getDocumentReturnValue;
     "DOM.requestChildNodes": DOM.requestChildNodesReturnValue;
     "DOM.querySelector": DOM.querySelectorReturnValue;
@@ -8822,38 +8854,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "DOMStorage.setDOMStorageItem": DOMStorage.setDOMStorageItemReturnValue;
     "DOMStorage.removeDOMStorageItem": DOMStorage.removeDOMStorageItemReturnValue;
     "DOMStorage.clearDOMStorageItems": DOMStorage.clearDOMStorageItemsReturnValue;
-    "Database.enable": Database.enableReturnValue;
-    "Database.disable": Database.disableReturnValue;
-    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesReturnValue;
-    "Database.executeSQL": Database.executeSQLReturnValue;
-    "Debugger.enable": Debugger.enableReturnValue;
-    "Debugger.disable": Debugger.disableReturnValue;
-    "Debugger.setAsyncStackTraceDepth": Debugger.setAsyncStackTraceDepthReturnValue;
-    "Debugger.setBreakpointsActive": Debugger.setBreakpointsActiveReturnValue;
-    "Debugger.setBreakpointByUrl": Debugger.setBreakpointByUrlReturnValue;
-    "Debugger.setBreakpoint": Debugger.setBreakpointReturnValue;
-    "Debugger.removeBreakpoint": Debugger.removeBreakpointReturnValue;
-    "Debugger.continueUntilNextRunLoop": Debugger.continueUntilNextRunLoopReturnValue;
-    "Debugger.continueToLocation": Debugger.continueToLocationReturnValue;
-    "Debugger.stepNext": Debugger.stepNextReturnValue;
-    "Debugger.stepOver": Debugger.stepOverReturnValue;
-    "Debugger.stepInto": Debugger.stepIntoReturnValue;
-    "Debugger.stepOut": Debugger.stepOutReturnValue;
-    "Debugger.pause": Debugger.pauseReturnValue;
-    "Debugger.resume": Debugger.resumeReturnValue;
-    "Debugger.searchInContent": Debugger.searchInContentReturnValue;
-    "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
-    "Debugger.getFunctionDetails": Debugger.getFunctionDetailsReturnValue;
-    "Debugger.setPauseOnDebuggerStatements": Debugger.setPauseOnDebuggerStatementsReturnValue;
-    "Debugger.setPauseOnExceptions": Debugger.setPauseOnExceptionsReturnValue;
-    "Debugger.setPauseOnAssertions": Debugger.setPauseOnAssertionsReturnValue;
-    "Debugger.setPauseOnMicrotasks": Debugger.setPauseOnMicrotasksReturnValue;
-    "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsReturnValue;
-    "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
-    "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLReturnValue;
-    "Dialog.enable": Dialog.enableReturnValue;
-    "Dialog.disable": Dialog.disableReturnValue;
-    "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogReturnValue;
     "Emulation.setDeviceMetricsOverride": Emulation.setDeviceMetricsOverrideReturnValue;
     "Emulation.setJavaScriptEnabled": Emulation.setJavaScriptEnabledReturnValue;
     "Emulation.setAuthCredentials": Emulation.setAuthCredentialsReturnValue;
