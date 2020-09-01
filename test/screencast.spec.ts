@@ -191,21 +191,24 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture navigation', test => {
+  fit('should capture navigation', test => {
     test.flaky(options.CHROMIUM && MAC);
     test.flaky(options.FIREFOX);
-    test.flaky(options.WEBKIT);
+    // test.flaky(options.WEBKIT);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+    const videoFile = '/Users/yurys/playwright/v.webm';
+    await page.setViewportSize({width: 1280, height: 960});
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480, scale: 0.25});
     // TODO: in WebKit figure out why video size is not reported correctly for
     // static pictures.
     if (options.HEADLESS && options.WEBKIT)
       await page.setViewportSize({width: 1270, height: 950});
-    await new Promise(r => setTimeout(r, 300));
-    await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-    await new Promise(r => setTimeout(r, 300));
+    await page.goto('https://news.google.com');
+    await page.setViewportSize({width: 640, height: 1960});
+    await new Promise(r => setTimeout(r, 500));
+    await page.setViewportSize({width: 1980, height: 480});
+    await new Promise(r => setTimeout(r, 500));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
