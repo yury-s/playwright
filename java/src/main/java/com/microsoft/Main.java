@@ -35,29 +35,22 @@ public class Main {
   public static void main(String[] args) throws IOException {
     String cmd = "node /home/yurys/playwright/java/driver/main.js";
     Process p = Runtime.getRuntime().exec(cmd);
-    System.out.println("Is alive = " + p.isAlive());
-    InputStream stdout = p.getInputStream();
 
-    DataInputStream dataInput = new DataInputStream(new BufferedInputStream((stdout)));
+    System.out.println("Is alive = " + p.isAlive());
+    DataInputStream stdout = new DataInputStream(new BufferedInputStream((p.getInputStream())));
     StringBuilder line = new StringBuilder();
     int count = 0;
     while (true) {
-      int len = readIntLE(dataInput);
+      int len = readIntLE(stdout);
       System.out.println("len = " + len);
       byte[] raw = new byte[len];
-      dataInput.readFully(raw, 0, len);
+      stdout.readFully(raw, 0, len);
       String message = new String(raw, StandardCharsets.UTF_8);
       System.out.println("message = " + message);
-//      int b = stdout.read();
-//      if (b == -1)
-//        break;
-//      char c = (char) b;
-//      line.append(c);
-//      if (++count < 100) continue;
-//      System.out.println(line);
-//      line = new StringBuilder();
-//      count = 0;
     }
+    // browser = playwright.chromium.launch(headless=False)
+    // page = browser.newPage(viewport=0)
+
 
 //    try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stdout))) {
 //      String line;
