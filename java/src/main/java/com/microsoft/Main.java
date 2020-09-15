@@ -20,43 +20,9 @@ import java.nio.charset.StandardCharsets;
 
 public class Main {
 
-  private static int readIntLE(DataInputStream in) throws IOException {
-    int ch1 = in.read();
-    int ch2 = in.read();
-    int ch3 = in.read();
-    int ch4 = in.read();
-    if ((ch1 | ch2 | ch3 | ch4) < 0) {
-      throw new EOFException();
-    } else {
-      return (ch4 << 24) + (ch3 << 16) + (ch2 << 8) + (ch1 << 0);
-    }
-  }
-
   public static void main(String[] args) throws IOException {
-    String cmd = "node /home/yurys/playwright/java/driver/main.js";
-    Process p = Runtime.getRuntime().exec(cmd);
-
-    System.out.println("Is alive = " + p.isAlive());
-    DataInputStream stdout = new DataInputStream(new BufferedInputStream((p.getInputStream())));
-    StringBuilder line = new StringBuilder();
-    int count = 0;
-    while (true) {
-      int len = readIntLE(stdout);
-      System.out.println("len = " + len);
-      byte[] raw = new byte[len];
-      stdout.readFully(raw, 0, len);
-      String message = new String(raw, StandardCharsets.UTF_8);
-      System.out.println("message = " + message);
-    }
+    new Playwright();
     // browser = playwright.chromium.launch(headless=False)
     // page = browser.newPage(viewport=0)
-
-
-//    try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stdout))) {
-//      String line;
-//      while ((line = bufferedReader.readLine()) != null) {
-//        System.out.println(line);
-//      }
-//    }
   }
 }
