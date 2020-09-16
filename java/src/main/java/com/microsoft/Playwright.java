@@ -40,17 +40,17 @@ public class Playwright {
     Process p = Runtime.getRuntime().exec(cmd);
     System.out.println("Is alive = " + p.isAlive());
     Connection connection = new Connection(p.getInputStream(), p.getOutputStream());
-    DataInputStream stdout = new DataInputStream(new BufferedInputStream((p.getInputStream())));
-    StringBuilder line = new StringBuilder();
-    int count = 0;
-    while (true) {
-      int len = readIntLE(stdout);
-      System.out.println("len = " + len);
-      byte[] raw = new byte[len];
-      stdout.readFully(raw, 0, len);
-      String message = new String(raw, StandardCharsets.UTF_8);
-      System.out.println("message = " + message);
-    }
+//    DataInputStream stdout = new DataInputStream(new BufferedInputStream((p.getInputStream())));
+//    StringBuilder line = new StringBuilder();
+//    int count = 0;
+//    while (true) {
+//      int len = readIntLE(stdout);
+//      System.out.println("len = " + len);
+//      byte[] raw = new byte[len];
+//      stdout.readFully(raw, 0, len);
+//      String message = new String(raw, StandardCharsets.UTF_8);
+//      System.out.println("message = " + message);
+//    }
 
   }
 }

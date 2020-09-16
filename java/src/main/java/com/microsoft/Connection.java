@@ -20,6 +20,8 @@ import java.io.OutputStream;
 
 public class Connection {
   public Connection(InputStream in, OutputStream out) {
-
+    Transport transport = new Transport(in, out, message -> {
+      System.out.println("recv message = " + message);
+    });
   }
 }
