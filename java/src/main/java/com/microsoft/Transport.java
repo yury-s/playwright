@@ -17,11 +17,52 @@ package com.microsoft;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class Transport {
   private final Listener listener;
+  private final BlockingQueue<String> incoming = new ArrayBlockingQueue(1000);
+  private final BlockingQueue<String> outgoing= new ArrayBlockingQueue(1000);
+
+  private final ReaderThread readerThread;
+  private final WriterThread writerThread;
+
+  interface Listener {
+    void handle(String message);
+  }
+
+  Transport(InputStream input, OutputStream output, Listener listener) {
+    this.listener = listener;
+    DataInputStream in = new DataInputStream(new BufferedInputStream(input));
+    readerThread = new ReaderThread(in, incoming);
+    readerThread.start();
+    // TODO: buffer?
+    DataOutputStream out = new DataOutputStream(output);
+    writerThread = new WriterThread(out, outgoing);
+    while (true) {
+      try {
+        String message = incoming.take();
+        System.out.println("RECV: " + message);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        break;
+      }
+    }
+  }
+
+  public void send(String message) {
+    try {
+      outgoing.put(message);
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Failed to send message", e);
+    }
+  }
+}
+
+class ReaderThread extends Thread {
   private final DataInputStream in;
-  private final DataOutputStream out;
+  private final BlockingQueue<String> queue;
 
   private static int readIntLE(DataInputStream in) throws IOException {
     int ch1 = in.read();
@@ -35,6 +76,35 @@ public class Transport {
     }
   }
 
+  ReaderThread(DataInputStream in, BlockingQueue<String> queue) {
+    this.in = in;
+    this.queue = queue;
+  }
+
+  @Override
+  public void run() {
+    while (!isInterrupted()) {
+      try {
+        queue.put(readMessage());
+      } catch (IOException | InterruptedException e) {
+        e.printStackTrace();
+        break;
+      }
+    }
+  }
+
+  private String readMessage() throws IOException {
+    int len = readIntLE(in);
+    byte[] raw = new byte[len];
+    in.readFully(raw, 0, len);
+    return new String(raw, StandardCharsets.UTF_8);
+  }
+}
+
+class WriterThread extends Thread {
+  private final DataOutputStream out;
+  private final BlockingQueue<String> queue;
+
   private static void writeIntLE(DataOutputStream out, int v) throws IOException {
     out.write(v >>> 0 & 255);
     out.write(v >>> 8 & 255);
@@ -42,41 +112,26 @@ public class Transport {
     out.write(v >>> 24 & 255);
   }
 
-  interface Listener {
-    void handle(String message);
+  WriterThread(DataOutputStream out, BlockingQueue<String> queue) {
+    this.out = out;
+    this.queue = queue;
   }
 
-  Transport(InputStream input, OutputStream output, Listener listener) {
-    this.listener = listener;
-    in = new DataInputStream(new BufferedInputStream(input));
-    // TODO: buffer?
-    out = new DataOutputStream(output);
-    while (true) {
+  @Override
+  public void run() {
+    while (!isInterrupted()) {
       try {
-        readMessage();
-      } catch (IOException e) {
+        sendMessage(queue.take());
+      } catch (IOException | InterruptedException e) {
         e.printStackTrace();
         break;
       }
     }
   }
 
-  void send(String message) {
+  private void sendMessage(String message) throws IOException {
     int len = message.length();
-    try {
-      writeIntLE(out, len);
-      out.writeUTF(message);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void readMessage() throws IOException {
-    int len = readIntLE(in);
-    System.out.println("len = " + len);
-    byte[] raw = new byte[len];
-    in.readFully(raw, 0, len);
-    String message = new String(raw, StandardCharsets.UTF_8);
-    System.out.println("message = " + message);
+    writeIntLE(out, len);
+    out.writeUTF(message);
   }
 }

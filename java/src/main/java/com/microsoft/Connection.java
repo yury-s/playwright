@@ -17,11 +17,30 @@ package com.microsoft;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+class ChannelOwner {
+}
 
 public class Connection {
+  private final Transport transport;
+  private final Map<String, ChannelOwner> objects = new HashMap();
+
+
   public Connection(InputStream in, OutputStream out) {
-    Transport transport = new Transport(in, out, message -> {
+    transport = new Transport(in, out, message -> {
       System.out.println("recv message = " + message);
     });
+  }
+
+  public Object waitForObjectWithKnownName(String guid) {
+    while (this.objects.containsKey(guid)) {
+      processOneMessage();
+    }
+    return this.objects.get(guid);
+  }
+
+  private void processOneMessage() {
   }
 }
