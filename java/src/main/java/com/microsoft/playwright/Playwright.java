@@ -16,28 +16,28 @@
 
 package com.microsoft.playwright;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
+import com.google.gson.JsonObject;
+
 import java.io.IOException;
 
-public class Playwright {
-  private static int readIntLE(DataInputStream in) throws IOException {
-    int ch1 = in.read();
-    int ch2 = in.read();
-    int ch3 = in.read();
-    int ch4 = in.read();
-    if ((ch1 | ch2 | ch3 | ch4) < 0) {
-      throw new EOFException();
-    } else {
-      return (ch4 << 24) + (ch3 << 16) + (ch2 << 8) + (ch1 << 0);
-    }
-  }
-
-  Playwright() throws IOException {
+public class Playwright extends ChannelOwner {
+  static Playwright create() throws IOException {
     String cmd = "node /home/yurys/playwright/java/driver/main.js";
     Process p = Runtime.getRuntime().exec(cmd);
     System.out.println("Is alive = " + p.isAlive());
     Connection connection = new Connection(p.getInputStream(), p.getOutputStream());
-    connection.waitForObjectWithKnownName("Playwright");
+    Playwright playwright = (Playwright)connection.waitForObjectWithKnownName("Playwright");
+    return playwright;
+  }
+
+  public final BrowserType chromium;
+  public final BrowserType firefox;
+  public final BrowserType webkit;
+
+  public Playwright(ChannelOwner parent, String type, String guid, JsonObject initializer) {
+    super(parent, type, guid, initializer);
+    chromium = parent.connection.getExistingObject(initializer.getAsJsonObject("chromium").get("guid").getAsString());
+    firefox = parent.connection.getExistingObject(initializer.getAsJsonObject("firefox").get("guid").getAsString());
+    webkit = parent.connection.getExistingObject(initializer.getAsJsonObject("webkit").get("guid").getAsString());
   }
 }

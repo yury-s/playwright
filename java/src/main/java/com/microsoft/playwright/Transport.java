@@ -40,20 +40,19 @@ public class Transport {
     // TODO: buffer?
     DataOutputStream out = new DataOutputStream(output);
     writerThread = new WriterThread(out, outgoing);
-    while (true) {
-      try {
-        String message = incoming.take();
-        System.out.println("RECV: " + message);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-        break;
-      }
-    }
   }
 
   public void send(String message) {
     try {
       outgoing.put(message);
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Failed to send message", e);
+    }
+  }
+
+  public String read() {
+    try {
+      return incoming.take();
     } catch (InterruptedException e) {
       throw new RuntimeException("Failed to send message", e);
     }
