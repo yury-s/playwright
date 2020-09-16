@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.microsoft;
+package com.microsoft.playwright;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class Playwright {
   private static int readIntLE(DataInputStream in) throws IOException {
