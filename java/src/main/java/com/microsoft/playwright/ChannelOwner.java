@@ -16,6 +16,7 @@
 
 package com.microsoft.playwright;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.HashMap;
@@ -53,5 +54,9 @@ class ChannelOwner {
   }
 
   public void dispose() {
+  }
+
+  JsonElement sendMessage(String method, JsonObject params) {
+    return connection.sendMessage(guid, method, params);
   }
 }

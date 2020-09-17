@@ -16,21 +16,23 @@
 package com.microsoft.playwright;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 class Message {
-  String id;
+  int id;
   String guid;
   String method;
   JsonObject params;
-  String result;
-  String error;
+  JsonElement result;
+  JsonObject error;
 
   @Override
   public String toString() {
@@ -50,6 +52,8 @@ public class Connection {
   private final Transport transport;
   private final Map<String, ChannelOwner> objects = new HashMap();
   private final Root root;
+  private int lastId = 0;
+  private final Map<Integer, CompletableFuture<Message>> callbacks = new HashMap();
 
   class Root extends ChannelOwner {
     Root(Connection connection) {
@@ -58,10 +62,28 @@ public class Connection {
   }
 
   public Connection(InputStream in, OutputStream out) {
-    transport = new Transport(in, out, message -> {
-      System.out.println("recv message = " + message);
-    });
+    transport = new Transport(in, out);
     root = new Root(this);
+  }
+
+  public JsonElement sendMessage(String guid, String method, JsonObject params) {
+    int id = ++lastId;
+    CompletableFuture<Message> result = new CompletableFuture();
+    callbacks.put(id, result);
+    JsonObject message = new JsonObject();
+    message.addProperty("id", id);
+    message.addProperty("guid", guid);
+    message.addProperty("method", method);
+    message.add("params", params);
+    transport.send(new Gson().toJson(message));
+    while (!result.isDone()) {
+      processOneMessage();
+    }
+    try {
+      return result.get().result;
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public ChannelOwner waitForObjectWithKnownName(String guid) {
@@ -94,22 +116,19 @@ public class Connection {
   }
 
   private void dispatch(Message message) {
-    System.out.println("Message guid: " + message);
-    if (message.id != null) {
-      System.out.println("channel:response");
-//      const callback = this._callbacks.get(id);
-//      if (!callback)
-//        throw new Error(`Cannot find command to respond: ${id}`);
-//      this._callbacks.delete(id);
-//      if (error)
-//        callback.reject(parseError(error));
-//      else
-//        callback.resolve(this._replaceGuidsWithChannels(result));
+//    System.out.println("Message: " + message);
+    if (message.id != 0) {
+      CompletableFuture<Message> callback = callbacks.get(message.id);
+      if (callback == null)
+        throw new RuntimeException("Cannot find command to respond: " + message.id);
+      callbacks.remove(message.id);
+      callback.complete(message);
       return;
     }
 
-    System.out.println("channel:event" + message.method);
-    System.out.println("  method: " + message.method);
+    // TODO: throw?
+    if (message.method == null)
+      return;
     if (message.method.equals("__create__")) {
       createRemoteObject(message.guid, message.params);
       return;
@@ -141,8 +160,20 @@ public class Connection {
       case "BrowserType":
         result = new BrowserType(parent, type, guid, initializer);
         break;
+      case "Browser":
+        result = new Browser(parent, type, guid, initializer);
+        break;
+      case "BrowserContext":
+        result = new BrowserContext(parent, type, guid, initializer);
+        break;
       case "Electron":
 //        result = new Playwright(parent, type, guid, initializer);
+        break;
+      case "Frame":
+        result = new Frame(parent, type, guid, initializer);
+        break;
+      case "Page":
+        result = new Page(parent, type, guid, initializer);
         break;
       case "Playwright":
         result = new Playwright(parent, type, guid, initializer);

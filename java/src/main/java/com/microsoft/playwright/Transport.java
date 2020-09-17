@@ -21,25 +21,20 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class Transport {
-  private final Listener listener;
   private final BlockingQueue<String> incoming = new ArrayBlockingQueue(1000);
   private final BlockingQueue<String> outgoing= new ArrayBlockingQueue(1000);
 
   private final ReaderThread readerThread;
   private final WriterThread writerThread;
 
-  interface Listener {
-    void handle(String message);
-  }
-
-  Transport(InputStream input, OutputStream output, Listener listener) {
-    this.listener = listener;
+  Transport(InputStream input, OutputStream output) {
     DataInputStream in = new DataInputStream(new BufferedInputStream(input));
     readerThread = new ReaderThread(in, incoming);
     readerThread.start();
     // TODO: buffer?
     DataOutputStream out = new DataOutputStream(output);
     writerThread = new WriterThread(out, outgoing);
+    writerThread.start();
   }
 
   public void send(String message) {
@@ -120,6 +115,8 @@ class WriterThread extends Thread {
   public void run() {
     while (!isInterrupted()) {
       try {
+        if (queue.isEmpty())
+          out.flush();
         sendMessage(queue.take());
       } catch (IOException | InterruptedException e) {
         e.printStackTrace();
@@ -131,6 +128,6 @@ class WriterThread extends Thread {
   private void sendMessage(String message) throws IOException {
     int len = message.length();
     writeIntLE(out, len);
-    out.writeUTF(message);
+    out.writeBytes(message);
   }
 }

@@ -16,28 +16,10 @@
 
 package com.microsoft.playwright;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class BrowserType extends ChannelOwner {
-  BrowserType(ChannelOwner parent, String type, String guid, JsonObject initializer) {
+public class Page extends ChannelOwner {
+  Page(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
   }
-
-  public String executablePath() {
-    return initializer.get("executablePath").getAsString();
-  }
-
-  public String name() {
-    return initializer.get("name").getAsString();
-  }
-
-  Browser launch() {
-    JsonObject params = new JsonObject();
-    JsonElement result = sendMessage("launch", params);
-    System.out.println("result = " + new Gson().toJson(result));
-    return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("browser").get("guid").getAsString());
-  }
-
 }
