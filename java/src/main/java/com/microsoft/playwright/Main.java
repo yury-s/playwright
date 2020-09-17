@@ -23,6 +23,7 @@ public class Main {
     Playwright playwright = Playwright.create();
     BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
     options.headless = false;
+    options.slowMo = 1000;
     Browser browser = playwright.chromium.launch(options);
     System.out.println("browser = " + browser);
 
@@ -34,7 +35,7 @@ public class Main {
     Page page = context.newPage();
 //    page.navigate("https://news.google.com");
     page.navigate("https://webkit.org");
-    Thread.sleep(500);
+    page.click("text=web browser engine");
     browser.close();
 
     // Disconnect and terminate the threads?

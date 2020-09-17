@@ -166,6 +166,9 @@ public class Connection {
       case "BrowserContext":
         result = new BrowserContext(parent, type, guid, initializer);
         break;
+      case "ConsoleMessage":
+        result = new ConsoleMessage(parent, type, guid, initializer);
+        break;
       case "Electron":
 //        result = new Playwright(parent, type, guid, initializer);
         break;

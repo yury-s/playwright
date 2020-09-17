@@ -39,4 +39,10 @@ public class Frame  extends ChannelOwner {
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("response").get("guid").getAsString());
   }
 
+  public void click(String selector) {
+    JsonObject params = new JsonObject();
+    params.addProperty("selector", selector);
+    JsonElement result = sendMessage("click", params);
+  }
+
 }

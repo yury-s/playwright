@@ -18,23 +18,8 @@ package com.microsoft.playwright;
 
 import com.google.gson.JsonObject;
 
-public class Page extends ChannelOwner {
-  private final Frame mainFrame;
-
-  Page(ChannelOwner parent, String type, String guid, JsonObject initializer) {
+public class ConsoleMessage extends ChannelOwner {
+  public ConsoleMessage(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
-    mainFrame = connection.getExistingObject(initializer.getAsJsonObject("mainFrame").get("guid").getAsString());
-    mainFrame.page = this;
-  }
-
-  public Response navigate(String url) {
-    return navigate(url, new NavigateOptions());
-  }
-  public Response navigate(String url, NavigateOptions options) {
-    return mainFrame.navigate(url, options);
-  }
-
-  public void click(String selector) {
-    mainFrame.click(selector);
   }
 }
