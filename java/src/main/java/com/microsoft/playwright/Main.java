@@ -15,8 +15,6 @@
  */
 package com.microsoft.playwright;
 
-import com.google.gson.Gson;
-
 import java.io.*;
 
 public class Main {
@@ -26,7 +24,9 @@ public class Main {
     System.out.println("chromium = " + playwright.chromium);
     System.out.println("firefox = " + playwright.firefox);
     System.out.println("webkit = " + playwright.webkit);
-    Browser browser = playwright.chromium.launch();
+    BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
+    options.headless = false;
+    Browser browser = playwright.chromium.launch(options);
     System.out.println("browser = " + browser);
     BrowserContext context = browser.newContext();
     System.out.println("context = " + context);

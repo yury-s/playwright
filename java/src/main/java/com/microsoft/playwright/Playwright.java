@@ -27,7 +27,6 @@ public class Playwright extends ChannelOwner {
     System.out.println("Is alive = " + p.isAlive());
     Connection connection = new Connection(p.getInputStream(), p.getOutputStream());
     Playwright playwright = (Playwright)connection.waitForObjectWithKnownName("Playwright");
-    playwright.chromium.launch();
     return playwright;
   }
 

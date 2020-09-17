@@ -28,9 +28,12 @@ public class Frame  extends ChannelOwner {
   }
 
   public Response navigate(String url) {
-    JsonObject params = new JsonObject();
+    return navigate(url, new NavigateOptions());
+  }
+
+  public Response navigate(String url, NavigateOptions options) {
+    JsonObject params = new Gson().toJsonTree(options).getAsJsonObject();
     params.addProperty("url", url);
-    params.addProperty("waitUntil", "load");
     JsonElement result = sendMessage("goto", params);
     System.out.println("result = " + new Gson().toJson(result));
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("response").get("guid").getAsString());

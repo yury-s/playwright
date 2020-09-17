@@ -18,19 +18,30 @@ package com.microsoft.playwright;
 
 import com.google.gson.JsonObject;
 
-public class Page extends ChannelOwner {
-  private final Frame mainFrame;
+import java.util.LinkedHashMap;
 
-  Page(ChannelOwner parent, String type, String guid, JsonObject initializer) {
-    super(parent, type, guid, initializer);
-    mainFrame = connection.getExistingObject(initializer.getAsJsonObject("mainFrame").get("guid").getAsString());
-    mainFrame.page = this;
+public class BrowserTypeLaunchOptions {
+  String executablePath;
+  String[] args;
+  Boolean ignoreAllDefaultArgs;
+  String[] ignoreDefaultArgs;
+  Boolean handleSIGINT;
+  Boolean handleSIGTERM;
+  Boolean handleSIGHUP;
+  Integer timeout;
+  LinkedHashMap<String, String> env;
+  Boolean headless;
+  Boolean devtools;
+  public static class Proxy {
+    String server;
+    String bypass;
+    String username;
+    String password;
   }
-
-  public Response navigate(String url) {
-    return navigate(url, new NavigateOptions());
-  }
-  public Response navigate(String url, NavigateOptions options) {
-    return mainFrame.navigate(url, options);
-  }
+  Proxy proxy;
+  String downloadsPath;
+  String _videosPath;
+  JsonObject firefoxUserPrefs;
+  Boolean chromiumSandbox;
+  Integer slowMo;
 }

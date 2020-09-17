@@ -34,8 +34,10 @@ public class BrowserType extends ChannelOwner {
   }
 
   Browser launch() {
-    JsonObject params = new JsonObject();
-    params.addProperty("headless", false);
+    return launch(new BrowserTypeLaunchOptions());
+  }
+  Browser launch(BrowserTypeLaunchOptions options) {
+    JsonObject params = new Gson().toJsonTree(options).getAsJsonObject();
     JsonElement result = sendMessage("launch", params);
     System.out.println("result = " + new Gson().toJson(result));
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("browser").get("guid").getAsString());
