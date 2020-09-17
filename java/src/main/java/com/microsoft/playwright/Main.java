@@ -28,7 +28,12 @@ public class Main {
     options.headless = false;
     Browser browser = playwright.chromium.launch(options);
     System.out.println("browser = " + browser);
-    BrowserContext context = browser.newContext();
+
+    BrowserNewContextOptions contextOptions = new BrowserNewContextOptions();
+    contextOptions.viewport = new BrowserNewContextOptions.Viewport();
+    contextOptions.viewport.width = 800;
+    contextOptions.viewport.height = 600;
+    BrowserContext context = browser.newContext(contextOptions);
     System.out.println("context = " + context);
     Page page = context.newPage();
     System.out.println("page = " + page);
