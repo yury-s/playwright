@@ -21,9 +21,6 @@ public class Main {
 
   public static void main(String[] args) throws IOException, InterruptedException {
     Playwright playwright = Playwright.create();
-    System.out.println("chromium = " + playwright.chromium);
-    System.out.println("firefox = " + playwright.firefox);
-    System.out.println("webkit = " + playwright.webkit);
     BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
     options.headless = false;
     Browser browser = playwright.chromium.launch(options);
@@ -34,9 +31,7 @@ public class Main {
     contextOptions.viewport.width = 800;
     contextOptions.viewport.height = 600;
     BrowserContext context = browser.newContext(contextOptions);
-    System.out.println("context = " + context);
     Page page = context.newPage();
-    System.out.println("page = " + page);
 //    page.navigate("https://news.google.com");
     page.navigate("https://webkit.org");
     Thread.sleep(500);
