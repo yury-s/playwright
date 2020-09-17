@@ -172,11 +172,20 @@ public class Connection {
       case "Frame":
         result = new Frame(parent, type, guid, initializer);
         break;
+      case "JSHandle":
+//        result = new JSHandle(parent, type, guid, initializer);
+        break;
       case "Page":
         result = new Page(parent, type, guid, initializer);
         break;
       case "Playwright":
         result = new Playwright(parent, type, guid, initializer);
+        break;
+      case "Request":
+        result = new Request(parent, type, guid, initializer);
+        break;
+      case "Response":
+        result = new Response(parent, type, guid, initializer);
         break;
       case "Selectors":
 //        result = new Playwright(parent, type, guid, initializer);

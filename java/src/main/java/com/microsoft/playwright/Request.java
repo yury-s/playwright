@@ -16,24 +16,10 @@
 
 package com.microsoft.playwright;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class Frame  extends ChannelOwner {
-  Page page;
-
-  Frame(ChannelOwner parent, String type, String guid, JsonObject initializer) {
+public class Request  extends ChannelOwner {
+  Request(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
   }
-
-  public Response navigate(String url) {
-    JsonObject params = new JsonObject();
-    params.addProperty("url", url);
-    params.addProperty("waitUntil", "load");
-    JsonElement result = sendMessage("goto", params);
-    System.out.println("result = " + new Gson().toJson(result));
-    return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("response").get("guid").getAsString());
-  }
-
 }

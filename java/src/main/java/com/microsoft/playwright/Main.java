@@ -32,7 +32,7 @@ public class Main {
     System.out.println("context = " + context);
     Page page = context.newPage();
     System.out.println("page = " + page);
-
-    // page = browser.newPage(viewport=0)
+//    page.navigate("https://news.google.com");
+    page.navigate("https://webkit.org");
   }
 }
