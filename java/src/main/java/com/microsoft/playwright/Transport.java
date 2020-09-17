@@ -80,8 +80,10 @@ class ReaderThread extends Thread {
     while (!isInterrupted()) {
       try {
         queue.put(readMessage());
-      } catch (IOException | InterruptedException e) {
+      } catch (IOException e) {
         e.printStackTrace();
+        break;
+      } catch (InterruptedException e) {
         break;
       }
     }
@@ -118,8 +120,10 @@ class WriterThread extends Thread {
         if (queue.isEmpty())
           out.flush();
         sendMessage(queue.take());
-      } catch (IOException | InterruptedException e) {
+      } catch (IOException e) {
         e.printStackTrace();
+        break;
+      } catch (InterruptedException e) {
         break;
       }
     }

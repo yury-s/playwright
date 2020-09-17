@@ -19,7 +19,7 @@ import java.io.*;
 
 public class Main {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, InterruptedException {
     Playwright playwright = Playwright.create();
     System.out.println("chromium = " + playwright.chromium);
     System.out.println("firefox = " + playwright.firefox);
@@ -39,5 +39,12 @@ public class Main {
     System.out.println("page = " + page);
 //    page.navigate("https://news.google.com");
     page.navigate("https://webkit.org");
+    Thread.sleep(500);
+    browser.close();
+
+    // Disconnect and terminate the threads?
+    // playwright.close();
+    System.out.println("\nDONE.");
+    System.exit(0);
   }
 }

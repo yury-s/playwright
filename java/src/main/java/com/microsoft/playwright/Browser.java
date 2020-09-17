@@ -36,5 +36,7 @@ public class Browser extends ChannelOwner {
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("context").get("guid").getAsString());
   }
 
-
+  void close() {
+    sendMessage("close", new JsonObject());
+  }
 }
