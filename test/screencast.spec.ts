@@ -189,6 +189,31 @@ class VideoPlayer {
 describe('screencast', suite => {
   suite.slow();
 }, () => {
+  it.only('should click wrapped links', async ({browser, server}) => {
+    const context = await browser.newContext({ _recordVideos: true });
+    const page = await context.newPage();
+
+    const v1 = await page.waitForEvent('_videostarted');
+    await page.goto(server.PREFIX + '/wrappedlink.html');
+    await page.waitForTimeout(1000);
+    const [popup, v2] = await Promise.all([
+      page.waitForEvent('popup'),
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      page.evaluate(url => window.open(url), server.PREFIX + '/input/scrollable.html'),
+    ]);
+    await page.click('a');
+    await popup.click('#button-5');
+    await popup.waitForTimeout(1000);
+    // expect(await page.evaluate('__clicked')).toBe(true);
+    await Promise.all([
+      page.close(),
+      popup.close()
+    ]);
+    await Promise.all([(v1 as any).path(), (v2 as any).path()]);
+    console.log('Closed all pages');
+    await context.close();
+  });
+
   it('should capture static page', async ({browser, videoPlayer, videoFile}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
     const page = await context.newPage();

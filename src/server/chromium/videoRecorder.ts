@@ -55,7 +55,7 @@ export class VideoRecorder {
     assert(!this._isRunning());
     const w = options.width;
     const h = options.height;
-    const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel info -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0 -flags nobuffer`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
 
@@ -134,10 +134,14 @@ export class VideoRecorder {
         this.writeFrame(this._lastFrameBuffer!, this._lastFrameTimestamp + durationSec);
     }
 
+    const start = Date.now();
+    this._progress.log('Start stopping...');
     const close = this._gracefullyClose;
     this._gracefullyClose = null;
     await this._lastWritePromise;
+    this._progress.log('After last write: ' + (Date.now() - start) + 'ms');
     await close();
+    this._progress.log('*** Finished ffmpeg: ' + (Date.now() - start) + 'ms\n');
   }
 
   private _isRunning(): boolean {
