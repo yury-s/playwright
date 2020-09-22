@@ -108,7 +108,7 @@ public class Connection {
     objects.remove(guid);
   }
 
-  private void processOneMessage() {
+  void processOneMessage() {
     String messageString = transport.read();
     Gson gson = new Gson();
     Message message = gson.fromJson(messageString, Message.class);
@@ -116,13 +116,17 @@ public class Connection {
   }
 
   private void dispatch(Message message) {
-//    System.out.println("Message: " + message);
+//    System.out.println("Message: " + message.method + " " + message.id);
     if (message.id != 0) {
       CompletableFuture<Message> callback = callbacks.get(message.id);
-      if (callback == null)
+      if (callback == null) {
         throw new RuntimeException("Cannot find command to respond: " + message.id);
+      }
       callbacks.remove(message.id);
-      callback.complete(message);
+      if (message.error == null)
+        callback.complete(message);
+      else
+        callback.completeExceptionally(new RuntimeException(message.error.toString()));
       return;
     }
 
@@ -144,6 +148,7 @@ public class Connection {
     if (object == null)
       throw new RuntimeException("Cannot find object to call " + message.method + ": " + message.guid);
 //    object._channel.emit(message.method, this._replaceGuidsWithChannels(message.params));
+    object.onEvent(message.method, message.params);
   }
 
   private ChannelOwner createRemoteObject(String parentGuid, JsonObject params) {

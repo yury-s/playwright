@@ -16,7 +16,11 @@
 
 package com.microsoft.playwright;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import java.util.function.Supplier;
 
 public class Page extends ChannelOwner {
   private final Frame mainFrame;
@@ -36,5 +40,18 @@ public class Page extends ChannelOwner {
 
   public void click(String selector) {
     mainFrame.click(selector);
+  }
+
+  public Supplier<Page> waitForPopup() {
+    Supplier<JsonObject> popupSupplier = waitForEvent("popup");
+    return () -> {
+      JsonObject params = popupSupplier.get();
+      String guid = params.getAsJsonObject("page").get("guid").getAsString();
+      return connection.getExistingObject(guid);
+    };
+  }
+
+  public JsonElement evaluate(String expression) {
+    return mainFrame.evaluate(expression);
   }
 }

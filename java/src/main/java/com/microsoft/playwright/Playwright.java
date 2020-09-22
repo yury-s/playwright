@@ -22,9 +22,10 @@ import java.io.IOException;
 
 public class Playwright extends ChannelOwner {
   static Playwright create() throws IOException {
-    String cmd = "node /home/yurys/playwright/java/driver/main.js";
-    Process p = Runtime.getRuntime().exec(cmd);
-    System.out.println("Is alive = " + p.isAlive());
+    ProcessBuilder pb = new ProcessBuilder("node", "/home/yurys/playwright/driver.js");
+    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+    pb.environment().put("DEBUG", "pw:pro*");
+    Process p = pb.start();
     Connection connection = new Connection(p.getInputStream(), p.getOutputStream());
     Playwright playwright = (Playwright)connection.waitForObjectWithKnownName("Playwright");
     return playwright;

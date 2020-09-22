@@ -17,6 +17,7 @@
 package com.microsoft.playwright;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -45,4 +46,17 @@ public class Frame  extends ChannelOwner {
     JsonElement result = sendMessage("click", params);
   }
 
+  public JsonElement evaluate(String expression) {
+    JsonObject params = new JsonObject();
+    params.addProperty("expression", expression);
+    params.addProperty("world", "main");
+    params.addProperty("isFunction", false);
+    JsonObject arg = new JsonObject();
+    JsonObject value = new JsonObject();
+    value.addProperty("n", 2020);
+    arg.add("value", value);
+    arg.add("handles", new JsonArray());
+    params.add("arg", arg);
+    return sendMessage("evaluateExpression", params);
+  }
 }

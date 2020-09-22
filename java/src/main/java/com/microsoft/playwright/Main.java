@@ -15,15 +15,21 @@
  */
 package com.microsoft.playwright;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
 import java.io.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 public class Main {
 
-  public static void main(String[] args) throws IOException, InterruptedException {
+  public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
     Playwright playwright = Playwright.create();
     BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
     options.headless = false;
-    options.slowMo = 1000;
+//    options.slowMo = 1000;
     Browser browser = playwright.chromium.launch(options);
     System.out.println("browser = " + browser);
 
@@ -34,9 +40,16 @@ public class Main {
     BrowserContext context = browser.newContext(contextOptions);
     Page page = context.newPage();
 //    page.navigate("https://news.google.com");
-    page.navigate("https://webkit.org");
-    page.click("text=web browser engine");
+    page.navigate("http://example.com");
+//    page.click("text=web browser engine");
+    Supplier<Page> popupSupplier = page.waitForPopup();
+    JsonElement r = page.evaluate("window.open('http://example.com'); 13");
+    System.out.println("r = " + new Gson().toJson(r));
+    Page popup = popupSupplier.get();
+    System.out.println("popup = " + popup);
+    popup.navigate("https://theverge.com");
     browser.close();
+
 
     // Disconnect and terminate the threads?
     // playwright.close();
