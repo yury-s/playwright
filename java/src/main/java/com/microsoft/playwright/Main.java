@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
@@ -30,6 +31,7 @@ public class Main {
     BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
     options.headless = false;
 //    options.slowMo = 1000;
+    System.out.println("options = " + new Gson().toJson(options));
     Browser browser = playwright.chromium.launch(options);
     System.out.println("browser = " + browser);
 
@@ -39,15 +41,17 @@ public class Main {
     contextOptions.viewport.height = 600;
     BrowserContext context = browser.newContext(contextOptions);
     Page page = context.newPage();
-//    page.navigate("https://news.google.com");
     page.navigate("http://example.com");
 //    page.click("text=web browser engine");
+
     Supplier<Page> popupSupplier = page.waitForPopup();
+    Supplier<Page> pageSupplier = context.waitForPage();
     JsonElement r = page.evaluate("window.open('http://example.com'); 13");
     System.out.println("r = " + new Gson().toJson(r));
     Page popup = popupSupplier.get();
     System.out.println("popup = " + popup);
-    popup.navigate("https://theverge.com");
+    Page page2 = pageSupplier.get();
+    System.out.println("popup == page2 is " + (popup == page2));
     browser.close();
 
 

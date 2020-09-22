@@ -20,6 +20,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.function.Supplier;
+
 public class BrowserContext extends ChannelOwner {
   protected BrowserContext(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
@@ -31,4 +33,14 @@ public class BrowserContext extends ChannelOwner {
     System.out.println("result = " + new Gson().toJson(result));
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("page").get("guid").getAsString());
   }
+
+  public Supplier<Page> waitForPage() {
+    Supplier<JsonObject> pageSupplier = waitForEvent("page");
+    return () -> {
+      JsonObject params = pageSupplier.get();
+      String guid = params.getAsJsonObject("page").get("guid").getAsString();
+      return connection.getExistingObject(guid);
+    };
+  }
+
 }
