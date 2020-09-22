@@ -52,6 +52,9 @@ public class Page extends ChannelOwner {
   }
 
   public JsonElement evaluate(String expression) {
-    return mainFrame.evaluate(expression);
+    return mainFrame.evaluate(expression, null);
+  }
+  public JsonElement evaluate(String expression, Object arg) {
+    return mainFrame.evaluate(expression, arg);
   }
 }

@@ -46,7 +46,29 @@ public class Frame  extends ChannelOwner {
     JsonElement result = sendMessage("click", params);
   }
 
-  public JsonElement evaluate(String expression) {
+  private static SerializedValue serializeValue(Object value) {
+    SerializedValue result = new SerializedValue();
+    if (value == null)
+      result.v = "undefined";
+    if (value instanceof Double) {
+      if (value == Double.POSITIVE_INFINITY)
+        result.v = "Infinity";
+      else if (value == Double.NEGATIVE_INFINITY)
+        result.v = "-Infinity";
+      else if (value == -0)
+        result.v = "-0";
+      else if Double.isNaN(value)
+        result.v="NaN";
+    }
+
+
+    return result;
+  }
+  private static JsonObject serializeArgument() {
+    return null;
+  }
+
+  public JsonElement evaluate(String expression, Object arg1) {
     JsonObject params = new JsonObject();
     params.addProperty("expression", expression);
     params.addProperty("world", "main");

@@ -20,9 +20,13 @@ import com.google.gson.JsonElement;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
+
 
 public class Main {
 
@@ -45,7 +49,7 @@ public class Main {
 //    page.click("text=web browser engine");
 
     Supplier<Page> popupSupplier = page.waitForPopup();
-    Supplier<Page> pageSupplier = context.waitForPage();
+    var pageSupplier = context.waitForPage();
     JsonElement r = page.evaluate("window.open('http://example.com'); 13");
     System.out.println("r = " + new Gson().toJson(r));
     Page popup = popupSupplier.get();
@@ -53,7 +57,6 @@ public class Main {
     Page page2 = pageSupplier.get();
     System.out.println("popup == page2 is " + (popup == page2));
     browser.close();
-
 
     // Disconnect and terminate the threads?
     // playwright.close();
