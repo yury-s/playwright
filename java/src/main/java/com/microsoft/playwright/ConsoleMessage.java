@@ -16,10 +16,40 @@
 
 package com.microsoft.playwright;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 public class ConsoleMessage extends ChannelOwner {
   public ConsoleMessage(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
+  }
+
+  public String type() {
+    return initializer.get("type").getAsString();
+  }
+
+  public String text() {
+    return initializer.get("text").getAsString();
+  }
+
+//  args(): JSHandle[] {
+//    return this._initializer.args.map(JSHandle.from);
+//  }
+
+  public static class Location {
+    String url;
+    int lineNumber;
+    int columnNumber;
+
+    @Override
+    public String toString() {
+      return url +
+        ":" + lineNumber +
+        ":" + columnNumber;
+    }
+  }
+
+  public Location location() {
+    return new Gson().fromJson(initializer.get("location"), Location.class);
   }
 }

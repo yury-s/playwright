@@ -73,7 +73,7 @@ public class Main {
 
 
 
-    page.addDialogHandler((Dialog d) -> {
+    page.addDialogHandler(d -> {
       System.out.println("Got dialog type: " +  d.type());
       System.out.println("    message = " +  d.message());
       d.accept("abc");
@@ -81,6 +81,14 @@ public class Main {
     page.evaluate("alert('Hi there!')");
     System.out.println("Did eval");
 
+
+
+    page.addConsoleListener(m -> {
+      System.out.println("Got console message type: " +  m.type());
+      System.out.println("    text = " +  m.text());
+      System.out.println("    location = " +  m.location());
+    });
+    page.evaluate("console.log('A message')");
 
     browser.close();
 

@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 public class Page extends ChannelOwner {
   private final Frame mainFrame;
   private final List<DialogHandler> dialogHandlers = new ArrayList<>();
+  private final List<ConsoleListener> consoleListeners = new ArrayList<>();
 
   Page(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
@@ -76,7 +77,24 @@ public class Page extends ChannelOwner {
       // If no action taken dismiss dialog to not hang.
       if (!dialog.isHandled())
         dialog.dismiss();
+    } else if ("console".equals(event)) {
+      String guid = params.getAsJsonObject("message").get("guid").getAsString();
+      ConsoleMessage message = connection.getExistingObject(guid);
+      for (var listener: new ArrayList<>(consoleListeners))
+        listener.handle(message);
     }
+  }
+
+  public interface ConsoleListener {
+    void handle(ConsoleMessage m);
+  }
+
+  public void addConsoleListener(ConsoleListener listener) {
+    consoleListeners.add(listener);
+  }
+
+  public void removeConsoleListener(ConsoleListener listener) {
+    consoleListeners.remove(listener);
   }
 
   public <T> T evalTyped(String expression) {
