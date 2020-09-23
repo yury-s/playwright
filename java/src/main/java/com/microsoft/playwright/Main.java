@@ -47,10 +47,7 @@ public class Main {
 
     Supplier<Page> popupSupplier = page.waitForPopup();
     var pageSupplier = context.waitForPage();
-    {
-      JsonElement r = page.evaluate("window.open('http://example.com'); 13");
-      System.out.println("r = " + new Gson().toJson(r));
-    }
+    page.evaluate("window.open('http://example.com'); 13");
     {
       JsonElement r = page.evaluate("function foo(a) { return a + 1; }", 20);
       System.out.println("r = " + new Gson().toJson(r));

@@ -53,50 +53,8 @@ public class Page extends ChannelOwner {
     };
   }
 
-  private static <T> T deserialize(SerializedValue value) {
-    if (value.n != null) {
-      return (T) value.n;
-    }
-    if (value.b != null)
-      return (T) value.b;
-    if (value.s != null)
-      return (T) value.s;
-    if (value.v != null) {
-      switch (value.v) {
-        case "undefined":
-          return null;
-        case "Infinity":
-          return (T) Double.valueOf(Double.POSITIVE_INFINITY);
-        case "-Infinity":
-          return (T) Double.valueOf(Double.NEGATIVE_INFINITY);
-        case "-0":
-          return (T) Double.valueOf(-0);
-        case "NaN":
-          return (T) Double.valueOf(Double.NaN);
-        default:
-          throw new RuntimeException("Unexpected value: " + value.v);
-      }
-    }
-    if (value.a != null) {
-      List list = new ArrayList();
-      for (SerializedValue v : value.a)
-        list.add(deserialize(v));
-      return (T) list;
-    }
-    if (value.o != null) {
-      Map map = new LinkedHashMap<>();
-      for (SerializedValue.O o : value.o)
-        map.put(o.k, deserialize(o.v));
-      return (T) map;
-    }
-    throw new RuntimeException("Unexpected result: " + new Gson().toJson(value));
-  }
-
   public <T> T evalTyped(String expression) {
-    JsonElement json = evaluate(expression);
-    System.out.println("json = " + new Gson().toJson(json));
-    SerializedValue value = new Gson().fromJson(json.getAsJsonObject().get("value"), SerializedValue.class);
-    return deserialize(value);
+    return mainFrame.evalTyped(expression);
   }
 
   public JsonElement evaluate(String expression) {
