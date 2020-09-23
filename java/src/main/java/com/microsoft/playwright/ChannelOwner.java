@@ -66,6 +66,10 @@ class ChannelOwner {
     return connection.sendMessage(guid, method, params);
   }
 
+  void sendMessageNoWait(String method, JsonObject params) {
+    connection.sendMessageNoWait(guid, method, params);
+  }
+
   protected Supplier<JsonObject> waitForEvent(String event) {
     ArrayList<CompletableFuture<JsonObject>> futures = futureEvents.get(event);
     if (futures == null) {
@@ -86,7 +90,8 @@ class ChannelOwner {
     };
   }
 
-  void onEvent(String event, JsonObject parameters) {
+  final void onEvent(String event, JsonObject parameters) {
+    handleEvent(event, parameters);
     ArrayList<CompletableFuture<JsonObject>> futures = futureEvents.remove(event);
     if (futures == null)
       return;
@@ -94,4 +99,8 @@ class ChannelOwner {
       f.complete(parameters);
     }
   }
+
+  protected void handleEvent(String event, JsonObject params) {
+  }
+
 }

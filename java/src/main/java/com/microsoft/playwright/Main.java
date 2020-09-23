@@ -45,6 +45,10 @@ public class Main {
     page.navigate("http://example.com");
 //    page.click("text=web browser engine");
 
+
+
+
+
     Supplier<Page> popupSupplier = page.waitForPopup();
     var pageSupplier = context.waitForPage();
     page.evaluate("window.open('http://example.com'); 13");
@@ -64,6 +68,20 @@ public class Main {
     Page popup = popupSupplier.get();
     System.out.println("popup = " + popup);
     Page page2 = pageSupplier.get();
+    System.out.println(page2 == popup);
+
+
+
+
+    page.addDialogHandler((Dialog d) -> {
+      System.out.println("Got dialog type: " +  d.type());
+      System.out.println("    message = " +  d.message());
+      d.accept("abc");
+    });
+    page.evaluate("alert('Hi there!')");
+    System.out.println("Did eval");
+
+
     browser.close();
 
     // Disconnect and terminate the threads?

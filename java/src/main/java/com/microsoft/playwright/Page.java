@@ -16,16 +16,18 @@
 
 package com.microsoft.playwright;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 
 public class Page extends ChannelOwner {
   private final Frame mainFrame;
+  private final List<DialogHandler> dialogHandlers = new ArrayList<>();
 
   Page(ChannelOwner parent, String type, String guid, JsonObject initializer) {
     super(parent, type, guid, initializer);
@@ -51,6 +53,30 @@ public class Page extends ChannelOwner {
       String guid = params.getAsJsonObject("page").get("guid").getAsString();
       return connection.getExistingObject(guid);
     };
+  }
+
+  public interface DialogHandler {
+    void handle(Dialog d);
+  }
+
+  public void addDialogHandler(DialogHandler handler) {
+    dialogHandlers.add(handler);
+  }
+
+  public void removeDialogHandler(DialogHandler handler) {
+    dialogHandlers.remove(handler);
+  }
+
+  protected void handleEvent(String event, JsonObject params) {
+    if ("dialog".equals(event)) {
+      String guid = params.getAsJsonObject("dialog").get("guid").getAsString();
+      Dialog dialog = connection.getExistingObject(guid);
+      for (DialogHandler handler: new ArrayList<>(dialogHandlers))
+        handler.handle(dialog);
+      // If no action taken dismiss dialog to not hang.
+      if (!dialog.isHandled())
+        dialog.dismiss();
+    }
   }
 
   public <T> T evalTyped(String expression) {

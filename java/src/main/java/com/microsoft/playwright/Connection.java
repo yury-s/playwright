@@ -67,15 +67,7 @@ public class Connection {
   }
 
   public JsonElement sendMessage(String guid, String method, JsonObject params) {
-    int id = ++lastId;
-    CompletableFuture<Message> result = new CompletableFuture();
-    callbacks.put(id, result);
-    JsonObject message = new JsonObject();
-    message.addProperty("id", id);
-    message.addProperty("guid", guid);
-    message.addProperty("method", method);
-    message.add("params", params);
-    transport.send(new Gson().toJson(message));
+    CompletableFuture<Message> result = internalSendMessage(guid, method, params);
     while (!result.isDone()) {
       processOneMessage();
     }
@@ -85,6 +77,24 @@ public class Connection {
       throw new RuntimeException(e);
     }
   }
+
+  public void sendMessageNoWait(String guid, String method, JsonObject params) {
+    internalSendMessage(guid, method, params);
+  }
+
+  private CompletableFuture<Message> internalSendMessage(String guid, String method, JsonObject params) {
+    int id = ++lastId;
+    CompletableFuture<Message> result = new CompletableFuture();
+    callbacks.put(id, result);
+    JsonObject message = new JsonObject();
+    message.addProperty("id", id);
+    message.addProperty("guid", guid);
+    message.addProperty("method", method);
+    message.add("params", params);
+    transport.send(new Gson().toJson(message));
+    return result;
+  }
+
 
   public ChannelOwner waitForObjectWithKnownName(String guid) {
     while (!objects.containsKey(guid)) {
@@ -174,6 +184,9 @@ public class Connection {
         break;
       case "ConsoleMessage":
         result = new ConsoleMessage(parent, type, guid, initializer);
+        break;
+      case "Dialog":
+        result = new Dialog(parent, type, guid, initializer);
         break;
       case "Electron":
 //        result = new Playwright(parent, type, guid, initializer);
