@@ -57,14 +57,21 @@ public class Main {
       System.out.println("r = " + new Gson().toJson(r));
     }
     {
-      List<Double> r = page.evalTyped("function foo() { return [1,2,3]; }");
+      List<Integer> r = page.evalTyped("function foo() { return [1,2,3]; }");
       System.out.println("r = " + new Gson().toJson(r));
       int p = r.get(0).intValue() + 1;
     }
+
     {
-      double r = page.evalTyped("function foo() { return 1.7; }");
-      System.out.println("r = " + new Gson().toJson(r));
+      int r = page.evalTyped("function foo() { return 7; }");
+      System.out.println("int r = " + new Gson().toJson(r));
     }
+
+    {
+      double r = page.evalTyped("function foo() { return 7.2; }");
+      System.out.println("double r = " + new Gson().toJson(r));
+    }
+
     Page popup = popupSupplier.get();
     System.out.println("popup = " + popup);
     Page page2 = pageSupplier.get();
@@ -79,7 +86,7 @@ public class Main {
       d.accept("abc");
     });
     page.evaluate("alert('Hi there!')");
-    System.out.println("Did eval");
+    System.out.println("After alert");
 
 
 

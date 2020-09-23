@@ -188,6 +188,9 @@ public class Connection {
       case "Dialog":
         result = new Dialog(parent, type, guid, initializer);
         break;
+      case "Download":
+        result = new Download(parent, type, guid, initializer);
+        break;
       case "Electron":
 //        result = new Playwright(parent, type, guid, initializer);
         break;

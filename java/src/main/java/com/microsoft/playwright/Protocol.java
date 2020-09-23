@@ -30,7 +30,7 @@ class Metadata{
 
 
 class SerializedValue{
-  Double n;
+  Number n;
   Boolean b;
   String s;
   // Possible values: { 'null, 'undefined, 'NaN, 'Infinity, '-Infinity, '-0 }
@@ -47,7 +47,7 @@ class SerializedValue{
     SerializedValue v;
   }
   O[] o;
-  Double h;
+  Number h;
 }
 
 
@@ -61,7 +61,7 @@ class AXNode{
   String role;
   String name;
   String valueString;
-  Double valueNumber;
+  Number valueNumber;
   String description;
   String keyshortcuts;
   String roledescription;
@@ -79,9 +79,9 @@ class AXNode{
   String checked;
   // Possible values: { 'pressed, 'released, 'mixed }
   String pressed;
-  Double level;
-  Double valuemin;
-  Double valuemax;
+  Number level;
+  Number valuemin;
+  Number valuemax;
   String autocomplete;
   String haspopup;
   String invalid;

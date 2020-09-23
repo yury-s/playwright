@@ -103,7 +103,9 @@ public class Frame  extends ChannelOwner {
 
   private static <T> T deserialize(SerializedValue value) {
     if (value.n != null) {
-      return (T) value.n;
+      if (value.n.doubleValue() == (double) value.n.intValue())
+        return (T) Integer.valueOf(value.n.intValue());
+      return (T) Double.valueOf(value.n.doubleValue());
     }
     if (value.b != null)
       return (T) value.b;

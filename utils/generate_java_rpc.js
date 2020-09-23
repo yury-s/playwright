@@ -35,7 +35,7 @@ function innerType(propertyName, type, indent) {
       case 'json': return { name: 'JsonObject', definition: '' };
       case 'string': return { name: 'String', definition: '' };
       case 'boolean': return { name: optional ? 'Boolean' : 'boolean', definition: '' };
-      case 'number': return { name: optional ? 'Double' : 'double', definition: '' };
+      case 'number': return { name: 'Number', definition: '' };
       default:
         break;
     }
@@ -99,7 +99,7 @@ const channels_ts = [
 
 package com.microsoft.playwright;
 
-class Binary {  
+class Binary {
 }
 
 class Channel {
