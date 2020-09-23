@@ -32,7 +32,6 @@ public class Browser extends ChannelOwner {
   BrowserContext newContext(BrowserNewContextOptions options) {
     JsonObject params = new Gson().toJsonTree(options).getAsJsonObject();
     JsonElement result = sendMessage("newContext", params);
-    System.out.println("result = " + new Gson().toJson(result));
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("context").get("guid").getAsString());
   }
 

@@ -18,7 +18,7 @@
 
 package com.microsoft.playwright;
 
-class Binary {  
+class Binary {
 }
 
 class Channel {
@@ -30,11 +30,11 @@ class Metadata{
 
 
 class SerializedValue{
-  Integer n;
+  Double n;
   Boolean b;
   String s;
-  enum VValues { NULL, UNDEFINED, NAN, INFINITY, NEGATIVE_INFINITY, NEGATIVE_0 }
-  VValues v;
+  // Possible values: { 'null, 'undefined, 'NaN, 'Infinity, '-Infinity, '-0 }
+  String v;
   String d;
   public static class R {
     String p;
@@ -47,7 +47,7 @@ class SerializedValue{
     SerializedValue v;
   }
   O[] o;
-  Integer h;
+  Double h;
 }
 
 
@@ -61,7 +61,7 @@ class AXNode{
   String role;
   String name;
   String valueString;
-  Integer valueNumber;
+  Double valueNumber;
   String description;
   String keyshortcuts;
   String roledescription;
@@ -75,13 +75,13 @@ class AXNode{
   Boolean readonly;
   Boolean required;
   Boolean selected;
-  enum CheckedValues { CHECKED, UNCHECKED, MIXED }
-  CheckedValues checked;
-  enum PressedValues { PRESSED, RELEASED, MIXED }
-  PressedValues pressed;
-  Integer level;
-  Integer valuemin;
-  Integer valuemax;
+  // Possible values: { 'checked, 'unchecked, 'mixed }
+  String checked;
+  // Possible values: { 'pressed, 'released, 'mixed }
+  String pressed;
+  Double level;
+  Double valuemin;
+  Double valuemax;
   String autocomplete;
   String haspopup;
   String invalid;

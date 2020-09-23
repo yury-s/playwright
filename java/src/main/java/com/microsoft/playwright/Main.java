@@ -17,14 +17,11 @@ package com.microsoft.playwright;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.internal.LazilyParsedNumber;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 
@@ -50,12 +47,26 @@ public class Main {
 
     Supplier<Page> popupSupplier = page.waitForPopup();
     var pageSupplier = context.waitForPage();
-    JsonElement r = page.evaluate("window.open('http://example.com'); 13");
-    System.out.println("r = " + new Gson().toJson(r));
+    {
+      JsonElement r = page.evaluate("window.open('http://example.com'); 13");
+      System.out.println("r = " + new Gson().toJson(r));
+    }
+    {
+      JsonElement r = page.evaluate("function foo(a) { return a + 1; }", 20);
+      System.out.println("r = " + new Gson().toJson(r));
+    }
+    {
+      List<Double> r = page.evalTyped("function foo() { return [1,2,3]; }");
+      System.out.println("r = " + new Gson().toJson(r));
+      int p = r.get(0).intValue() + 1;
+    }
+    {
+      double r = page.evalTyped("function foo() { return 1.7; }");
+      System.out.println("r = " + new Gson().toJson(r));
+    }
     Page popup = popupSupplier.get();
     System.out.println("popup = " + popup);
     Page page2 = pageSupplier.get();
-    System.out.println("popup == page2 is " + (popup == page2));
     browser.close();
 
     // Disconnect and terminate the threads?

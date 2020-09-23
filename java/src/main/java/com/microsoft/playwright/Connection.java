@@ -123,6 +123,7 @@ public class Connection {
         throw new RuntimeException("Cannot find command to respond: " + message.id);
       }
       callbacks.remove(message.id);
+//      System.out.println("Message: " + message.id + " " + message);
       if (message.error == null)
         callback.complete(message);
       else

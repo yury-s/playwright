@@ -35,7 +35,7 @@ function innerType(propertyName, type, indent) {
       case 'json': return { name: 'JsonObject', definition: '' };
       case 'string': return { name: 'String', definition: '' };
       case 'boolean': return { name: optional ? 'Boolean' : 'boolean', definition: '' };
-      case 'number': return { name: optional ? 'Integer' : 'int', definition: '' };
+      case 'number': return { name: optional ? 'Double' : 'double', definition: '' };
       default:
         break;
     }
@@ -50,14 +50,8 @@ function innerType(propertyName, type, indent) {
     return { name: `${inner.name}[]`, definition: `${inner.definition}` };
   }
   if (type.type.startsWith('enum')) {
-    const values = type.literals.map(literal => {
-      literal = '' + literal;
-      if (literal.startsWith('-'))
-        literal = 'negative_' + literal.substring(1);
-      return `${literal.toUpperCase()}`
-    }).join(', ');
-    const name = `${titleCase(propertyName)}Values`;
-    return { name, definition: `enum ${name} { ${values} }` };
+    const values = type.literals.map(literal => `'${literal}`).join(', ');
+    return { name: 'String', definition: `// Possible values: { ${values} }` };
   }
   if (type.type.startsWith('object')) {
     const inner = properties(type.properties, indent + '  ');

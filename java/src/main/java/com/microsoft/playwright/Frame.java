@@ -21,6 +21,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import static com.microsoft.playwright.Helpers.isFunctionBody;
+
 public class Frame  extends ChannelOwner {
   Page page;
 
@@ -50,35 +57,60 @@ public class Frame  extends ChannelOwner {
     SerializedValue result = new SerializedValue();
     if (value == null)
       result.v = "undefined";
-    if (value instanceof Double) {
-      if (value == Double.POSITIVE_INFINITY)
+    else if (value instanceof Double) {
+      double d = ((Double) value).doubleValue();
+      if (d == Double.POSITIVE_INFINITY)
         result.v = "Infinity";
-      else if (value == Double.NEGATIVE_INFINITY)
+      else if (d == Double.NEGATIVE_INFINITY)
         result.v = "-Infinity";
-      else if (value == -0)
+      else if (d == -0)
         result.v = "-0";
-      else if Double.isNaN(value)
+      else if (Double.isNaN(d))
         result.v="NaN";
     }
-
-
+//    if (value instanceof Date)
+    else if (value instanceof Boolean)
+      result.b = (Boolean) value;
+    else if (value instanceof Integer)
+      result.n = ((Integer) value).doubleValue();
+    else if (value instanceof Double)
+      result.n = (Double) value; // ?
+    else if (value instanceof String)
+      result.s = (String) value;
+    else if (value instanceof List) {
+      List<SerializedValue> list = new ArrayList<>();
+      for (Object o : (List) value)
+        list.add(serializeValue(o));
+      result.a = list.toArray(new SerializedValue[0]);
+    } else if (value instanceof Map) {
+      List<SerializedValue.O> list = new ArrayList<>();
+      Map<String, Object> map = (Map<String, Object>) value;
+      for (Map.Entry<String, Object> e : map.entrySet()) {
+        SerializedValue.O o = new SerializedValue.O();
+        o.k = e.getKey();
+        o.v = serializeValue(e.getValue());
+        list.add(o);
+      }
+      result.o = list.toArray(new SerializedValue.O[0]);
+    } else
+      throw new RuntimeException("Unsupported type of argument: " + value);
     return result;
   }
-  private static JsonObject serializeArgument() {
-    return null;
+  private static SerializedArgument serializeArgument(Object arg) {
+    SerializedArgument result = new SerializedArgument();
+    result.value = serializeValue(arg);
+    result.handles = new Channel[0];
+    return result;
   }
 
-  public JsonElement evaluate(String expression, Object arg1) {
+  public JsonElement evaluate(String expression, Object arg, boolean forceExpression) {
     JsonObject params = new JsonObject();
     params.addProperty("expression", expression);
     params.addProperty("world", "main");
-    params.addProperty("isFunction", false);
-    JsonObject arg = new JsonObject();
-    JsonObject value = new JsonObject();
-    value.addProperty("n", 2020);
-    arg.add("value", value);
-    arg.add("handles", new JsonArray());
-    params.add("arg", arg);
+    if (!isFunctionBody(expression))
+      forceExpression = true;
+    params.addProperty("isFunction", !forceExpression);
+    params.add("arg", new Gson().toJsonTree(serializeArgument(arg)));
     return sendMessage("evaluateExpression", params);
   }
 }

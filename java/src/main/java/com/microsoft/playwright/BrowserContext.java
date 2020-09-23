@@ -30,7 +30,6 @@ public class BrowserContext extends ChannelOwner {
   Page newPage() {
     JsonObject params = new JsonObject();
     JsonElement result = sendMessage("newPage", params);
-    System.out.println("result = " + new Gson().toJson(result));
     return connection.getExistingObject(result.getAsJsonObject().getAsJsonObject("page").get("guid").getAsString());
   }
 

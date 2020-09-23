@@ -191,7 +191,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
       new Function('(' + functionText  + ')');
     } catch (e2) {
       // We tried hard to serialize, but there's a weird beast here.
-      throw new Error('Passed function is not well-serializable!');
+      throw new Error('Passed function is not well-serializable! ' + functionText);
     }
   }
 
