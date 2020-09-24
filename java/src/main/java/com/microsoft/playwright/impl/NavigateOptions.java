@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
-import com.google.gson.JsonObject;
-
-public class Request  extends ChannelOwner {
-  Request(ChannelOwner parent, String type, String guid, JsonObject initializer) {
-    super(parent, type, guid, initializer);
+public class NavigateOptions {
+  Integer timeout;
+  enum WaitUntil {
+    load,
+    domcontentloaded,
+    networkidle
   }
+  WaitUntil waitUntil = WaitUntil.load;
+  String referer;
 }

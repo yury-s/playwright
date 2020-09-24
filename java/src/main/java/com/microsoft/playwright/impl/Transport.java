@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

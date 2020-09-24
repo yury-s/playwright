@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
-public class NavigateOptions {
-  Integer timeout;
-  enum WaitUntil {
-    load,
-    domcontentloaded,
-    networkidle
+import com.google.gson.JsonObject;
+
+public class Response extends ChannelOwner {
+  Response(ChannelOwner parent, String type, String guid, JsonObject initializer) {
+    super(parent, type, guid, initializer);
   }
-  WaitUntil waitUntil = WaitUntil.load;
-  String referer;
 }

@@ -14,27 +14,34 @@
  * limitations under the License.
  */
 
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class Download extends ChannelOwner {
-  public Download(ChannelOwner parent, String type, String guid, JsonObject initializer) {
-    super(parent, type, guid, initializer);
-  }
+import java.util.LinkedHashMap;
 
-  public String url() {
-    return initializer.get("url").getAsString();
+public class BrowserTypeLaunchOptions {
+  String executablePath;
+  String[] args;
+  Boolean ignoreAllDefaultArgs;
+  String[] ignoreDefaultArgs;
+  Boolean handleSIGINT;
+  Boolean handleSIGTERM;
+  Boolean handleSIGHUP;
+  Integer timeout;
+  LinkedHashMap<String, String> env;
+  Boolean headless;
+  Boolean devtools;
+  public static class Proxy {
+    String server;
+    String bypass;
+    String username;
+    String password;
   }
-
-  public String suggestedFilename() {
-    return initializer.get("suggestedFilename").getAsString();
-  }
-
-  public String path() {
-    JsonObject params = new JsonObject();
-    JsonElement result = sendMessage("path", params);
-    return result.getAsJsonObject().get("path").getAsString();
-  }
+  Proxy proxy;
+  String downloadsPath;
+  String _videosPath;
+  JsonObject firefoxUserPrefs;
+  Boolean chromiumSandbox;
+  Integer slowMo;
 }

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.*;
 
-import static com.microsoft.playwright.Helpers.isFunctionBody;
+import static com.microsoft.playwright.impl.Helpers.isFunctionBody;
 
 public class Frame  extends ChannelOwner {
   Page page;

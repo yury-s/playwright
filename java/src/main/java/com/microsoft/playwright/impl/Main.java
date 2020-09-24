@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.internal.LazilyParsedNumber;
 
 import java.io.*;
 import java.util.List;

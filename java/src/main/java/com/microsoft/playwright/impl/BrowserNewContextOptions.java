@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microsoft.playwright;
+package com.microsoft.playwright.impl;
 
 import java.util.LinkedHashMap;
 
