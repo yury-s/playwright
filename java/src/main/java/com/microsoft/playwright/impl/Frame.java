@@ -63,14 +63,14 @@ public class Frame  extends ChannelOwner {
         result.v = "-0";
       else if (Double.isNaN(d))
         result.v="NaN";
+      else
+        result.n = d;
     }
 //    if (value instanceof Date)
     else if (value instanceof Boolean)
       result.b = (Boolean) value;
     else if (value instanceof Integer)
-      result.n = ((Integer) value).doubleValue();
-    else if (value instanceof Double)
-      result.n = (Double) value; // ?
+      result.n = (Integer) value;
     else if (value instanceof String)
       result.s = (String) value;
     else if (value instanceof List) {

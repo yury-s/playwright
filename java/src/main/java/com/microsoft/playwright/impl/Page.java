@@ -111,4 +111,4 @@ public class Page extends ChannelOwner {
   public JsonElement evaluate(String expression, Object arg, boolean forceExpression) {
     return mainFrame.evaluate(expression, arg, forceExpression);
   }
-  }
+}
