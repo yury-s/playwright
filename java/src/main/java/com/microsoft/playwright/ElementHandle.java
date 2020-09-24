@@ -47,7 +47,8 @@ interface ElementHandle{
   String toString();
   void type(String text, Object options);
   void uncheck(Object options);
-  void waitForElementState(String state, Object options);
+  enum ElementState { DISABLED, ENABLED, HIDDEN, STABLE, VISIBLE }
+  void waitForElementState(ElementState state, Object options);
   ElementHandle waitForSelector(String selector, Object options);
   ElementHandle asElement();
   void dispose();

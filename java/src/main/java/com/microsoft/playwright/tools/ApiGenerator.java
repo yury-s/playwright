@@ -23,9 +23,11 @@ import com.google.gson.JsonObject;
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ApiGenerator {
   private List<String> output;
+  private Set<String> innerTypes;
 
   private static Map<String, String> tsToJavaMethodName = new HashMap<>();
   static {
@@ -61,8 +63,9 @@ public class ApiGenerator {
     File dir = new File(cwd, "src/main/java/com/microsoft/playwright");
     System.out.println("Writing files to: " + dir.getCanonicalPath());
     for (Map.Entry<String, JsonElement> entry: api.entrySet()) {
-      String name = entry.getKey();
+      innerTypes = new HashSet<>();
       output = new ArrayList<>();
+      String name = entry.getKey();
       output.add(header);
       output.add("import java.util.*;");
       output.add("import java.util.function.BiConsumer;");
@@ -106,8 +109,11 @@ public class ApiGenerator {
               argType = "Object";
           } else if (argType.equals("number")) {
             argType = "int";
+          } else if (argType.contains("|\"")) {
+            String enumName = enumName(name, argName);
+            generateEnum(enumName, argType, offset);
+            argType = enumName;
           } else if (argType.contains("|")) {
-//            System.out.println(name + " (" + argType + " " + arg.getKey() + ")");
             argType = "String";
           } else if (argType.contains("function")) {
             // js functions are always passed as text in java.
@@ -129,6 +135,26 @@ public class ApiGenerator {
         name = tsToJavaMethodName.get(name);
       output.add(offset + type + " " + name + "(" + args + ");");
     }
+  }
+
+  private static String toTitle(String name) {
+    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+  }
+
+
+  private static String enumName(String methodName, String argName) {
+    if (methodName.startsWith("waitFor"))
+      return methodName.substring("waitFor".length());
+    return toTitle(argName);
+  }
+
+  private void generateEnum(String name, String values, String offset) {
+    if (innerTypes.contains(values))
+      return;
+    innerTypes.add(values);
+    String[] split = values.split("\\|");
+    List<String> enumValues = Arrays.stream(split).map(s -> s.substring(1, s.length() - 1).toUpperCase()).collect(Collectors.toList());
+    output.add(offset + "enum " + name + " { " + String.join(", ", enumValues) + " }");
   }
 
   private static String convertReturnType(JsonElement jsonType) {
@@ -155,9 +181,8 @@ public class ApiGenerator {
 
   public static void main(String[] args) throws IOException {
     File cwd = FileSystems.getDefault().getPath(".").toFile();
-    System.out.println("cwd = " + cwd.getAbsolutePath());
     File file = new File(cwd, "../packages/playwright-driver/api.json");
-    System.out.println("f = " + file.getAbsolutePath());
+    System.out.println("Reading from: " + file.getCanonicalPath());
     new ApiGenerator(new FileReader(file));
   }
 

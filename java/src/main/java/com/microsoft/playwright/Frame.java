@@ -56,7 +56,8 @@ interface Frame{
   void uncheck(String selector, Object options);
   String url();
   JSHandle waitForFunction(String pageFunction, Object arg, Object options);
-  void waitForLoadState(String state, Object options);
+  enum LoadState { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+  void waitForLoadState(LoadState state, Object options);
   Response waitForNavigation(Object options);
   ElementHandle waitForSelector(String selector, Object options);
   void waitForTimeout(int timeout);

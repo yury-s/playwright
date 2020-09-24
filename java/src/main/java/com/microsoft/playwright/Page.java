@@ -75,7 +75,8 @@ interface Page{
   Object viewportSize();
   Object waitForEvent(String event, String optionsOrPredicate);
   JSHandle waitForFunction(String pageFunction, Object arg, Object options);
-  void waitForLoadState(String state, Object options);
+  enum LoadState { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+  void waitForLoadState(LoadState state, Object options);
   Response waitForNavigation(Object options);
   Request waitForRequest(String urlOrPredicate, Object options);
   Response waitForResponse(String urlOrPredicate, Object options);
