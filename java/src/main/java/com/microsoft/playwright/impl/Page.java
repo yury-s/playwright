@@ -79,7 +79,7 @@ public class Page extends ChannelOwner {
     } else if ("console".equals(event)) {
       String guid = params.getAsJsonObject("message").get("guid").getAsString();
       ConsoleMessage message = connection.getExistingObject(guid);
-      for (var listener: new ArrayList<>(consoleListeners))
+      for (ConsoleListener listener: new ArrayList<>(consoleListeners))
         listener.handle(message);
     }
   }

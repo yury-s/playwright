@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Route{
-  void abort(String errorCode); 
-  void continue_(Object overrides); 
-  void fulfill(Object response); 
-  Request request(); 
+  void abort(String errorCode);
+  void continue_(Object overrides);
+  void fulfill(Object response);
+  Request request();
 }
 

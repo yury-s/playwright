@@ -27,14 +27,15 @@ import java.util.*;
 public class ApiGenerator {
   private List<String> output;
 
-  private static Map<String, String> tsToJavaMethodName = Map.of(
-    "continue", "continue_",
-    "$eval", "evalOnSelector",
-    "$$eval", "evalOnSelectorAll",
-    "$", "querySelector",
-    "$$", "querySelectorAll",
-    "goto", "navigate"
-  );
+  private static Map<String, String> tsToJavaMethodName = new HashMap<>();
+  static {
+    tsToJavaMethodName.put("continue", "continue_");
+    tsToJavaMethodName.put("$eval", "evalOnSelector");
+    tsToJavaMethodName.put("$$eval", "evalOnSelectorAll");
+    tsToJavaMethodName.put("$", "querySelector");
+    tsToJavaMethodName.put("$$", "querySelectorAll");
+    tsToJavaMethodName.put("goto", "navigate");
+  }
 
   private static String header = "/**\n" +
     " * Copyright (c) Microsoft Corporation.\n" +
@@ -59,7 +60,7 @@ public class ApiGenerator {
     File cwd = FileSystems.getDefault().getPath(".").toFile();
     File dir = new File(cwd, "src/main/java/com/microsoft/playwright");
     System.out.println("Writing files to: " + dir.getCanonicalPath());
-    for (var entry: api.entrySet()) {
+    for (Map.Entry<String, JsonElement> entry: api.entrySet()) {
       String name = entry.getKey();
       output = new ArrayList<>();
       output.add(header);
@@ -74,7 +75,7 @@ public class ApiGenerator {
       String text = String.join("\n", output);
 //      System.out.println(text);
 
-      var writer = new FileWriter(new File(dir, name + ".java"));
+      FileWriter writer = new FileWriter(new File(dir, name + ".java"));
       writer.write(text);
       writer.close();
     }
@@ -82,7 +83,7 @@ public class ApiGenerator {
 
   private void generateInterface(JsonObject docClass, String offset) {
     JsonObject members = docClass.get("members").getAsJsonObject();
-    for (var m : members.entrySet())
+    for (Map.Entry<String, JsonElement> m : members.entrySet())
       generateMember(m.getValue().getAsJsonObject(), offset);
   }
 
@@ -94,7 +95,7 @@ public class ApiGenerator {
 
       StringBuilder args = new StringBuilder();
       if (docMember.get("args") != null) {
-        for (var arg : docMember.get("args").getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> arg : docMember.get("args").getAsJsonObject().entrySet()) {
           String argName = arg.getKey();
           String argType = arg.getValue().getAsJsonObject().get("type").getAsJsonObject().get("name").getAsString();
           argType = convertBuiltinType(argType);
