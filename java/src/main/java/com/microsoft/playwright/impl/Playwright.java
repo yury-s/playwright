@@ -18,11 +18,16 @@ package com.microsoft.playwright.impl;
 
 import com.google.gson.JsonObject;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 
 public class Playwright extends ChannelOwner {
   static Playwright create() throws IOException {
-    ProcessBuilder pb = new ProcessBuilder("node", "/home/yurys/playwright/driver.js");
+    File cwd = FileSystems.getDefault().getPath(".").toFile();
+    File driver = new File(cwd, "../driver.js");
+    System.out.println("driver = " + driver.getCanonicalPath());
+    ProcessBuilder pb = new ProcessBuilder("node", driver.getCanonicalPath());
     pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 //    pb.environment().put("DEBUG", "pw:pro*");
     Process p = pb.start();

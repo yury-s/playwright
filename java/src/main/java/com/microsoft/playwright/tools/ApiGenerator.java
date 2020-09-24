@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.*;
+import java.nio.file.FileSystems;
 import java.util.*;
 
 public class ApiGenerator {
@@ -51,15 +52,13 @@ public class ApiGenerator {
     " * limitations under the License.\n" +
     " */\n" +
     "\n" +
-    "package com.microsoft.playwright.api;\n";
+    "package com.microsoft.playwright;\n";
 
   ApiGenerator(Reader reader) throws IOException {
     JsonObject api = new Gson().fromJson(reader, JsonObject.class);
-//    BiConsumer<Integer, String> b = (i, s) -> {
-//      System.out.println(s + i);
-//    };
-//    b.accept(10, "s = ");
-    File dir = new File("/home/yurys/playwright/java/src/main/java/com/microsoft/playwright/api");
+    File cwd = FileSystems.getDefault().getPath(".").toFile();
+    File dir = new File(cwd, "src/main/java/com/microsoft/playwright");
+    System.out.println("Writing files to: " + dir.getCanonicalPath());
     for (var entry: api.entrySet()) {
       String name = entry.getKey();
       output = new ArrayList<>();
@@ -118,8 +117,9 @@ public class ApiGenerator {
             }
           }
 
-          if (args.length() > 0)
+          if (args.length() > 0) {
             args.append(", ");
+          }
           args.append(argType).append(" ").append(argName);
         }
       }
@@ -132,8 +132,9 @@ public class ApiGenerator {
 
   private static String convertReturnType(JsonElement jsonType) {
     String type = jsonType.isJsonNull() ? "void" : jsonType.getAsJsonObject().get("name").getAsString();
-    if ("Promise".equals(type))
+    if ("Promise".equals(type)) {
       type = "void";
+    }
     // Java API is sync just strip Promise<>
     if (type.startsWith("Promise<"))
       type = type.substring("Promise<".length(), type.length() - 1);
@@ -152,7 +153,10 @@ public class ApiGenerator {
   }
 
   public static void main(String[] args) throws IOException {
-    String file = "/home/yurys/playwright/packages/playwright-driver/api.json";
+    File cwd = FileSystems.getDefault().getPath(".").toFile();
+    System.out.println("cwd = " + cwd.getAbsolutePath());
+    File file = new File(cwd, "../packages/playwright-driver/api.json");
+    System.out.println("f = " + file.getAbsolutePath());
     new ApiGenerator(new FileReader(file));
   }
 
