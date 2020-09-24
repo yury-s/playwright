@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface FileChooser{
-  ElementHandle element(); 
-  boolean isMultiple(); 
-  Page page(); 
-  void setFiles(String files, Object options); 
+  ElementHandle element();
+  boolean isMultiple();
+  Page page();
+  void setFiles(String files, Object options);
 }
 

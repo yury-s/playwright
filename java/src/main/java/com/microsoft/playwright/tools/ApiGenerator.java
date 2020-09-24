@@ -127,7 +127,7 @@ public class ApiGenerator {
 
       if (tsToJavaMethodName.containsKey(name))
         name = tsToJavaMethodName.get(name);
-      output.add(offset + type + " " + name + "(" + args + "); ");
+      output.add(offset + type + " " + name + "(" + args + ");");
     }
   }
 

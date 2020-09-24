@@ -20,14 +20,14 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface ChromiumBrowser{
-  CDPSession newBrowserCDPSession(); 
-  void startTracing(Page page, Object options); 
-  byte[] stopTracing(); 
-  void close(); 
-  List<BrowserContext> contexts(); 
-  boolean isConnected(); 
-  BrowserContext newContext(Object options); 
-  Page newPage(Object options); 
-  String version(); 
+  CDPSession newBrowserCDPSession();
+  void startTracing(Page page, Object options);
+  byte[] stopTracing();
+  void close();
+  List<BrowserContext> contexts();
+  boolean isConnected();
+  BrowserContext newContext(Object options);
+  Page newPage(Object options);
+  String version();
 }
 

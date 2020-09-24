@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface CDPSession{
-  void detach(); 
-  Object send(String method, Object params); 
+  void detach();
+  Object send(String method, Object params);
 }
 

@@ -20,18 +20,18 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Request{
-  Object failure(); 
-  Frame frame(); 
-  Map<String, String> headers(); 
-  boolean isNavigationRequest(); 
-  String method(); 
-  String postData(); 
-  byte[] postDataBuffer(); 
-  Object postDataJSON(); 
-  Request redirectedFrom(); 
-  Request redirectedTo(); 
-  String resourceType(); 
-  Response response(); 
-  String url(); 
+  Object failure();
+  Frame frame();
+  Map<String, String> headers();
+  boolean isNavigationRequest();
+  String method();
+  String postData();
+  byte[] postDataBuffer();
+  Object postDataJSON();
+  Request redirectedFrom();
+  Request redirectedTo();
+  String resourceType();
+  Response response();
+  String url();
 }
 

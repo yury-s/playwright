@@ -20,12 +20,12 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Download{
-  Readable createReadStream(); 
-  void delete(); 
-  String failure(); 
-  String path(); 
-  void saveAs(String path); 
-  String suggestedFilename(); 
-  String url(); 
+  Readable createReadStream();
+  void delete();
+  String failure();
+  String path();
+  void saveAs(String path);
+  String suggestedFilename();
+  String url();
 }
 

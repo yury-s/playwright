@@ -20,10 +20,10 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Keyboard{
-  void down(String key); 
-  void insertText(String text); 
-  void press(String key, Object options); 
-  void type(String text, Object options); 
-  void up(String key); 
+  void down(String key);
+  void insertText(String text);
+  void press(String key, Object options);
+  void type(String text, Object options);
+  void up(String key);
 }
 

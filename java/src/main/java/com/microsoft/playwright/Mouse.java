@@ -20,10 +20,10 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Mouse{
-  void click(int x, int y, Object options); 
-  void dblclick(int x, int y, Object options); 
-  void down(Object options); 
-  void move(int x, int y, Object options); 
-  void up(Object options); 
+  void click(int x, int y, Object options);
+  void dblclick(int x, int y, Object options);
+  void down(Object options);
+  void move(int x, int y, Object options);
+  void up(Object options);
 }
 

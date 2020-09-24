@@ -20,11 +20,11 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface WebKitBrowser{
-  void close(); 
-  List<BrowserContext> contexts(); 
-  boolean isConnected(); 
-  BrowserContext newContext(Object options); 
-  Page newPage(Object options); 
-  String version(); 
+  void close();
+  List<BrowserContext> contexts();
+  boolean isConnected();
+  BrowserContext newContext(Object options);
+  Page newPage(Object options);
+  String version();
 }
 

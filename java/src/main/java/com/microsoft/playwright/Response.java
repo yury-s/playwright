@@ -20,16 +20,16 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Response{
-  byte[] body(); 
-  Error finished(); 
-  Frame frame(); 
-  Map<String, String> headers(); 
-  Object json(); 
-  boolean ok(); 
-  Request request(); 
-  int status(); 
-  String statusText(); 
-  String text(); 
-  String url(); 
+  byte[] body();
+  Error finished();
+  Frame frame();
+  Map<String, String> headers();
+  Object json();
+  boolean ok();
+  Request request();
+  int status();
+  String statusText();
+  String text();
+  String url();
 }
 

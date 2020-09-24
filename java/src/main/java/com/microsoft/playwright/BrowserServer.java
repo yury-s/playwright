@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface BrowserServer{
-  void close(); 
-  void kill(); 
-  Object process(); 
-  String wsEndpoint(); 
+  void close();
+  void kill();
+  Object process();
+  String wsEndpoint();
 }
 

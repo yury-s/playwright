@@ -20,12 +20,12 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface JSHandle{
-  ElementHandle asElement(); 
-  void dispose(); 
-  Object evaluate(String pageFunction, Object arg); 
-  JSHandle evaluateHandle(String pageFunction, Object arg); 
-  Map<String, JSHandle> getProperties(); 
-  JSHandle getProperty(String propertyName); 
-  Object jsonValue(); 
+  ElementHandle asElement();
+  void dispose();
+  Object evaluate(String pageFunction, Object arg);
+  JSHandle evaluateHandle(String pageFunction, Object arg);
+  Map<String, JSHandle> getProperties();
+  JSHandle getProperty(String propertyName);
+  Object jsonValue();
 }
 

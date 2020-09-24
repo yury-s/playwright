@@ -20,6 +20,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Selectors{
-  void register(String name, String script, Object options); 
+  void register(String name, String script, Object options);
 }
 

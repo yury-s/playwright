@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Logger{
-  boolean isEnabled(String name, String severity); 
-  void log(String name, String severity, String message, List<Object> args, Object hints); 
+  boolean isEnabled(String name, String severity);
+  void log(String name, String severity, String message, List<Object> args, Object hints);
 }
 

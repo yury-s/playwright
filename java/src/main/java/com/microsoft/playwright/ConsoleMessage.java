@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface ConsoleMessage{
-  List<JSHandle> args(); 
-  Object location(); 
-  String text(); 
-  String type(); 
+  List<JSHandle> args();
+  Object location();
+  String text();
+  String type();
 }
 

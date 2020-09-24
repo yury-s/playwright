@@ -20,11 +20,11 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface BrowserType{
-  Browser connect(Object options); 
-  String executablePath(); 
-  Browser launch(Object options); 
-  BrowserContext launchPersistentContext(String userDataDir, Object options); 
-  BrowserServer launchServer(Object options); 
-  String name(); 
+  Browser connect(Object options);
+  String executablePath();
+  Browser launch(Object options);
+  BrowserContext launchPersistentContext(String userDataDir, Object options);
+  BrowserServer launchServer(Object options);
+  String name();
 }
 

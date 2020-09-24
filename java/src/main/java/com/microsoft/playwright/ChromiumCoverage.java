@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface ChromiumCoverage{
-  void startCSSCoverage(Object options); 
-  void startJSCoverage(Object options); 
-  List<Object> stopCSSCoverage(); 
-  List<Object> stopJSCoverage(); 
+  void startCSSCoverage(Object options);
+  void startJSCoverage(Object options);
+  List<Object> stopCSSCoverage();
+  List<Object> stopJSCoverage();
 }
 

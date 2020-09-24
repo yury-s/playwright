@@ -20,10 +20,10 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Dialog{
-  void accept(String promptText); 
-  String defaultValue(); 
-  void dismiss(); 
-  String message(); 
-  String type(); 
+  void accept(String promptText);
+  String defaultValue();
+  void dismiss();
+  String message();
+  String type();
 }
 
