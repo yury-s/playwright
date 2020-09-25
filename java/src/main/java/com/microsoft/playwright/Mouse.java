@@ -20,10 +20,39 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Mouse{
-  void click(int x, int y, Object options);
-  void dblclick(int x, int y, Object options);
-  void down(Object options);
-  void move(int x, int y, Object options);
-  void up(Object options);
+
+  class ClickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+    Integer delay;
+  }
+  void click(int x, int y, ClickOptions options);
+
+  class DblclickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer delay;
+  }
+  void dblclick(int x, int y, DblclickOptions options);
+
+  class DownOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+  }
+  void down(DownOptions options);
+
+  class MoveOptions {
+    Integer steps;
+  }
+  void move(int x, int y, MoveOptions options);
+
+  class UpOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+  }
+  void up(UpOptions options);
 }
 

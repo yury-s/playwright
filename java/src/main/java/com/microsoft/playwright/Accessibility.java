@@ -20,6 +20,11 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Accessibility{
-  Object snapshot(Object options);
+
+  class SnapshotOptions {
+    Boolean interestingOnly;
+    ElementHandle root;
+  }
+  Object snapshot(SnapshotOptions options);
 }
 

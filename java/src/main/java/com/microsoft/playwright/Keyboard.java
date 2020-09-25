@@ -22,8 +22,16 @@ import java.util.function.BiConsumer;
 interface Keyboard{
   void down(String key);
   void insertText(String text);
-  void press(String key, Object options);
-  void type(String text, Object options);
+
+  class PressOptions {
+    Integer delay;
+  }
+  void press(String key, PressOptions options);
+
+  class TypeOptions {
+    Integer delay;
+  }
+  void type(String text, TypeOptions options);
   void up(String key);
 }
 

@@ -25,31 +25,130 @@ interface ElementHandle{
   Object evalOnSelector(String selector, String pageFunction, Object arg);
   Object evalOnSelectorAll(String selector, String pageFunction, Object arg);
   Object boundingBox();
-  void check(Object options);
-  void click(Object options);
+
+  class CheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void check(CheckOptions options);
+
+  class ClickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void click(ClickOptions options);
   Frame contentFrame();
-  void dblclick(Object options);
+
+  class DblclickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void dblclick(DblclickOptions options);
   void dispatchEvent(String type, Object eventInit);
-  void fill(String value, Object options);
+
+  class FillOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void fill(String value, FillOptions options);
   void focus();
   String getAttribute(String name);
-  void hover(Object options);
+
+  class HoverOptions {
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Integer timeout;
+  }
+  void hover(HoverOptions options);
   String innerHTML();
   String innerText();
   Frame ownerFrame();
-  void press(String key, Object options);
-  byte[] screenshot(Object options);
-  void scrollIntoViewIfNeeded(Object options);
-  List<String> selectOption(String values, Object options);
-  void selectText(Object options);
-  void setInputFiles(String files, Object options);
+
+  class PressOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void press(String key, PressOptions options);
+
+  class ScreenshotOptions {
+    String path;
+    enum Type { JPEG, PNG }
+    Type type;
+    Integer quality;
+    Boolean omitBackground;
+    Integer timeout;
+  }
+  byte[] screenshot(ScreenshotOptions options);
+
+  class ScrollIntoViewIfNeededOptions {
+    Integer timeout;
+  }
+  void scrollIntoViewIfNeeded(ScrollIntoViewIfNeededOptions options);
+
+  class SelectOptionOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  List<String> selectOption(String values, SelectOptionOptions options);
+
+  class SelectTextOptions {
+    Integer timeout;
+  }
+  void selectText(SelectTextOptions options);
+
+  class SetInputFilesOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void setInputFiles(String files, SetInputFilesOptions options);
   String textContent();
   String toString();
-  void type(String text, Object options);
-  void uncheck(Object options);
+
+  class TypeOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void type(String text, TypeOptions options);
+
+  class UncheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void uncheck(UncheckOptions options);
   enum ElementState { DISABLED, ENABLED, HIDDEN, STABLE, VISIBLE }
-  void waitForElementState(ElementState state, Object options);
-  ElementHandle waitForSelector(String selector, Object options);
+
+  class WaitForElementStateOptions {
+    Integer timeout;
+  }
+  void waitForElementState(ElementState state, WaitForElementStateOptions options);
+
+  class WaitForSelectorOptions {
+    enum State { ATTACHED, DETACHED, HIDDEN, VISIBLE }
+    State state;
+    Integer timeout;
+  }
+  ElementHandle waitForSelector(String selector, WaitForSelectorOptions options);
   ElementHandle asElement();
   void dispose();
   Object evaluate(String pageFunction, Object arg);

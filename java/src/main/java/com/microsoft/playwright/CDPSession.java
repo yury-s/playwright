@@ -21,6 +21,9 @@ import java.util.function.BiConsumer;
 
 interface CDPSession{
   void detach();
-  Object send(String method, Object params);
+
+  class SendParams {
+  }
+  Object send(String method, SendParams params);
 }
 

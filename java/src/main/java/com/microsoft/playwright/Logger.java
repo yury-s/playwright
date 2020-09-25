@@ -22,6 +22,10 @@ import java.util.function.BiConsumer;
 interface Logger{
   enum Severity { ERROR, INFO, VERBOSE, WARNING }
   boolean isEnabled(String name, Severity severity);
-  void log(String name, Severity severity, String message, List<Object> args, Object hints);
+
+  class LogHints {
+    String color;
+  }
+  void log(String name, Severity severity, String message, List<Object> args, LogHints hints);
 }
 

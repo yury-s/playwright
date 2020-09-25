@@ -21,13 +21,71 @@ import java.util.function.BiConsumer;
 
 interface ChromiumBrowser{
   CDPSession newBrowserCDPSession();
-  void startTracing(Page page, Object options);
+
+  class StartTracingOptions {
+    String path;
+    Boolean screenshots;
+    List<String> categories;
+  }
+  void startTracing(Page page, StartTracingOptions options);
   byte[] stopTracing();
   void close();
   List<BrowserContext> contexts();
   boolean isConnected();
-  BrowserContext newContext(Object options);
-  Page newPage(Object options);
+
+  class NewContextOptions {
+    Boolean acceptDownloads;
+    Boolean ignoreHTTPSErrors;
+    Boolean bypassCSP;
+    Object viewport;
+    String userAgent;
+    Integer deviceScaleFactor;
+    Boolean isMobile;
+    Boolean hasTouch;
+    Boolean javaScriptEnabled;
+    String timezoneId;
+    Object geolocation;
+    String locale;
+    List<String> permissions;
+    Map<String, String> extraHTTPHeaders;
+    Boolean offline;
+    Object httpCredentials;
+    enum ColorScheme { DARK, LIGHT, NO_PREFERENCE }
+    ColorScheme colorScheme;
+    Logger logger;
+    String relativeArtifactsPath;
+    Boolean recordVideos;
+    Object videoSize;
+    Boolean recordTrace;
+  }
+  BrowserContext newContext(NewContextOptions options);
+
+  class NewPageOptions {
+    Boolean acceptDownloads;
+    Boolean ignoreHTTPSErrors;
+    Boolean bypassCSP;
+    Object viewport;
+    String userAgent;
+    Integer deviceScaleFactor;
+    Boolean isMobile;
+    Boolean hasTouch;
+    Boolean javaScriptEnabled;
+    String timezoneId;
+    Object geolocation;
+    String locale;
+    List<String> permissions;
+    Map<String, String> extraHTTPHeaders;
+    Boolean offline;
+    Object httpCredentials;
+    enum ColorScheme { DARK, LIGHT, NO_PREFERENCE }
+    ColorScheme colorScheme;
+    Logger logger;
+    String relativeArtifactsPath;
+    Boolean recordVideos;
+    Object videoSize;
+    Boolean recordTrace;
+  }
+  Page newPage(NewPageOptions options);
   String version();
 }
 

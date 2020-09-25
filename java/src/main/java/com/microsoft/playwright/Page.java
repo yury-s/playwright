@@ -20,67 +20,284 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 interface Page{
-  void close(Object options);
+
+  class CloseOptions {
+    Boolean runBeforeUnload;
+  }
+  void close(CloseOptions options);
   ElementHandle querySelector(String selector);
   List<ElementHandle> querySelectorAll(String selector);
   Object evalOnSelector(String selector, String pageFunction, Object arg);
   Object evalOnSelectorAll(String selector, String pageFunction, Object arg);
-  void addInitScript(String script, Object arg);
-  ElementHandle addScriptTag(Object options);
-  ElementHandle addStyleTag(Object options);
+
+  class AddInitScriptArg {
+  }
+  void addInitScript(String script, AddInitScriptArg arg);
+
+  class AddScriptTagOptions {
+    String url;
+    String path;
+    String content;
+    String type;
+  }
+  ElementHandle addScriptTag(AddScriptTagOptions options);
+
+  class AddStyleTagOptions {
+    String url;
+    String path;
+    String content;
+  }
+  ElementHandle addStyleTag(AddStyleTagOptions options);
   void bringToFront();
-  void check(String selector, Object options);
-  void click(String selector, Object options);
+
+  class CheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void check(String selector, CheckOptions options);
+
+  class ClickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void click(String selector, ClickOptions options);
   String content();
   BrowserContext context();
-  void dblclick(String selector, Object options);
-  void dispatchEvent(String selector, String type, Object eventInit, Object options);
-  void emulateMedia(Object options);
+
+  class DblclickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void dblclick(String selector, DblclickOptions options);
+
+  class DispatchEventOptions {
+    Integer timeout;
+  }
+  void dispatchEvent(String selector, String type, Object eventInit, DispatchEventOptions options);
+
+  class EmulateMediaOptions {
+    enum Media { PRINT, SCREEN }
+    Media media;
+    enum ColorScheme { DARK, LIGHT, NO_PREFERENCE }
+    ColorScheme colorScheme;
+  }
+  void emulateMedia(EmulateMediaOptions options);
   Object evaluate(String pageFunction, Object arg);
   JSHandle evaluateHandle(String pageFunction, Object arg);
   void exposeBinding(String name, String playwrightBinding);
   void exposeFunction(String name, String playwrightFunction);
-  void fill(String selector, String value, Object options);
-  void focus(String selector, Object options);
+
+  class FillOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void fill(String selector, String value, FillOptions options);
+
+  class FocusOptions {
+    Integer timeout;
+  }
+  void focus(String selector, FocusOptions options);
   Frame frame(String options);
   List<Frame> frames();
-  String getAttribute(String selector, String name, Object options);
-  Response goBack(Object options);
-  Response goForward(Object options);
-  Response navigate(String url, Object options);
-  void hover(String selector, Object options);
-  String innerHTML(String selector, Object options);
-  String innerText(String selector, Object options);
+
+  class GetAttributeOptions {
+    Integer timeout;
+  }
+  String getAttribute(String selector, String name, GetAttributeOptions options);
+
+  class GoBackOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  Response goBack(GoBackOptions options);
+
+  class GoForwardOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  Response goForward(GoForwardOptions options);
+
+  class GotoOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+    String referer;
+  }
+  Response navigate(String url, GotoOptions options);
+
+  class HoverOptions {
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Integer timeout;
+  }
+  void hover(String selector, HoverOptions options);
+
+  class InnerHTMLOptions {
+    Integer timeout;
+  }
+  String innerHTML(String selector, InnerHTMLOptions options);
+
+  class InnerTextOptions {
+    Integer timeout;
+  }
+  String innerText(String selector, InnerTextOptions options);
   boolean isClosed();
   Frame mainFrame();
   Page opener();
-  byte[] pdf(Object options);
-  void press(String selector, String key, Object options);
-  Response reload(Object options);
+
+  class PdfOptions {
+    String path;
+    Integer scale;
+    Boolean displayHeaderFooter;
+    String headerTemplate;
+    String footerTemplate;
+    Boolean printBackground;
+    Boolean landscape;
+    String pageRanges;
+    String format;
+    String width;
+    String height;
+    Object margin;
+    Boolean preferCSSPageSize;
+  }
+  byte[] pdf(PdfOptions options);
+
+  class PressOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void press(String selector, String key, PressOptions options);
+
+  class ReloadOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  Response reload(ReloadOptions options);
   void route(String url, BiConsumer<Route, Request> handler);
-  byte[] screenshot(Object options);
-  List<String> selectOption(String selector, String values, Object options);
-  void setContent(String html, Object options);
+
+  class ScreenshotOptions {
+    String path;
+    enum Type { JPEG, PNG }
+    Type type;
+    Integer quality;
+    Boolean fullPage;
+    Object clip;
+    Boolean omitBackground;
+    Integer timeout;
+  }
+  byte[] screenshot(ScreenshotOptions options);
+
+  class SelectOptionOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  List<String> selectOption(String selector, String values, SelectOptionOptions options);
+
+  class SetContentOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  void setContent(String html, SetContentOptions options);
   void setDefaultNavigationTimeout(int timeout);
   void setDefaultTimeout(int timeout);
   void setExtraHTTPHeaders(Map<String, String> headers);
-  void setInputFiles(String selector, String files, Object options);
-  void setViewportSize(Object viewportSize);
-  String textContent(String selector, Object options);
+
+  class SetInputFilesOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void setInputFiles(String selector, String files, SetInputFilesOptions options);
+
+  class SetViewportSizeViewportSize {
+    Integer width;
+    Integer height;
+  }
+  void setViewportSize(SetViewportSizeViewportSize viewportSize);
+
+  class TextContentOptions {
+    Integer timeout;
+  }
+  String textContent(String selector, TextContentOptions options);
   String title();
-  void type(String selector, String text, Object options);
-  void uncheck(String selector, Object options);
+
+  class TypeOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void type(String selector, String text, TypeOptions options);
+
+  class UncheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void uncheck(String selector, UncheckOptions options);
   void unroute(String url, BiConsumer<Route, Request> handler);
   String url();
   Object viewportSize();
   Object waitForEvent(String event, String optionsOrPredicate);
-  JSHandle waitForFunction(String pageFunction, Object arg, Object options);
+
+  class WaitForFunctionOptions {
+    enum Polling { UMBE, RAF }
+    Polling polling;
+    Integer timeout;
+  }
+  JSHandle waitForFunction(String pageFunction, Object arg, WaitForFunctionOptions options);
   enum LoadState { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
-  void waitForLoadState(LoadState state, Object options);
-  Response waitForNavigation(Object options);
-  Request waitForRequest(String urlOrPredicate, Object options);
-  Response waitForResponse(String urlOrPredicate, Object options);
-  ElementHandle waitForSelector(String selector, Object options);
+
+  class WaitForLoadStateOptions {
+    Integer timeout;
+  }
+  void waitForLoadState(LoadState state, WaitForLoadStateOptions options);
+
+  class WaitForNavigationOptions {
+    Integer timeout;
+    String url;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  Response waitForNavigation(WaitForNavigationOptions options);
+
+  class WaitForRequestOptions {
+    Integer timeout;
+  }
+  Request waitForRequest(String urlOrPredicate, WaitForRequestOptions options);
+
+  class WaitForResponseOptions {
+    Integer timeout;
+  }
+  Response waitForResponse(String urlOrPredicate, WaitForResponseOptions options);
+
+  class WaitForSelectorOptions {
+    enum State { ATTACHED, DETACHED, HIDDEN, VISIBLE }
+    State state;
+    Integer timeout;
+  }
+  ElementHandle waitForSelector(String selector, WaitForSelectorOptions options);
   void waitForTimeout(int timeout);
   List<Worker> workers();
 }

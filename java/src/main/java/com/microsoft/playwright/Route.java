@@ -21,8 +21,22 @@ import java.util.function.BiConsumer;
 
 interface Route{
   void abort(String errorCode);
-  void continue_(Object overrides);
-  void fulfill(Object response);
+
+  class ContinueOverrides {
+    String method;
+    String postData;
+    Map<String, String> headers;
+  }
+  void continue_(ContinueOverrides overrides);
+
+  class FulfillResponse {
+    Integer status;
+    Map<String, String> headers;
+    String contentType;
+    String body;
+    String path;
+  }
+  void fulfill(FulfillResponse response);
   Request request();
 }
 

@@ -23,6 +23,11 @@ interface FileChooser{
   ElementHandle element();
   boolean isMultiple();
   Page page();
-  void setFiles(String files, Object options);
+
+  class SetFilesOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void setFiles(String files, SetFilesOptions options);
 }
 

@@ -23,6 +23,8 @@ import com.google.gson.JsonObject;
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ApiGenerator {
@@ -76,8 +78,6 @@ public class ApiGenerator {
       output.add("\n");
 
       String text = String.join("\n", output);
-//      System.out.println(text);
-
       FileWriter writer = new FileWriter(new File(dir, name + ".java"));
       writer.write(text);
       writer.close();
@@ -102,16 +102,19 @@ public class ApiGenerator {
           String argName = arg.getKey();
           String argType = arg.getValue().getAsJsonObject().get("type").getAsJsonObject().get("name").getAsString();
           argType = convertBuiltinType(argType);
+          if (argType.equals("Object")) {
+            argType = generateParamClass(name, argName, arg.getValue().getAsJsonObject().get("type").getAsJsonObject(), offset);
+          }
 
           if (argType.equals("function(Route, Request)")) {
             argType = "BiConsumer<Route, Request>";
           } else if (argType.equals("EvaluationArgument")) {
-              argType = "Object";
+            argType = "Object";
           } else if (argType.equals("number")) {
             argType = "int";
           } else if (argType.contains("|\"")) {
             String enumName = enumName(name, argName);
-            generateEnum(enumName, argType, offset);
+            generateEnum(enumName, argType, "", offset);
             argType = enumName;
           } else if (argType.contains("|")) {
             argType = "String";
@@ -119,8 +122,6 @@ public class ApiGenerator {
             // js functions are always passed as text in java.
             if (argName.startsWith("playwright") || argName.startsWith("page")) {
               argType = "String";
-            } else {
-              System.out.println(name + " (" + argType + " " + arg.getKey() + ")");
             }
           }
 
@@ -137,23 +138,80 @@ public class ApiGenerator {
     }
   }
 
+  private String generateParamClass(String methodName, String argName, JsonObject json, String offset) {
+    String className = toTitle(methodName) + toTitle(argName);
+    output.add("");
+    output.add(offset + "class " + className + " {");
+    String memberOffset = offset + "  ";
+    for (Map.Entry<String, JsonElement> e : json.get("properties").getAsJsonObject().entrySet()) {
+      String name = e.getKey();
+      String type = e.getValue().getAsJsonObject().get("type").getAsJsonObject().get("name").getAsString();
+      if ("modifiers".equals(name)) {
+        if (!type.equals("Array<\"Alt\"|\"Control\"|\"Meta\"|\"Shift\">"))
+          throw new RuntimeException("Unexpected type of modifiers: " + type);
+        generateEnum("Modifier", "\"Alt\"|\"Control\"|\"Meta\"|\"Shift\"", className, memberOffset);
+        type = "Set<Modifier>";
+      }
+      if ("media".equals(name)) {
+        if (!type.equals("null|\"print\"|\"screen\""))
+          throw new RuntimeException("Unexpected type of media: " + type);
+        type = "Media";
+        generateEnum(type, "\"print\"|\"screen\"", className, memberOffset);
+      }
+      if ("pdf".equals(methodName) && (name.equals("width") || name.equals("height"))) {
+        if (!type.equals("string|number"))
+          throw new RuntimeException("Unexpected type of pdf dimensions: " + type);
+        type = "String";
+      }
+      if ("continue".equals(methodName) && name.equals("postData")) {
+        if (!type.equals("string|Buffer"))
+          throw new RuntimeException("Unexpected type of pdf dimensions: " + type);
+        type = "String";
+      }
+      if ("fulfill".equals(methodName) && name.equals("body")) {
+        if (!type.equals("string|Buffer"))
+          throw new RuntimeException("Unexpected type of pdf dimensions: " + type);
+        type = "String";
+      }
+      if ("waitForNavigation".equals(methodName) && argName.equals("options") && name.equals("url")) {
+        if (!type.equals("string|RegExp|Function"))
+          throw new RuntimeException("Unexpected type of pdf dimensions: " + type);
+        type = "String";
+      }
+      if (type.contains("|\"") && type.endsWith("\"")) {
+        type = type.replace("null|", "");
+        String enumName = toTitle(name);
+        generateEnum(enumName, type, className, memberOffset);
+        type = enumName;
+      }
+      if ("ignoreDefaultArgs".equals(name)) {
+        type = "Boolean";
+      }
+      type = convertBuiltinType(type);
+      type = replacePrimitiveWithBoxedType(type);
+      output.add(memberOffset + type + " " + name + ";");
+    }
+    output.add(offset + "}");
+    return className;
+  }
+
   private static String toTitle(String name) {
     return Character.toUpperCase(name.charAt(0)) + name.substring(1);
   }
 
-
   private static String enumName(String methodName, String argName) {
-    if (methodName.startsWith("waitFor"))
+    if (methodName.startsWith("waitFor")) {
       return methodName.substring("waitFor".length());
+    }
     return toTitle(argName);
   }
 
-  private void generateEnum(String name, String values, String offset) {
-    if (innerTypes.contains(values))
+  private void generateEnum(String name, String values, String scope, String offset) {
+    if (!innerTypes.add(scope + values)) {
       return;
-    innerTypes.add(values);
+    }
     String[] split = values.split("\\|");
-    List<String> enumValues = Arrays.stream(split).map(s -> s.substring(1, s.length() - 1).toUpperCase()).collect(Collectors.toList());
+    List<String> enumValues = Arrays.stream(split).map(s -> s.substring(1, s.length() - 1).replace("-", "_").toUpperCase()).collect(Collectors.toList());
     output.add(offset + "enum " + name + " { " + String.join(", ", enumValues) + " }");
   }
 
@@ -163,13 +221,21 @@ public class ApiGenerator {
       type = "void";
     }
     // Java API is sync just strip Promise<>
-    if (type.startsWith("Promise<"))
+    if (type.startsWith("Promise<")) {
       type = type.substring("Promise<".length(), type.length() - 1);
+    }
     return convertBuiltinType(type);
   }
 
+  private static String replacePrimitiveWithBoxedType(String type) {
+    return type.replace("int", "Integer")
+      .replace("boolean", "Boolean")
+      .replace("double", "Double");
+  }
+
   private static String convertBuiltinType(String type) {
-    return type.replace("Array<", "List<")
+    return type.replace("string|number|boolean", "String")
+      .replace("Array<", "List<")
       .replace("string", "String")
       .replace("number", "int")
       .replace("Serializable", "Object")

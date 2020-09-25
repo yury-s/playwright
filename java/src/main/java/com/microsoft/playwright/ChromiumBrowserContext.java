@@ -25,22 +25,40 @@ interface ChromiumBrowserContext{
   List<Worker> serviceWorkers();
   void close();
   void addCookies(List<Object> cookies);
-  void addInitScript(String script, Object arg);
+
+  class AddInitScriptArg {
+  }
+  void addInitScript(String script, AddInitScriptArg arg);
   Browser browser();
   void clearCookies();
   void clearPermissions();
   List<Object> cookies(String urls);
   void exposeBinding(String name, String playwrightBinding);
   void exposeFunction(String name, String playwrightFunction);
-  void grantPermissions(List<String> permissions, Object options);
+
+  class GrantPermissionsOptions {
+    String origin;
+  }
+  void grantPermissions(List<String> permissions, GrantPermissionsOptions options);
   Page newPage();
   List<Page> pages();
   void route(String url, BiConsumer<Route, Request> handler);
   void setDefaultNavigationTimeout(int timeout);
   void setDefaultTimeout(int timeout);
   void setExtraHTTPHeaders(Map<String, String> headers);
-  void setGeolocation(Object geolocation);
-  void setHTTPCredentials(Object httpCredentials);
+
+  class SetGeolocationGeolocation {
+    Integer latitude;
+    Integer longitude;
+    Integer accuracy;
+  }
+  void setGeolocation(SetGeolocationGeolocation geolocation);
+
+  class SetHTTPCredentialsHttpCredentials {
+    String username;
+    String password;
+  }
+  void setHTTPCredentials(SetHTTPCredentialsHttpCredentials httpCredentials);
   void setOffline(boolean offline);
   void unroute(String url, BiConsumer<Route, Request> handler);
   Object waitForEvent(String event, String optionsOrPredicate);

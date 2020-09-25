@@ -24,42 +24,187 @@ interface Frame{
   List<ElementHandle> querySelectorAll(String selector);
   Object evalOnSelector(String selector, String pageFunction, Object arg);
   Object evalOnSelectorAll(String selector, String pageFunction, Object arg);
-  ElementHandle addScriptTag(Object options);
-  ElementHandle addStyleTag(Object options);
-  void check(String selector, Object options);
+
+  class AddScriptTagOptions {
+    String url;
+    String path;
+    String content;
+    String type;
+  }
+  ElementHandle addScriptTag(AddScriptTagOptions options);
+
+  class AddStyleTagOptions {
+    String url;
+    String path;
+    String content;
+  }
+  ElementHandle addStyleTag(AddStyleTagOptions options);
+
+  class CheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void check(String selector, CheckOptions options);
   List<Frame> childFrames();
-  void click(String selector, Object options);
+
+  class ClickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer clickCount;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void click(String selector, ClickOptions options);
   String content();
-  void dblclick(String selector, Object options);
-  void dispatchEvent(String selector, String type, Object eventInit, Object options);
+
+  class DblclickOptions {
+    enum Button { LEFT, MIDDLE, RIGHT }
+    Button button;
+    Integer delay;
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void dblclick(String selector, DblclickOptions options);
+
+  class DispatchEventOptions {
+    Integer timeout;
+  }
+  void dispatchEvent(String selector, String type, Object eventInit, DispatchEventOptions options);
   Object evaluate(String pageFunction, Object arg);
   JSHandle evaluateHandle(String pageFunction, Object arg);
-  void fill(String selector, String value, Object options);
-  void focus(String selector, Object options);
+
+  class FillOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void fill(String selector, String value, FillOptions options);
+
+  class FocusOptions {
+    Integer timeout;
+  }
+  void focus(String selector, FocusOptions options);
   ElementHandle frameElement();
-  String getAttribute(String selector, String name, Object options);
-  Response navigate(String url, Object options);
-  void hover(String selector, Object options);
-  String innerHTML(String selector, Object options);
-  String innerText(String selector, Object options);
+
+  class GetAttributeOptions {
+    Integer timeout;
+  }
+  String getAttribute(String selector, String name, GetAttributeOptions options);
+
+  class GotoOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+    String referer;
+  }
+  Response navigate(String url, GotoOptions options);
+
+  class HoverOptions {
+    Object position;
+    enum Modifier { ALT, CONTROL, META, SHIFT }
+    Set<Modifier> modifiers;
+    Boolean force;
+    Integer timeout;
+  }
+  void hover(String selector, HoverOptions options);
+
+  class InnerHTMLOptions {
+    Integer timeout;
+  }
+  String innerHTML(String selector, InnerHTMLOptions options);
+
+  class InnerTextOptions {
+    Integer timeout;
+  }
+  String innerText(String selector, InnerTextOptions options);
   boolean isDetached();
   String name();
   Page page();
   Frame parentFrame();
-  void press(String selector, String key, Object options);
-  List<String> selectOption(String selector, String values, Object options);
-  void setContent(String html, Object options);
-  void setInputFiles(String selector, String files, Object options);
-  String textContent(String selector, Object options);
+
+  class PressOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void press(String selector, String key, PressOptions options);
+
+  class SelectOptionOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  List<String> selectOption(String selector, String values, SelectOptionOptions options);
+
+  class SetContentOptions {
+    Integer timeout;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  void setContent(String html, SetContentOptions options);
+
+  class SetInputFilesOptions {
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void setInputFiles(String selector, String files, SetInputFilesOptions options);
+
+  class TextContentOptions {
+    Integer timeout;
+  }
+  String textContent(String selector, TextContentOptions options);
   String title();
-  void type(String selector, String text, Object options);
-  void uncheck(String selector, Object options);
+
+  class TypeOptions {
+    Integer delay;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void type(String selector, String text, TypeOptions options);
+
+  class UncheckOptions {
+    Boolean force;
+    Boolean noWaitAfter;
+    Integer timeout;
+  }
+  void uncheck(String selector, UncheckOptions options);
   String url();
-  JSHandle waitForFunction(String pageFunction, Object arg, Object options);
+
+  class WaitForFunctionOptions {
+    enum Polling { UMBE, RAF }
+    Polling polling;
+    Integer timeout;
+  }
+  JSHandle waitForFunction(String pageFunction, Object arg, WaitForFunctionOptions options);
   enum LoadState { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
-  void waitForLoadState(LoadState state, Object options);
-  Response waitForNavigation(Object options);
-  ElementHandle waitForSelector(String selector, Object options);
+
+  class WaitForLoadStateOptions {
+    Integer timeout;
+  }
+  void waitForLoadState(LoadState state, WaitForLoadStateOptions options);
+
+  class WaitForNavigationOptions {
+    Integer timeout;
+    String url;
+    enum WaitUntil { DOMCONTENTLOADED, LOAD, NETWORKIDLE }
+    WaitUntil waitUntil;
+  }
+  Response waitForNavigation(WaitForNavigationOptions options);
+
+  class WaitForSelectorOptions {
+    enum State { ATTACHED, DETACHED, HIDDEN, VISIBLE }
+    State state;
+    Integer timeout;
+  }
+  ElementHandle waitForSelector(String selector, WaitForSelectorOptions options);
   void waitForTimeout(int timeout);
 }
 
