@@ -77,7 +77,7 @@ with sync_playwright() as playwright:
 ## async method: Frame.querySelector
 * langs:
   - alias-python: query_selector
-  - alias-js: $ 
+  - alias-js: $
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
