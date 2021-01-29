@@ -115,7 +115,7 @@ class ApiParser {
    */
   parseArgument(spec) {
     const match = spec.text.match(/(param|option): ([^.]+)\.([^.]+)\.(.*)/);
-    if(!match) 
+    if(!match)
       throw `Something went wrong with matching ${spec.text}`;
     const clazz = this.classes.get(match[2]);
     if (!clazz)
