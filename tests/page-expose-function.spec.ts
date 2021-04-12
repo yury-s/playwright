@@ -246,9 +246,9 @@ it('should work with internal bindings', async ({page, toImpl, server, mode, bro
 
   const implPage: import('../src/server/page').Page = toImpl(page);
   let foo;
-  await implPage.exposeBinding('foo', false, ({}, arg) => {
+  await implPage.exposeBinding('foo', 'utility', false, ({}, arg) => {
     foo = arg;
-  }, 'utility');
+  });
   expect(await page.evaluate('!!window.foo')).toBe(false);
   expect(await implPage.mainFrame().evaluateExpression('!!window.foo', false, {}, 'utility')).toBe(true);
   expect(foo).toBe(undefined);

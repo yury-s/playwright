@@ -58,7 +58,7 @@ export class Snapshotter {
   }
 
   async initialize() {
-    await this._context.exposeBinding(this._snapshotBinding, false, (source, data: SnapshotData) => {
+    await this._context.exposeBinding(this._snapshotBinding, 'utility', false, (source, data: SnapshotData) => {
       const snapshot: FrameSnapshot = {
         snapshotName: data.snapshotName,
         pageId: source.page.uniqueId,

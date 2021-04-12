@@ -464,7 +464,14 @@ const hasTextEngine: SelectorEngine = {
 export function createLaxTextMatcher(text: string): TextMatcher {
   text = text.trim().replace(/\s+/g, ' ').toLowerCase();
   return (elementText: ElementText) => {
+    const start = Date.now();
     const s = elementText.full.trim().replace(/\s+/g, ' ').toLowerCase();
+    const end = Date.now();
+    if (end - start > 10) {
+      // console.log(elementText.full);
+      // console.log('len = ' + elementText.full.length + ' in ' + (end - start) + 'ms');
+    }
+    // const s =  elementText.full.replace(/\s+/g, ' ').toLowerCase();
     return s.includes(text);
   };
 }

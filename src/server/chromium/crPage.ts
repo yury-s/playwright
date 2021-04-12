@@ -164,6 +164,7 @@ export class CRPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
+    console.log('> exposeBinding ' + binding.world + ':' + binding.name);
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}, binding.world).catch(e => {})));
   }

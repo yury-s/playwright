@@ -57,6 +57,7 @@ export class Recorder {
   private _snapshotBaseUrl: string;
 
   constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean, snapshotBaseUrl: string }) {
+    console.trace(injectedScript);
     this._params = params;
     this._injectedScript = injectedScript;
     this._outerGlassPaneElement = document.createElement('x-pw-glass');

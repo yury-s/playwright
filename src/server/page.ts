@@ -273,7 +273,7 @@ export class Page extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, world: types.World = 'main') {
+  async exposeBinding(name: string, world: types.World, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
     const identifier = PageBinding.identifier(name, world);
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);

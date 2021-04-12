@@ -125,15 +125,16 @@ export abstract class BrowserContext extends SdkObject {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
-    const identifier = PageBinding.identifier(name, 'main');
+  async exposeBinding(name: string, world: types.World, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+    const identifier = PageBinding.identifier(name, world);
+    console.log('exposeBinding ' + identifier);
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
-      if (page.getBinding(name, 'main'))
+      if (page.getBinding(name, world))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, 'main');
+    const binding = new PageBinding(name, playwrightBinding, needsHandle, world);
     this._pageBindings.set(identifier, binding);
     await this._doExposeBinding(binding);
   }

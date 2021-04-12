@@ -81,7 +81,7 @@ export class RecorderApp extends EventEmitter {
       await route.continue();
     });
 
-    await this._page.exposeBinding('dispatch', false, (_, data: any) => this.emit('event', data));
+    await this._page.exposeBinding('dispatch', 'utility', false, (_, data: any) => this.emit('event', data));
 
     this._page.once('close', () => {
       this.emit('close');
@@ -123,25 +123,25 @@ export class RecorderApp extends EventEmitter {
   async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((mode: Mode) => {
       window.playwrightSetMode(mode);
-    }).toString(), true, mode, 'main').catch(() => {});
+    }).toString(), true, mode, 'utility').catch(() => {});
   }
 
   async setFile(file: string): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((file: string) => {
       window.playwrightSetFile(file);
-    }).toString(), true, file, 'main').catch(() => {});
+    }).toString(), true, file, 'utility').catch(() => {});
   }
 
   async setPaused(paused: boolean): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((paused: boolean) => {
       window.playwrightSetPaused(paused);
-    }).toString(), true, paused, 'main').catch(() => {});
+    }).toString(), true, paused, 'utility').catch(() => {});
   }
 
   async setSources(sources: Source[]): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((sources: Source[]) => {
       window.playwrightSetSources(sources);
-    }).toString(), true, sources, 'main').catch(() => {});
+    }).toString(), true, sources, 'utility').catch(() => {});
 
     // Testing harness for runCLI mode.
     {
@@ -156,13 +156,13 @@ export class RecorderApp extends EventEmitter {
   async setSelector(selector: string, focus?: boolean): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((arg: any) => {
       window.playwrightSetSelector(arg.selector, arg.focus);
-    }).toString(), true, { selector, focus }, 'main').catch(() => {});
+    }).toString(), true, { selector, focus }, 'utility').catch(() => {});
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
       window.playwrightUpdateLogs(callLogs);
-    }).toString(), true, callLogs, 'main').catch(() => {});
+    }).toString(), true, callLogs, 'utility').catch(() => {});
   }
 
   async bringToFront() {

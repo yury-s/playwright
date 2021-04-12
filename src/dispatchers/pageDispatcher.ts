@@ -101,7 +101,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, metadata: CallMetadata): Promise<void> {
-    await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+    await this._page.exposeBinding(params.name, 'main', !!params.needsHandle, (source, ...args) => {
       const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();

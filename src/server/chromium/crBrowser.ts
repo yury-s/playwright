@@ -404,6 +404,7 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   async _doExposeBinding(binding: PageBinding) {
+    console.log('> _doExposeBinding ' + this._browserContextId + '  ' + binding.world + ':' + binding.name + ' ' + this.pages().length);
     for (const page of this.pages())
       await (page._delegate as CRPage).exposeBinding(binding);
   }

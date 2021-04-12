@@ -192,18 +192,18 @@ export class RecorderSupplement {
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
-    await this._context.exposeBinding('_playwrightRecorderPerformAction', false,
+    await this._context.exposeBinding('_playwrightRecorderPerformAction', 'utility', false,
         (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
-    await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
+    await this._context.exposeBinding('_playwrightRecorderRecordAction', 'utility', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
     // Commits last action so that no further signals are added to it.
-    await this._context.exposeBinding('_playwrightRecorderCommitAction', false,
+    await this._context.exposeBinding('_playwrightRecorderCommitAction', 'utility', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('_playwrightRecorderState', false, source => {
+    await this._context.exposeBinding('_playwrightRecorderState', 'utility', false, source => {
       let snapshotUrl: string | undefined;
       let actionSelector = this._highlightedSelector;
       let actionPoint: Point | undefined;
@@ -228,13 +228,13 @@ export class RecorderSupplement {
       return uiState;
     });
 
-    await this._context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
+    await this._context.exposeBinding('_playwrightRecorderSetSelector', 'utility', false, async (_, selector: string) => {
       this._setMode('none');
       await this._recorderApp?.setSelector(selector, true);
       await this._recorderApp?.bringToFront();
     });
 
-    await this._context.exposeBinding('_playwrightResume', false, () => {
+    await this._context.exposeBinding('_playwrightResume', 'utility', false, () => {
       this._resume(false).catch(() => {});
     });
 
@@ -284,7 +284,7 @@ export class RecorderSupplement {
 
   private _refreshOverlay() {
     for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'utility').catch(() => {});
   }
 
   private async _onPage(page: Page) {

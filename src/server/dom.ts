@@ -97,6 +97,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           [${custom.join(',\n')}]
         );
         })();
+        //# sourceURL=injectedScriptSource.js
       `;
       this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
