@@ -10998,7 +10998,7 @@ index b645593fb8f32fceb3ce65a632a493f845f64568..3c9a7d273b950b111fc5543aa11d6a86
  {
      if (!m_uiDelegate)
 diff --git a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
-index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7aac655b5 100644
+index e37adf8e47a53311e43a24f0d51246588e5882cd..734c4ad9432096be60d60edbe46cd2abf038ce0e 100644
 --- a/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/WebPageProxyCocoa.mm
 @@ -34,6 +34,7 @@
@@ -11009,7 +11009,7 @@ index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7
  #import "QuickLookThumbnailLoader.h"
  #import "SafeBrowsingSPI.h"
  #import "SafeBrowsingWarning.h"
-@@ -219,9 +220,64 @@ bool WebPageProxy::scrollingUpdatesDisabledForTesting()
+@@ -219,9 +220,61 @@ bool WebPageProxy::scrollingUpdatesDisabledForTesting()
  
  void WebPageProxy::startDrag(const DragItem& dragItem, const ShareableBitmap::Handle& dragImageHandle)
  {
@@ -11021,11 +11021,8 @@ index e37adf8e47a53311e43a24f0d51246588e5882cd..2b1e231bdb8db2631046be1f0fc600a7
 +        m_dragSourceOperationMask = WebCore::anyDragOperation();
 +
 +        if (auto& info = dragItem.promisedAttachmentInfo) {
-+            NSString *utiType = info.contentType;
-+            if (auto attachment = attachmentForIdentifier(info.attachmentIdentifier))
-+                utiType = attachment->utiType();
-+
-+            if (!utiType.length) {
++            auto attachment = attachmentForIdentifier(info.attachmentIdentifier);
++            if (!attachment || attachment->utiType().isEmpty()) {
 +                dragCancelled();
 +                return;
 +            }
