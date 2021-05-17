@@ -39,7 +39,6 @@ void ${name}() {`;
   content = content.replace(/ async \(route, request\) => {/g, ' (route, request) -> {');
   content = content.replace(/ \(route, request\) => {/g, ' (route, request) -> {');
   content = content.replace(/(server.setRoute.+)\(req, res\) => \{/g, '$1exchange -> {');
-  content = content.replace(/page.on\('console', \w+ \=\>/g, 'page.addListener(CONSOLE, event ->');
 
   content = content.replace(/([^\\])"/g, '$1SINGLE_QUOTE');
   // content = content.replace(/(\) \=\>.*)'/g, '$1 XXX');
@@ -52,7 +51,7 @@ void ${name}() {`;
   content = content.replace(/`/g, '"');
 
   // quote lambdas
-  content = content.replace(/request => requests.push\(request\)/g, 'event -> requests.add((Request) event.data())');
+  content = content.replace(/request => requests.push\(request\)/g, 'request -> requests.add(request)');
   // content = content.replace(/, ([^,\(]+ \=\> [^\)]+)\)/g, ', "$1")');
   content = content.replace(/page.evaluate\((\(\) => [^\)]+)\)/g, 'page.evaluate("$1")');
 
@@ -120,7 +119,7 @@ void ${name}() {`;
   assertEquals(box.width, $3);
   assertEquals(box.height, $4);`);
   content = content.replace(/setViewportSize\({ width: (\d+), height: (\d+) }\)/g, 'setViewportSize($1, $2)');
-  content = content.replace(/page.on\("([^"]+)"/g, (match, p1, offset, string) => `page.addListener(${p1.toUpperCase()}`);
+  content = content.replace(/\.on\("([^"]+)", /g, (match, p1, offset, string) => `\.on${toTitleCase(p1)}(`);
   content = content.replace(/page.waitForEvent\("([^"]+)"/g, (match, p1, offset, string) => `page.waitForEvent(${p1.toUpperCase()}`);
 
   // try/catch
@@ -132,3 +131,7 @@ void ${name}() {`;
   console.log('Writing: ' + output);
   await util.promisify(fs.writeFile)(output, content)
 })();
+
+function toTitleCase(s) {
+  return s[0].toUpperCase() + s.substr(1);
+}
