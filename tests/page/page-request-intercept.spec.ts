@@ -127,8 +127,8 @@ it('should give access to the intercepted response', async ({page, server}) => {
   await Promise.all([route.fulfill(), evalPromise]);
 });
 
-it('should give access to the intercepted response status text', async ({page, server, browserName}) => {
-  it.fail(browserName === 'chromium', 'Status line is not reported for intercepted responses');
+it.only('should give access to the intercepted response status text', async ({page, server, browserName}) => {
+  // it.fail(browserName === 'chromium', 'Status line is not reported for intercepted responses');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/title.html', (req, res) => {
     res.statusCode = 200;
