@@ -435,7 +435,7 @@ it('should support https', async ({context, httpsServer}) => {
   }
 });
 
-it('should resolve url relative to baseURL', async function({browser, server, contextFactory, contextOptions}) {
+it('should resolve url relative to baseURL', async function({server, contextFactory, contextOptions}) {
   const context = await contextFactory({
     ...contextOptions,
     baseURL: server.PREFIX,
@@ -443,4 +443,20 @@ it('should resolve url relative to baseURL', async function({browser, server, co
   // @ts-expect-error
   const response = await context._fetch('/empty.html');
   expect(response.url()).toBe(server.EMPTY_PAGE);
+});
+
+it('should download binary data', async function({context, server}) {
+  const buffer = new ArrayBuffer(256);
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++)
+    bytes[i] = i;
+  server.setRoute('/data', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Length', buffer.byteLength);
+    res.end(Buffer.from(buffer));
+  });
+    // @ts-expect-error
+  const response = await context._fetch(server.PREFIX + '/data');
+  const body = await response.body();
+  expect(body).toEqual(Buffer.from(buffer));
 });
