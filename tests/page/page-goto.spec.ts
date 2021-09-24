@@ -35,17 +35,12 @@ it('canvas drawing', async ({ page }) => {
     }, num);
   }
 
-  await new Promise(f => setTimeout(f, 2000));
-  // await addLine(1); // Draw first line
-  await page.screenshot({ path: '/tmp/canvas-1.png' });
-
-  await new Promise(f => setTimeout(f, 2000));
-  // await addLine(2); // Add second line
-  await page.screenshot({ path: '/tmp/canvas-2.png' });
-
-  await new Promise(f => setTimeout(f, 2000));
-  // await addLine(3); // Add third line
-  await page.screenshot({ path: '/tmp/canvas-3.png' });
+  for (let i = 0; i < 5; i++) {
+    // await new Promise(f => setTimeout(f, 2000));
+    await addLine(i);
+    await new Promise(f => setTimeout(f, 100));
+    await page.screenshot({ path: `/tmp/canvas-${i}.png` });
+  }
 });
 
 it('should work', async ({page, server}) => {
