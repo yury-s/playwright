@@ -20,6 +20,34 @@ import os from 'os';
 import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
+
+it('canvas drawing', async ({ page }) => {
+  await page.goto('https://amoshydra.github.io/draw/', { waitUntil: 'networkidle' });
+
+  async function addLine(num:number) {
+    await page.evaluate((n) => {
+      const canvas = document.querySelector('canvas');
+      var ctx = canvas.getContext("2d");
+      ctx.beginPath();
+      ctx.moveTo(0, n * 100);
+      ctx.lineTo(300, n * 100);
+      ctx.stroke();
+    }, num);
+  }
+
+  await new Promise(f => setTimeout(f, 2000));
+  // await addLine(1); // Draw first line
+  await page.screenshot({ path: '/tmp/canvas-1.png' });
+
+  await new Promise(f => setTimeout(f, 2000));
+  // await addLine(2); // Add second line
+  await page.screenshot({ path: '/tmp/canvas-2.png' });
+
+  await new Promise(f => setTimeout(f, 2000));
+  // await addLine(3); // Add third line
+  await page.screenshot({ path: '/tmp/canvas-3.png' });
+});
+
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
