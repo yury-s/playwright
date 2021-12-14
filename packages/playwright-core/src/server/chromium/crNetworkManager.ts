@@ -176,10 +176,13 @@ export class CRNetworkManager {
 
     const requestId = event.networkId;
     const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(requestId);
+    console.log('requestId = ' + requestId + '  requestWillBeSentEvent = ' + requestWillBeSentEvent);
     if (requestWillBeSentEvent) {
       this._onRequest(workerFrame, requestWillBeSentEvent, event);
       this._requestIdToRequestWillBeSentEvent.delete(requestId);
     } else {
+      // this._client._sendMayFail('Fetch.continueRequest', { requestId: event.requestId });
+      // return;
       this._requestIdToRequestPausedEvent.set(requestId, event);
     }
   }

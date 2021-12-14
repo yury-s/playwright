@@ -21,8 +21,43 @@ import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
 it('should work', async ({ page, server }) => {
+  server.setRoute('/redir', (req, res) => {
+    console.log('req headers ' + JSON.stringify(req.headers, null, 2));
+    res.writeHead(302, {
+      'Accept-CH': 'Sec-CH-UA, Sec-CH-UA-Arch, Sec-CH-UA-Bitness, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Full-Version, Sec-CH-UA-Mobile, Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version',
+      'location': '/empty.html'
+    });
+    res.end();
+  });
+  server.setRoute('/empty.html', (req, res) => {
+    console.log('req headers ' + JSON.stringify(req.headers, null, 2));
+    res.setHeader('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Arch, Sec-CH-UA-Bitness, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Full-Version, Sec-CH-UA-Mobile, Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version');
+    res.end();
+  });
+  server.setRoute('/empty.html?id=1', (req, res) => {
+    console.log('req headers ' + JSON.stringify(req.headers, null, 2));
+    res.setHeader('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Arch, Sec-CH-UA-Bitness, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Full-Version, Sec-CH-UA-Mobile, Sec-CH-UA-Model, Sec-CH-UA-Platform, Sec-CH-UA-Platform-Version');
+    res.end();
+  });
+  await page.route(() => false, r => {});
+  console.log('AAA\n\n\n');
+  // await page.goto(server.PREFIX + '/redir');
   await page.goto(server.EMPTY_PAGE);
-  expect(page.url()).toBe(server.EMPTY_PAGE);
+  await page.goto(server.EMPTY_PAGE);
+  // await page.goto(server.EMPTY_PAGE + '?id=1');
+  console.log('BBB\n\n\n');
+  // expect(page.url()).toBe(server.EMPTY_PAGE);
+});
+
+it('should go to google', async ({ page, server }) => {
+  await page.route(() => false, async route => {
+    console.log('intercept');
+    await route.continue();
+  });
+  // page.on('request', async r => console.log('req ' + r.url() + '\n' + JSON.stringify(await r.allHeaders(), null, 2)));
+  // page.on('response', async r => console.log('res ' + r.url() + '\n' + JSON.stringify(await r.allHeaders(), null, 2)));
+  await page.goto('https://google.com');
+  // expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
 it('should work with file URL', async ({ page, asset, isAndroid }) => {
