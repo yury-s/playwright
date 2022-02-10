@@ -274,6 +274,15 @@ export class Route extends SdkObject {
       if (oldUrl.protocol !== newUrl.protocol)
         throw new Error('New URL must have same protocol as overridden URL');
     }
+    // Remove empty cookie values, WebKit on Linux doesn't like them.
+    for (const header of overrides.headers || []) {
+      if (header.name.toLocaleLowerCase() !== 'cookie')
+        continue;
+      console.log('cookie: ' + header.value);
+      header.value = header.value.split(';').map(s => s.trim()).filter(s => !!s.length).join('; ');
+      console.log('cookie after: ' + header.value);
+      break;
+    }
     await this._delegate.continue(this._request, overrides);
   }
 

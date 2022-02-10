@@ -36,6 +36,23 @@ it('should amend HTTP headers', async ({ page, server }) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
+it('should ignore empty cookie values', async ({ page, server }) => {
+  await page.route('**/*', route => {
+    const headers = {
+      ...route.request().headers(),
+      // 'cookie': ' ; a=b; ;  '
+      'cookie': 'a=b'
+    };
+    route.continue({ headers });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    server.waitForRequest('/sleep.zzz'),
+    page.evaluate(() => fetch('/sleep.zzz'))
+  ]);
+  expect(request.headers.cookie).toBe('a=b');
+});
+
 it('should amend method', async ({ page, server }) => {
   const sRequest = server.waitForRequest('/sleep.zzz');
   await page.goto(server.EMPTY_PAGE);

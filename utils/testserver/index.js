@@ -228,6 +228,8 @@ class TestServer {
    * @param {http.ServerResponse} response
    */
   _onRequest(request, response) {
+    console.log('url = ' + request.url);
+    console.log('headers = ' + JSON.stringify(request.headers, null, 2));
     request.on('error', error => {
       if (error.code === 'ECONNRESET')
         response.end();
