@@ -339,6 +339,9 @@ class NetworkRequest {
       return false;
 
     const shouldIntercept = this._shouldIntercept();
+    dump(`
+    shouldIntercept = ${shouldIntercept}
+    `);
     if (!shouldIntercept) {
       // We are not intercepting - ready to issue onRequest.
       this._sendOnRequest(false);
@@ -677,11 +680,18 @@ class NetworkObserver {
   }
 
   _onRequest(channel, topic) {
+    dump(`
+    _onRequest 1 
+    `);
     if (!(channel instanceof Ci.nsIHttpChannel))
       return;
     const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
     const channelId = httpChannel.channelId + '';
     const redirectedFrom = this._expectedRedirect.get(channelId);
+    dump(`            URI ${httpChannel.URI.spec} 
+    channelId = ${channelId}
+    redirectedFrom = ${redirectedFrom}
+    `);
     if (redirectedFrom) {
       this._expectedRedirect.delete(channelId);
       new NetworkRequest(this, httpChannel, redirectedFrom);

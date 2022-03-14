@@ -272,6 +272,7 @@ class TestServer {
    * @param {string|undefined} filePath
    */
   async serveFile(request, response, filePath) {
+    console.log('url: ' + request.url);
     let pathName = url.parse(request.url).path;
     if (!filePath) {
       if (pathName === '/')
@@ -288,7 +289,7 @@ class TestServer {
       response.setHeader('Cache-Control', 'public, max-age=31536000, no-cache');
       response.setHeader('Last-Modified', this._startTime.toISOString());
     } else {
-      response.setHeader('Cache-Control', 'no-cache, no-store');
+      // response.setHeader('Cache-Control', 'no-cache, no-store');
     }
     if (this._csp.has(pathName))
       response.setHeader('Content-Security-Policy', this._csp.get(pathName));

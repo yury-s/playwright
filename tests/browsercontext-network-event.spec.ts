@@ -17,11 +17,11 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('BrowserContext.Events.Request', async ({ context, server }) => {
+it.only('BrowserContext.Events.Request', async ({ context, server }) => {
   const page = await context.newPage();
   const requests = [];
   context.on('request', request => requests.push(request));
-  await page.goto(server.EMPTY_PAGE);
+  await page.goto('http://localhost:9000/empty.html');
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [page1] = await Promise.all([
     context.waitForEvent('page'),
@@ -30,7 +30,7 @@ it('BrowserContext.Events.Request', async ({ context, server }) => {
   await page1.waitForLoadState();
   const urls = requests.map(r => r.url());
   expect(urls).toEqual([
-    server.EMPTY_PAGE,
+    'http://localhost:9000/empty.html',
     `${server.PREFIX}/one-style.html`,
     `${server.PREFIX}/one-style.css`
   ]);
