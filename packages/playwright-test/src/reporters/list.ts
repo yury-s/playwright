@@ -61,12 +61,12 @@ class ListReporter extends BaseReporter {
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stdout);
+    this._dumpToStdio(test, chunk, 'stdout');
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stderr);
+    this._dumpToStdio(test, chunk, 'stderr');
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
@@ -85,7 +85,7 @@ class ListReporter extends BaseReporter {
     this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step.parent)), this._retrySuffix(result));
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, channel: 'stdout' | 'stderr') {
     if (this.config.quiet)
       return;
     const text = chunk.toString('utf-8');
@@ -94,7 +94,10 @@ class ListReporter extends BaseReporter {
       const newLineCount = text.split('\n').length - 1;
       this._lastRow += newLineCount;
     }
-    stream.write(chunk);
+    if (channel === 'stdout')
+      console.log(text);
+    else
+      console.error(text);
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
