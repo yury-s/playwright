@@ -170,42 +170,20 @@ test('should not include trace resources from the provious chunks', async ({ con
   }
 });
 
-test('should overwrite existing file', async ({ context, page, server }, testInfo) => {
+test.only('should overwrite existing file', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
   await page.goto(server.EMPTY_PAGE);
-  await page.setContent('<button>Click</button>');
-  await page.click('"Click"');
   const path = testInfo.outputPath('trace1.zip');
   await context.tracing.stop({ path });
-  {
-    const { resources } = await parseTrace(path);
-    const names = Array.from(resources.keys());
-    expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
-  }
 
+  console.log('\n\n\nstart');
   await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
   await context.tracing.stop({ path });
-
-  {
-    const { resources } = await parseTrace(path);
-    const names = Array.from(resources.keys());
-    expect(names.filter(n => n.endsWith('.html')).length).toBe(0);
-  }
+  console.log('\n\n\nstop');
 });
 
-test('should collect sources', async ({ context, page, server }, testInfo) => {
-  await context.tracing.start({ sources: true });
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent('<button>Click</button>');
-  await page.click('"Click"');
-  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
-
-  const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
-  const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
-  expect(sourceNames.length).toBe(1);
-  const sourceFile = resources.get(sourceNames[0]);
-  const thisFile = await fs.promises.readFile(__filename);
-  expect(sourceFile).toEqual(thisFile);
+test.only('should collect sources', async ({  }, testInfo) => {
+  await new Promise(r => setTimeout(r, 2000));
 });
 
 test('should record network failures', async ({ context, page, server }, testInfo) => {
@@ -475,6 +453,7 @@ test('should record global request trace', async ({ request, context, server }, 
       })
     ])
   }));
+  await new Promise(r => setTimeout(r, 2000));
 });
 
 test('should store global request traces separately', async ({ request, context, server, playwright }, testInfo) => {

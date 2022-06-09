@@ -54,7 +54,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
   fullyParallel: !process.env.CI,
-  forbidOnly: !!process.env.CI,
+  // forbidOnly: !!process.env.CI,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [

@@ -132,7 +132,9 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
     await use(browser);
+    console.log('\n\n\nstart closing browser:');
     await browser.close();
+    console.log('\n\n\ndid close browser');
   }, { scope: 'worker' } ],
 
   acceptDownloads: [ true, { option: true } ],
