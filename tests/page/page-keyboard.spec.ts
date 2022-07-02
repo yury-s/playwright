@@ -20,6 +20,17 @@ import { attachFrame } from '../config/utils';
 
 it.skip(({ isAndroid }) => isAndroid);
 
+it.only('should support clipboard commands', async ({ page, isMac }) => {
+  const modifier = isMac ? 'Meta' : 'Control';
+  await page.setContent(`<div contenteditable>123</div>`);
+  await page.focus('div');
+  await page.keyboard.press(`${modifier}+KeyA`);
+  await page.keyboard.press(`${modifier}+KeyC`);
+  await page.keyboard.press(`${modifier}+KeyV`);
+  await page.keyboard.press(`${modifier}+KeyV`);
+  expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
+});
+
 it('should type into a textarea @smoke', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
