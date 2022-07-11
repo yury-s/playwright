@@ -30,6 +30,22 @@ it('should fill textarea @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
+
+it.only('should press buttons', async ({ page, server }) => {
+  await page.goto('https://ckeditor.com/ckeditor-4/demo/#article');
+  const frame_locator = page.frameLocator('.cke_wysiwyg_frame.cke_reset');
+  await frame_locator.locator('[aria-label="Editor, ckdemo"]').click({ position: { x: 0, y: 0 } });
+  await frame_locator.locator('[aria-label="Editor, ckdemo"]').press('Control+A');
+  await frame_locator.locator('[aria-label="Editor, ckdemo"]').press('Backspace');
+
+  console.log('\n\n\n\n');
+  await frame_locator.locator(':nth-match(h2,1)').highlight();
+  await frame_locator.locator(':nth-match(h2,1)').press('A', { delay: 50 });
+  await page.waitForTimeout(400000);
+  await frame_locator.locator('[aria-label="Editor, ckdemo"]').press('A');
+  await expect(frame_locator.locator(':nth-match(h2,1)')).toHaveText('A');
+});
+
 it('should fill input', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('input', 'some value');
