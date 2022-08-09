@@ -2,7 +2,7 @@
 * since: v1.8
 * langs: csharp, js, python
 
-**DEPRECATED** This class is deprecated. Please follow our [accessbility testing](../accessibility-testing.md) guide if you need to test page accessibility.
+**DEPRECATED** This class is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by
 assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
@@ -48,7 +48,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
   - `orientation` <[string]> Whether the node is oriented horizontally or vertically, if applicable.
   - `children` <[Array]<[Object]>> Child nodes, if any, if applicable.
 
- **DEPRECATED** This method is deprecated. Please follow our [accessbility testing](../accessibility-testing.md)guide if you need to test page accessibility.
+**DEPRECATED** This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 Captures the current state of the accessibility tree. The returned object represents the root accessible node of the
 page.
