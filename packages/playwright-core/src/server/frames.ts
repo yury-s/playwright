@@ -337,10 +337,12 @@ export class FrameManager {
     this._page.emitOnContext(BrowserContext.Events.RequestFinished, { request, response });
   }
 
-  requestFailed(request: network.Request, canceled: boolean) {
+  requestFailed(request: network.Request, canceled: boolean, hasProvisionalPage?: boolean) {
     const frame = request.frame()!;
     this._inflightRequestFinished(request);
-    if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
+    console.log('requestFailed frame.pendingDocument() = ' + frame.pendingDocument());
+    if (frame.pendingDocument() && frame.pendingDocument()!.request === request && !hasProvisionalPage) {
+      console.log('    frame.pendingDocument()!.request === request = ' + (frame.pendingDocument()!.request === request));
       let errorText = request.failure()!.errorText;
       if (canceled)
         errorText += '; maybe frame was detached?';

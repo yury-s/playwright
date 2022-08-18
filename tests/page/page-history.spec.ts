@@ -94,6 +94,56 @@ it('page.reload should work with data url', async ({ page, server }) => {
   expect(await page.content()).toContain('hello');
 });
 
+it('page.reload should work after redirect', async ({ page, server }) => {
+  server.setRedirect('/foo', '/bar');
+  server.setRedirect('/bar', server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
+  let order = 0;
+  server.setRoute('/frames/frame.html', (req, res) => {
+    ++order;
+    console.log('XXX');
+    const finishResponse = (order == 2) || true;
+    const body = '<title>xxx</title>';
+    res.writeHead(200, {
+      'content-type': 'text/html',
+      'content-length': finishResponse ? '' + body.length : '8192'
+    });
+    res.write(body);
+    if (finishResponse)
+      res.end('');
+  });
+  console.log('\n\n\n\n');
+  await page.goto(server.PREFIX + '/foo');
+  console.log('did navigagte');
+  await expect(page).toHaveURL(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
+  console.log('\n\n\n\n');
+  await page.reload();
+});
+
+it.only('page.reload should work after redirect 2', async ({ page, server }) => {
+  console.log('\n\n\n\n');
+  const inflight = new Set();
+  page.on('request', req => {
+    inflight.add(req.url());
+    console.log('req: ' + req.method() + ': ' + req.url());
+  });
+  page.on('requestfinished', req => {
+    inflight.delete(req.url());
+    // console.log('finished: ' + req.url())
+  });
+  page.on('frameattached', fram => console.log('**FRAME ' + fram.url()));
+  await page.goto("http://demorgen.be");
+  console.log('\n\n\n\n');
+  console.log('IN flight: ');
+  for (const s of inflight.values())
+    console.log('inflight: ' + s);
+  await page.waitForURL('https://myprivacy.dpgmedia.be/**/*');
+  // await page.waitForTimeout(2000);
+  console.log('\n\n\n\n');
+  await page.reload();
+  console.log('\n\n\n\n');
+  await page.waitForTimeout(2000000);
+});
+
 it('page.reload during renderer-initiated navigation', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);

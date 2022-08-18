@@ -451,6 +451,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameStoppedLoading(frameId: string) {
+    console.log('XXX _onFrameStoppedLoading');
     this._page._frameManager.frameStoppedLoading(frameId);
   }
 
@@ -1103,6 +1104,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onLoadingFailed(event: Protocol.Network.loadingFailedPayload) {
+    console.log('XXX loadingFailed');
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
     // @see https://crbug.com/750469
@@ -1122,7 +1124,8 @@ export class WKPage implements PageDelegate {
     }
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
-    this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));
+    console.log('has provisional page: ' + this._provisionalPage);
+    this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'), !!this._provisionalPage);
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {
