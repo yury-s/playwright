@@ -33,6 +33,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@cucumber/cucumber-expressions": "^16.0.0",
+    "@cucumber/gherkin": "^24.0.0",
+    "@cucumber/messages": "^19.1.2",
     "@types/node": "*",
     "playwright-core": "1.27.0-next"
   }

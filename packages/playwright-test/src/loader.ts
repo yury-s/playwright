@@ -32,6 +32,7 @@ import { serializeError } from './util';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
+import { loadGherkinFeatureFile } from './gherkinLoader';
 
 export const defaultTimeout = 30000;
 
@@ -174,6 +175,8 @@ export class Loader {
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
+    if (file.endsWith('.feature'))
+      return await this.loadFeatureFile(file, environment);
     if (cachedFileSuites.has(file))
       return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
@@ -210,6 +213,28 @@ export class Loader {
             suite.location.file = mappedFile;
         }
       }
+    }
+
+    return suite;
+  }
+
+  async loadFeatureFile(file: string, environment: 'runner' | 'worker') {
+    if (cachedFileSuites.has(file))
+      return cachedFileSuites.get(file)!;
+    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file), 'file');
+    suite._requireFile = file;
+    suite.location = { file, line: 0, column: 0 };
+
+    setCurrentlyLoadingFileSuite(suite);
+    try {
+      await loadGherkinFeatureFile(suite, file, environment);
+      cachedFileSuites.set(file, suite);
+    } catch (e) {
+      if (environment === 'worker')
+        throw e;
+      suite._loadError = serializeError(e);
+    } finally {
+      setCurrentlyLoadingFileSuite(undefined);
     }
 
     return suite;

@@ -18,6 +18,7 @@ import type { FixturePool } from './fixtures';
 import type * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
 import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
+import type { Expression } from '@cucumber/cucumber-expressions';
 
 class Base {
   title: string;
@@ -52,6 +53,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _projectConfig: FullProjectInternal | undefined;
   _loadError?: reporterTypes.TestError;
   _fileId: string | undefined;
+  _bddSteps: { type: 'Given' | 'When' | 'Then', fn: Function, location: Location, expression: Expression }[] = [];
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {

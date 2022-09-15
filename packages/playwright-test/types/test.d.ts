@@ -2623,6 +2623,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * otherwise it throws.
    */
   info(): TestInfo;
+
+  Given(pattern: string | RegExp, inner: (fixtures: TestArgs & WorkerArgs, ...args: any[]) => Promise<any> | any): void;
+  When(pattern: string | RegExp, inner: (fixtures: TestArgs & WorkerArgs, ...args: any[]) => Promise<any> | any): void;
+  Then(pattern: string | RegExp, inner: (fixtures: TestArgs & WorkerArgs, ...args: any[]) => Promise<any> | any): void;
+  // TODO: suppot bdd hooks
+  // TODO: And, But
 }
 
 type KeyValue = { [key: string]: any };

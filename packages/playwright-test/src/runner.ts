@@ -260,7 +260,7 @@ export class Runner {
       const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
-      const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
+      const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx', '.feature'];
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
       files.set(project, testFiles);

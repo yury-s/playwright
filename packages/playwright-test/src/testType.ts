@@ -20,12 +20,17 @@ import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
+import { CucumberExpression, ParameterTypeRegistry, RegularExpression } from '@cucumber/cucumber-expressions';
 
 const testTypeSymbol = Symbol('testType');
 
 export class TestTypeImpl {
   readonly fixtures: FixturesWithLocation[];
   readonly test: TestType<any, any>;
+
+  static _fromTest(test: TestType<any, any>): TestTypeImpl {
+    return (test as any)[testTypeSymbol] as TestTypeImpl;
+  }
 
   constructor(fixtures: FixturesWithLocation[]) {
     this.fixtures = fixtures;
@@ -56,6 +61,11 @@ export class TestTypeImpl {
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
+
+    test.Given = wrapFunctionWithLocation(this._bddTestStep.bind(this, 'Given'));
+    test.When = wrapFunctionWithLocation(this._bddTestStep.bind(this, 'When'));
+    test.Then = wrapFunctionWithLocation(this._bddTestStep.bind(this, 'Then'));
+
     test.info = () => {
       const result = currentTestInfo();
       if (!result)
@@ -137,6 +147,18 @@ export class TestTypeImpl {
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
     const suite = this._ensureCurrentSuite(location, `test.${name}()`);
     suite._hooks.push({ type: name, fn, location });
+  }
+
+  private _bddTestStep(name: 'Given' | 'When' | 'Then', location: Location, pattern: string | RegExp, fn: Function) {
+    let expression;
+    const registry = new ParameterTypeRegistry();
+    if (typeof pattern === 'string')
+      expression = new CucumberExpression(pattern, registry);
+    else
+      expression = new RegularExpression(pattern, registry);
+    const suite = this._ensureCurrentSuite(location, `test.${name}()`);
+    // console.log('_bddTestStep '  + name + ' ' + expression.regexp + ' suite = ' + suite);
+    suite._bddSteps.push({ type: name, location, expression, fn });
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
