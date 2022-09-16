@@ -24,6 +24,7 @@ import { CucumberExpression, ParameterTypeRegistry, RegularExpression } from '@c
 
 const testTypeSymbol = Symbol('testType');
 
+
 export class TestTypeImpl {
   readonly fixtures: FixturesWithLocation[];
   readonly test: TestType<any, any>;
@@ -159,6 +160,7 @@ export class TestTypeImpl {
     const suite = this._ensureCurrentSuite(location, `test.${name}()`);
     // console.log('_bddTestStep '  + name + ' ' + expression.regexp + ' suite = ' + suite);
     suite._bddSteps.push({ type: name, location, expression, fn });
+    Suite._globalBddSteps.push({ type: name, location, expression, fn });
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {

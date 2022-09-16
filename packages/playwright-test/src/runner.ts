@@ -273,6 +273,14 @@ export class Runner {
     const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
 
     const allTestFiles = new Set<string>();
+    // FIXME: Make sure steps are added first before any .feature files
+    for (const files of filesByProject.values()) {
+      files.forEach(file => {
+        if (file.endsWith('.steps.ts') || file.endsWith('.steps.js') || file.endsWith('.steps.mjs' ))
+          allTestFiles.add(file);
+      });
+    }
+
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
 

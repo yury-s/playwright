@@ -20,7 +20,7 @@ import { IdGenerator } from '@cucumber/messages';
 import * as fs from 'fs';
 import { Suite, TestCase } from './test';
 import { test } from './index';
-import { TestTypeImpl } from '../lib/testType';
+import { TestTypeImpl } from './testType';
 
 
 export async function loadGherkinFeatureFile(parent: Suite, file: string, environment: 'runner' | 'worker') {
@@ -38,6 +38,23 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
 
   const addTestCaseForScenario = (scenario: Scenario) => {
     // TODO: derive all params
+
+    for (const step of scenario.steps) {
+      // TODO: use keywordType instead to support localization
+
+      // _bddSteps.get(step.keyword);
+      console.log('Suite._globalBddSteps = ' + Suite._globalBddSteps.map(s => s.expression.source));
+      console.log('Matching ' + step.keyword + ' text = ' + step.text);
+      const definitions = Suite._globalBddSteps.filter(definition => {
+        if (definition.type !== step.keyword)
+          return;
+
+        const mathes = !!definition.expression.match(step.text);
+        console.log(`  matches=${mathes} source=${definition.expression.source}`);
+      });
+      console.log(' definitions = ' + definitions);
+    }
+
     const testCase = new TestCase(scenario.name, ({ page }) => { console.log('Scenario '); }, testType, { file, column: 0, ...scenario.location });
     testCase._requireFile = suite._requireFile;
     suite._addTest(testCase);

@@ -54,6 +54,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _loadError?: reporterTypes.TestError;
   _fileId: string | undefined;
   _bddSteps: { type: 'Given' | 'When' | 'Then', fn: Function, location: Location, expression: Expression }[] = [];
+  static _globalBddSteps: { type: 'Given' | 'When' | 'Then', fn: Function, location: Location, expression: Expression }[] = [];
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
