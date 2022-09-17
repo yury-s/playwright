@@ -129,6 +129,7 @@ export class Suite extends Base implements reporterTypes.Suite {
 
 export class TestCase extends Base implements reporterTypes.TestCase {
   fn: Function;
+  bddFunction?: (fixtures: any) => any;
   results: reporterTypes.TestResult[] = [];
   location: Location;
   parent!: Suite;
@@ -179,6 +180,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   _clone(): TestCase {
     const test = new TestCase(this.title, this.fn, this._testType, this.location);
+    test.bddFunction = this.bddFunction;
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;

@@ -406,12 +406,16 @@ export class FixtureRunner {
 
 const signatureSymbol = Symbol('signature');
 
-function fixtureParameterNames(fn: Function | any, location: Location): string[] {
+export function fixtureParameterNames(fn: Function | any, location: Location): string[] {
   if (typeof fn !== 'function')
     return [];
   if (!fn[signatureSymbol])
     fn[signatureSymbol] = innerFixtureParameterNames(fn, location);
   return fn[signatureSymbol];
+}
+
+export function setFixtureParameterNames(fn: Function, names: string[]) {
+  (fn as any)[signatureSymbol] = names;
 }
 
 function innerFixtureParameterNames(fn: Function, location: Location): string[] {

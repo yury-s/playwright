@@ -169,6 +169,9 @@ export class WorkerRunner extends EventEmitter {
     let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
+      // Load steps before .feature
+      for (const stepsFile of runPayload.stepsFiles)
+        await this._loader.loadTestFile(stepsFile, 'worker');
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
         if (runPayload.watchMode) {
@@ -387,7 +390,7 @@ export class WorkerRunner extends EventEmitter {
 
         // Now run the test itself.
         debugTest(`test function started`);
-        const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
+        const fn = test.bddFunction || test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(params, testInfo);
         debugTest(`test function finished`);
       }, 'allowSkips');

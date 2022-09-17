@@ -276,7 +276,7 @@ export class Runner {
     // FIXME: Make sure steps are added first before any .feature files
     for (const files of filesByProject.values()) {
       files.forEach(file => {
-        if (file.endsWith('.steps.ts') || file.endsWith('.steps.js') || file.endsWith('.steps.mjs' ))
+        if (file.endsWith('.steps.ts') || file.endsWith('.steps.js') || file.endsWith('.steps.mjs'))
           allTestFiles.add(file);
       });
     }
@@ -522,6 +522,7 @@ export class Runner {
         const group: TestGroup = {
           workerHash: `run${project.id}-repeat${repeatEachIndex}`,
           requireFile: file,
+          stepsFiles: [],
           repeatEachIndex,
           projectId: project.id,
           tests: [],
@@ -840,9 +841,16 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
   }>>();
 
   const createGroup = (test: TestCase): TestGroup => {
+    let stepsFiles: string[] = [];
+    if (test._requireFile.endsWith('.feature')) {
+      const fileSet = new Set<string>();
+      Suite._globalBddSteps.forEach(d => fileSet.add(d.location.file));
+      stepsFiles = Array.from(fileSet);
+    }
     return {
       workerHash: test._workerHash,
       requireFile: test._requireFile,
+      stepsFiles: stepsFiles,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
       tests: [],

@@ -21,6 +21,8 @@ import * as fs from 'fs';
 import { Suite, TestCase } from './test';
 import { test } from './index';
 import { TestTypeImpl } from './testType';
+import { fixtureParameterNames } from './fixtures';
+import { debugTest } from './util';
 
 
 export async function loadGherkinFeatureFile(parent: Suite, file: string, environment: 'runner' | 'worker') {
@@ -37,24 +39,57 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
   const testType = TestTypeImpl._fromTest(test);
 
   const addTestCaseForScenario = (scenario: Scenario) => {
-    // TODO: derive all params
+    const parameterNames = new Set();
+    // Derive all parameter names from step definitions.
     for (const step of scenario.steps) {
       // TODO: use keywordType instead to support localization
       const definitions = Suite._globalBddSteps.filter(definition => {
         if (definition.type !== step.keyword.trim())
           return;
-        const mathes = !!definition.expression.match(step.text);
+        const mathes = definition.expression.match(step.text);
         // console.log(`  matches=${mathes} source=${definition.expression.source}`);
-        return mathes;
+        return !!mathes;
       });
-      console.log(' definitions = ' + definitions);
       if (definitions.length === 0)
         throw new Error(`No matching definition for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
       if (definitions.length > 1)
         throw new Error(`Multiple definitions for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+
+      const names = fixtureParameterNames(definitions[0].fn, definitions[0].location);
+      names.forEach(n => parameterNames.add(n));
     }
 
-    const testCase = new TestCase(scenario.name, ({ page }) => { console.log('Scenario '); }, testType, { file, column: 0, ...scenario.location });
+    const parametersString = Array.from(parameterNames).join(', ');
+    // TODO: save parameters names on TestCase instead.
+    const testFn = new Function(`{${parametersString}}`, `console.log('Scenario (${parametersString})');`);
+
+    // console.log('fn = ' + testFn);
+    const testCase = new TestCase(scenario.name, testFn, testType, { file, column: 0, ...scenario.location });
+    if (environment === 'worker') {
+      testCase.bddFunction = async (fixtures: any) => {
+        debugTest(`running steps for scenario: ${scenario.name}`);
+        for (const step of scenario.steps) {
+        // TODO: use keywordType instead to support localization
+          const definitions = Suite._globalBddSteps.filter(definition => {
+            if (definition.type !== step.keyword.trim())
+              return;
+            const mathes = definition.expression.match(step.text);
+            return !!mathes;
+          });
+          if (definitions.length === 0)
+            throw new Error(`No matching definition for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+          if (definitions.length > 1)
+            throw new Error(`Multiple definitions for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+          const definition = definitions[0];
+          const stepArguments = definition.expression.match(step.text)!.map(arg => arg.getValue({}));
+          const fn = definition.fn;// Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
+          debugTest(`bdd step started: ${step.text}`);
+          await fn(fixtures, ...stepArguments);
+          debugTest(`bdd step finished: ${step.text}`);
+        }
+      };
+      debugTest(`added testCase.bddFunction`);
+    }
     testCase._requireFile = suite._requireFile;
     suite._addTest(testCase);
   };

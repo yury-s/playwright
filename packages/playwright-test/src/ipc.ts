@@ -94,6 +94,7 @@ export type TestEntry = {
 
 export type RunPayload = {
   file: string;
+  stepsFiles: string[];
   entries: TestEntry[];
   watchMode: boolean;
 };

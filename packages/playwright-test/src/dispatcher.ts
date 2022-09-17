@@ -28,6 +28,7 @@ import { TestTypeImpl } from './testType';
 export type TestGroup = {
   workerHash: string;
   requireFile: string;
+  stepsFiles: string[];
   repeatEachIndex: number;
   projectId: string;
   tests: TestCase[];
@@ -563,6 +564,7 @@ class Worker extends EventEmitter {
   run(testGroup: TestGroup) {
     const runPayload: RunPayload = {
       file: testGroup.requireFile,
+      stepsFiles: testGroup.stepsFiles,
       entries: testGroup.tests.map(test => {
         return { testId: test.id, retry: test.results.length };
       }),
