@@ -48,8 +48,9 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
   const addTestCaseForScenario = (scenario: Scenario) => {
     const parameterNames = new Set<string>();
 
-    const steps = [...backgroundSteps];
+    const steps = [...backgroundSteps, ...scenario.steps];
 
+    // TODO: Cucumber will replace these parameters with values from the table before it tries to match the step against a step definition.
     // if (scenario.examples.length) {
     //   // scenario.
     //   for (const example of scenario.examples) {
@@ -59,7 +60,7 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
     //     }
     //   }
     // } else {
-    steps.push(...scenario.steps);
+    //   steps.push(...scenario.steps);
     // }
 
     // Derive all parameter names from step definitions.
@@ -84,24 +85,52 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
 
     const testFn = async (fixtures: any) => {
       debugTest(`  bdd running steps for scenario: ${scenario.name}`);
-      for (const step of steps) {
-        // TODO: use keywordType instead to support localization
-        const definitions = Suite._globalBddSteps.filter(definition => {
-          if (definition.type !== step.keyword.trim())
-            return;
-          const mathes = definition.expression.match(step.text);
-          return !!mathes;
-        });
-        if (definitions.length === 0)
-          throw new Error(`No matching definition for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
-        if (definitions.length > 1)
-          throw new Error(`Multiple definitions for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
-        const definition = definitions[0];
-        const stepArguments = definition.expression.match(step.text)!.map(arg => arg.getValue({}));
-        const fn = definition.fn;// Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
-        debugTest(`  bdd step started: ${step.text}`);
-        await fn(fixtures, ...stepArguments);
-        debugTest(`  bdd step finished: ${step.text}`);
+
+      const runOneExample = async (exampleArgs: Map<string, any>) => {
+        for (const step of steps) {
+          // TODO: use keywordType instead to support localization
+          const definitions = Suite._globalBddSteps.filter(definition => {
+            if (definition.type !== step.keyword.trim())
+              return;
+            const mathes = definition.expression.match(step.text);
+            return !!mathes;
+          });
+          if (definitions.length === 0)
+            throw new Error(`No matching definition for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+          if (definitions.length > 1)
+            throw new Error(`Multiple definitions for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+          const definition = definitions[0];
+          const stepArguments = definition.expression.match(step.text)!.map(arg => {
+            const value = arg.getValue({});
+            debugTest(`  value: ${value}`);
+            if (typeof value === 'string') {
+              let key = value.trim();
+              key = key.substring(1, key.length - 1);
+              debugTest(`  key: ${key}`);
+              if (exampleArgs.has(key))
+                return exampleArgs.get(key);
+            }
+            return value;
+          });
+          const fn = definition.fn;// Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
+          debugTest(`  bdd step started: ${step.text}`);
+          await fn(fixtures, ...stepArguments);
+          debugTest(`  bdd step finished: ${step.text}`);
+        }
+      };
+      if (scenario.examples.length) {
+        for (const example of scenario.examples) {
+          const names =  example.tableHeader?.cells.map(c => c.value);
+          for (const row of example.tableBody) {
+            const exampleArgs = new Map();
+            debugTest(`  bdd running next example with: ${row.cells.map(c => c.value).join(' ')}`);
+            for (let i = 0; i < (names?.length || 0); i++)
+              exampleArgs.set(names?.[i], row.cells[i].value);
+            await runOneExample(exampleArgs);
+          }
+        }
+      } else {
+        await runOneExample(new Map());
       }
     };
     setFixtureParameterNames(testFn, Array.from(parameterNames));
