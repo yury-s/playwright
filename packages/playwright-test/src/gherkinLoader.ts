@@ -38,21 +38,20 @@ export async function loadGherkinFeatureFile(parent: Suite, file: string, enviro
 
   const addTestCaseForScenario = (scenario: Scenario) => {
     // TODO: derive all params
-
     for (const step of scenario.steps) {
       // TODO: use keywordType instead to support localization
-
-      // _bddSteps.get(step.keyword);
-      console.log('Suite._globalBddSteps = ' + Suite._globalBddSteps.map(s => s.expression.source));
-      console.log('Matching ' + step.keyword + ' text = ' + step.text);
       const definitions = Suite._globalBddSteps.filter(definition => {
-        if (definition.type !== step.keyword)
+        if (definition.type !== step.keyword.trim())
           return;
-
         const mathes = !!definition.expression.match(step.text);
-        console.log(`  matches=${mathes} source=${definition.expression.source}`);
+        // console.log(`  matches=${mathes} source=${definition.expression.source}`);
+        return mathes;
       });
       console.log(' definitions = ' + definitions);
+      if (definitions.length === 0)
+        throw new Error(`No matching definition for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
+      if (definitions.length > 1)
+        throw new Error(`Multiple definitions for step(${environment}): '${step.text}'\n  mentioned at ${file} ${JSON.stringify(step.location)}`);
     }
 
     const testCase = new TestCase(scenario.name, ({ page }) => { console.log('Scenario '); }, testType, { file, column: 0, ...scenario.location });
