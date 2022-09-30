@@ -31,6 +31,8 @@
    //   stage: 0
    //   runAlways: false
    //   stopOnFailure: false
+   //
+   // runAlways is redundant - can be solved by running --project=setup,smoke,teardown instead
    // stage aka order, phase, ...
    // workers - later
    projects: [
@@ -88,7 +90,6 @@
       {
         name: 'teardown',
         testMatch: '**/*teardown.ts',
-        
         stage: 100,
         canShard: false,
         runAlways: true,
