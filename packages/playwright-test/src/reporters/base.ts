@@ -92,7 +92,7 @@ export class BaseReporter implements ReporterInternal  {
     }
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
-    const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
+    const fileAndProject = (projectName ? `[${projectName}] \u203A ` : '') + relativePath;
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
   }
@@ -354,7 +354,8 @@ function relativeTestPath(config: FullConfig, test: TestCase): string {
 
 function stepSuffix(step: TestStep | undefined) {
   const stepTitles = step ? step.titlePath() : [];
-  return stepTitles.map(t => ' › ' + t).join('');
+  // \u203A is ›
+  return stepTitles.map(t => ' \u203A ' + t).join('');
 }
 
 export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
@@ -365,8 +366,9 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
     location = `${relativeTestPath(config, test)}`;
   else
     location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
-  const projectTitle = projectName ? `[${projectName}] › ` : '';
-  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
+  // \u203A is ›
+  const projectTitle = projectName ? `[${projectName}] \u203A ` : '';
+  return `${projectTitle}${location} \u203A ${titles.join(' \u203A ')}${stepSuffix(step)}`;
 }
 
 function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
