@@ -28,6 +28,24 @@ when: {
 
 
 
+_________________________________
+
+- concern: rename 'run' to what?
+- concern: run: always runs even after setup failures
+-  
+
+
+
+Use cases:
+
+- global setup (login) with tracing, video, report etc. (10 bugs)
+- global setup per project (5 bugs)
+- order between files (a lot)
+- single threaded
+
+
+
+-- storage stage always applies to each project
 
 
 
