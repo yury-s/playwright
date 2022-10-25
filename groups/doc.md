@@ -45,6 +45,8 @@ Use cases:
 
 
 
+- fetch tests from DB
+
 -- storage stage always applies to each project
 
 
