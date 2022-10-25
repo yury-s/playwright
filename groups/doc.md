@@ -44,13 +44,21 @@ Use cases:
 - single threaded
 
 
+_________________________________
 
 - fetch tests from DB
-
 -- storage stage always applies to each project
 
+_________________________________
 
+- test.configure({ globalSetup: 10 });
+- project config globalSetup: true  (no way to lazily select required setups)
+- project dependencies
+- projectSetup (no way to lazily select required setups)
+  + globalSetup that may contain test() calls
+  - both will require use({ storageState: undefined })
 
+- test.globalSetup - no easy way to descover when filtering out just one file (load files after filtering by file:line)
 
 
 
