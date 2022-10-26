@@ -61,7 +61,9 @@ _________________________________
 - test.globalSetup - no easy way to descover when filtering out just one file (load files after filtering by file:line)
 
 
-
+__________________________________
+- no need for order between projects, only order between files
+- 
 
 
 
