@@ -103,7 +103,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       stdio: 'stdin',
       shell: true,
       attemptToGracefullyClose: async () => {},
-      log: () => {},
+      log: (m) => {console.log(m)},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],
     });
