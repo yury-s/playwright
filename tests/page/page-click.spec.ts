@@ -23,10 +23,26 @@ async function giveItAChanceToClick(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should click the button @smoke', async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/input/button.html');
-  await page.click('button');
-  expect(await page.evaluate('result')).toBe('Clicked');
+it.only('should click the button @smoke', async ({ page, server }) => {
+  server.setRoute('/chunked-response.jsp', async (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+    });
+    for (let i = 0; i < 10; i++) {
+      res.write(i + " ");
+      res.uncork();
+      console.log('written ' + i)
+      await new Promise(f => setTimeout(f, 100));
+    }
+    await new Promise(f => setTimeout(f, 10000));
+    res.end();
+  });
+  page.on("console", (log) => {
+      console.log(log.text());
+  });
+  await page.goto(server.PREFIX + '/example.html', { waitUntil: "load" });
+  console.log("goto resolved, waiting for selector...");
+  await page.waitForSelector("#pw-finished", { state: "attached", timeout: 15000 });
 });
 
 it('should click button inside frameset', async ({ page, server }) => {

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="application/javascript">
+        async function loadXhr() {
+            console.log(performance.now().toFixed(2), "sending xhr...");
+            fetch(`chunked-response.jsp`);
+            
+            setTimeout(function() {
+                var div = document.createElement("div");
+                div.id = "pw-finished";
+                document.body.appendChild(div);
+                console.log(performance.now().toFixed(2), "div attached!");
+            }, 1000);
+        }
+    </script>
+</head>
+<body onload="loadXhr()">
+loads some long request onload
+</body>
+</html>
