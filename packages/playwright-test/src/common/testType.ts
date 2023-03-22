@@ -20,6 +20,7 @@ import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { serializeError } from '../util';
+import { captureRawStack, zones } from 'playwright-core/lib/utils';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -221,7 +222,7 @@ export class TestTypeImpl {
       wallTime: Date.now(),
     });
     try {
-      const result = await body();
+      const result = await step.runInStepZone(body);
       step.complete({});
       return result;
     } catch (e) {

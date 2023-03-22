@@ -82,6 +82,7 @@ export type TestEndPayload = {
 export type StepBeginPayload = {
   testId: string;
   stepId: string;
+  parentStepId?: string;
   title: string;
   category: string;
   canHaveChildren: boolean;

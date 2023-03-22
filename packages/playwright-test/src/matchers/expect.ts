@@ -269,7 +269,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       try {
         const expectZone: ExpectZone = { title: defaultTitle, wallTime };
         const result = zones.run<ExpectZone, any>('expectZone', expectZone, () => {
-          return matcher.call(target, ...args);
+          return step.runInStepZone(() => {
+            return matcher.call(target, ...args);
+          });
         });
         if (result instanceof Promise)
           return result.then(() => finalizer()).catch(reportStepError);

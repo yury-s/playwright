@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, zones } from 'playwright-core/lib/utils';
 import type { TestInfoError, TestInfo, TestStatus } from '../../types/test';
 import type { StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -32,6 +32,7 @@ export type TestInfoErrorState = {
 };
 
 interface TestStepInternal {
+  runInStepZone<T>(fn: () => T | Promise<T>): T | Promise<T>;
   complete(result: { error?: Error | TestInfoError }): void;
   title: string;
   category: string;
@@ -209,7 +210,8 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'runInStepZone'>): TestStepInternal {
+    const parentStepId = zones.zoneData<string | undefined>('stepZone', captureRawStack()) || undefined;
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
     let callbackHandled = false;
     const firstErrorIndex = this.errors.length;
@@ -239,7 +241,10 @@ export class TestInfoImpl implements TestInfo {
           error,
         };
         this._onStepEnd(payload);
-      }
+      },
+      runInStepZone: fn => {
+        return zones.run('stepZone', stepId, () => fn());
+      },
     };
     const hasLocation = data.location && !data.location.file.includes('@playwright');
     // Sanitize location that comes from user land, it might have extra properties.
@@ -247,6 +252,7 @@ export class TestInfoImpl implements TestInfo {
     const payload: StepBeginPayload = {
       testId: this._test.id,
       stepId,
+      parentStepId,
       ...data,
       location,
     };
@@ -282,10 +288,10 @@ export class TestInfoImpl implements TestInfo {
     this._hasHardError = state.hasHardError;
   }
 
-  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime'>): Promise<T> {
+  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete' | 'wallTime' | 'runInStepZone'>): Promise<T> {
     const step = this._addStep({ ...stepInfo, wallTime: Date.now() });
     try {
-      const result = await cb();
+      const result = await step.runInStepZone(cb);
       step.complete({});
       return result;
     } catch (e) {
