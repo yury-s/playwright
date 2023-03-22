@@ -16,14 +16,14 @@
 
 import type { RawStack } from './stackTrace';
 
-export type ZoneType = 'apiZone' | 'expectZone';
+type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
 
 class ZoneManager {
-  lastZoneId = 0;
+  private _lastZoneId = 0;
   readonly _zones = new Map<number, Zone<any>>();
 
   run<T, R>(type: ZoneType, data: T, func: (data: T) => R | Promise<R>): R | Promise<R> {
-    return new Zone<T>(this, ++this.lastZoneId, type, data).run(func);
+    return new Zone<T>(this, ++this._lastZoneId, type, data).run(func);
   }
 
   zoneData<T>(type: ZoneType, rawStack: RawStack): T | null {
@@ -64,7 +64,7 @@ class Zone<T> {
   }
 }
 
-export function runWithFinally<R>(func: () => R | Promise<R>, finallyFunc: Function): R | Promise<R> {
+function runWithFinally<R>(func: () => R | Promise<R>, finallyFunc: Function): R | Promise<R> {
   try {
     const result = func();
     if (result instanceof Promise) {
