@@ -217,8 +217,6 @@ export class TestTypeImpl {
       category: 'test.step',
       title,
       location,
-      canHaveChildren: true,
-      forceNoParent: false,
       wallTime: Date.now(),
     });
     try {

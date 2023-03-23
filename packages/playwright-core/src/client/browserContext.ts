@@ -201,6 +201,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async newPage(): Promise<Page> {
     if (this._ownerPage)
       throw new Error('Please use browser.newContext()');
+    console.log('newPage', new Error().stack);
     return Page.from((await this._channel.newPage()).page);
   }
 

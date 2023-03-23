@@ -60,11 +60,11 @@ module.exports = Reporter;
 test('should report api step hierarchy', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepHierarchyReporter,
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: './reporter',
-      };
-    `,
+    // 'playwright.config.ts': `
+    //   module.exports = {
+    //     reporter: './reporter',
+    //   };
+    // `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({ page }) => {
@@ -80,8 +80,10 @@ test('should report api step hierarchy', async ({ runInlineTest }) => {
     `
   }, { reporter: '', workers: 1 });
 
+  console.log(result.output);
   expect(result.exitCode).toBe(0);
   const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  // console.log(JSON.stringify(objects, null, 2));
   expect(objects).toEqual([
     {
       category: 'hook',

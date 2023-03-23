@@ -328,8 +328,6 @@ export class WorkerMain extends ProcessRunner {
       const beforeHooksStep = testInfo._addStep({
         category: 'hook',
         title: 'Before Hooks',
-        canHaveChildren: true,
-        forceNoParent: true,
         wallTime: Date.now(),
       });
 
@@ -396,8 +394,6 @@ export class WorkerMain extends ProcessRunner {
     const afterHooksStep = testInfo._addStep({
       category: 'hook',
       title: 'After Hooks',
-      canHaveChildren: true,
-      forceNoParent: true,
       wallTime: Date.now(),
     });
     let firstAfterHooksError: TestInfoError | undefined;
@@ -423,8 +419,6 @@ export class WorkerMain extends ProcessRunner {
               await testInfo._runAsStep(fn, {
                 category: 'hook',
                 title,
-                canHaveChildren: true,
-                forceNoParent: false,
               });
               debugTest(`on-failure callback finished`);
             }
@@ -510,8 +504,6 @@ export class WorkerMain extends ProcessRunner {
       const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope), {
         category: 'hook',
         title: `${modifier.type} modifier`,
-        canHaveChildren: true,
-        forceNoParent: false,
         location: modifier.location,
       });
       debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
@@ -537,8 +529,6 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
           title: `${hook.type} hook`,
-          canHaveChildren: true,
-          forceNoParent: false,
           location: hook.location,
         });
       } catch (e) {
@@ -567,8 +557,6 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
           title: `${hook.type} hook`,
-          canHaveChildren: true,
-          forceNoParent: false,
           location: hook.location,
         });
       });
@@ -587,8 +575,6 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'), {
           category: 'hook',
           title: `${hook.type} hook`,
-          canHaveChildren: true,
-          forceNoParent: false,
           location: hook.location,
         });
       } catch (e) {

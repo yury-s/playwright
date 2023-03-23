@@ -36,8 +36,6 @@ interface TestStepInternal {
   complete(result: { error?: Error | TestInfoError }): void;
   title: string;
   category: string;
-  canHaveChildren: boolean;
-  forceNoParent: boolean;
   wallTime: number;
   location?: Location;
   refinedTitle?: string;
@@ -213,6 +211,9 @@ export class TestInfoImpl implements TestInfo {
   _addStep(data: Omit<TestStepInternal, 'complete' | 'runInStepZone'>): TestStepInternal {
     const parentStepId = zones.zoneData<string | undefined>('stepZone', captureRawStack()) || undefined;
     const stepId = `${data.category}@${data.title}@${++this._lastStepId}`;
+    console.log('stepId', stepId)
+    console.log('    parentStepId', parentStepId);
+    console.log('    stack', captureRawStack());
     let callbackHandled = false;
     const firstErrorIndex = this.errors.length;
     const step: TestStepInternal = {

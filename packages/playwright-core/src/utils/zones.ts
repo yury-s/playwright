@@ -38,6 +38,16 @@ class ZoneManager {
     }
     return null;
   }
+
+  allZoneData(type: ZoneType) {
+    const r = [];
+    for (const zone of this._zones.values()) {
+      if (zone.type === type)
+        r.push(zone.data);
+    }
+    return r.join(', ');
+  }
+
 }
 
 class Zone<T> {
@@ -60,6 +70,8 @@ class Zone<T> {
     Object.defineProperty(func, 'name', { value: `__PWZONE__[${this.id}]` });
     return runWithFinally(() => func(this.data), () => {
       this._manager._zones.delete(this.id);
+      if (this.type === 'stepZone')
+        console.log('    FINISHED zone ', this.id, 'data = ', this.data, '   ALL DATA = [', this._manager.allZoneData('stepZone'), ']');
     });
   }
 }
