@@ -64,6 +64,7 @@ export class CRBrowser extends Browser {
       await (options as any).__testHookOnConnectToBrowser();
 
     const version = await session.send('Browser.getVersion');
+    console.log(version);
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     browser._userAgent = version.userAgent;
     // We don't trust the option as it may lie in case of connectOverCDP where remote browser

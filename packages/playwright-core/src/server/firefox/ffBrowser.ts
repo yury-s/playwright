@@ -77,7 +77,9 @@ export class FFBrowser extends Browser {
 
   async _initVersion() {
     const result = await this._connection.send('Browser.getInfo');
+    console.log(result);
     this._version = result.version.substring(result.version.indexOf('/') + 1);
+    console.log(this._version);
     this._userAgent = result.userAgent;
   }
 
