@@ -265,26 +265,26 @@ type InputFilesList = {
 export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<InputFilesList> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
-  const sizeLimit = 50 * 1024 * 1024;
-  const totalBufferSizeExceedsLimit = items.reduce((size, item) => size + ((typeof item === 'object' && item.buffer) ? item.buffer.byteLength : 0), 0) > sizeLimit;
-  if (totalBufferSizeExceedsLimit)
-    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
+  // const sizeLimit = 50 * 1024 * 1024;
+  // const totalBufferSizeExceedsLimit = items.reduce((size, item) => size + ((typeof item === 'object' && item.buffer) ? item.buffer.byteLength : 0), 0) > sizeLimit;
+  // if (totalBufferSizeExceedsLimit)
+  //   throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
 
-  const stats = await Promise.all(items.filter(isString).map(item => fs.promises.stat(item as string)));
-  const totalFileSizeExceedsLimit = stats.reduce((acc, stat) => acc + stat.size, 0) > sizeLimit;
-  if (totalFileSizeExceedsLimit) {
-    if (context._connection.isRemote()) {
-      const streams: channels.WritableStreamChannel[] = await Promise.all(items.map(async item => {
-        assert(isString(item));
-        const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item) });
-        const writable = WritableStream.from(stream);
-        await pipelineAsync(fs.createReadStream(item), writable.stream());
-        return stream;
-      }));
-      return { streams };
-    }
+  // const stats = await Promise.all(items.filter(isString).map(item => fs.promises.stat(item as string)));
+  // const totalFileSizeExceedsLimit = stats.reduce((acc, stat) => acc + stat.size, 0) > sizeLimit;
+  // if (totalFileSizeExceedsLimit) {
+    // if (context._connection.isRemote()) {
+    //   const streams: channels.WritableStreamChannel[] = await Promise.all(items.map(async item => {
+    //     assert(isString(item));
+    //     const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item) });
+    //     const writable = WritableStream.from(stream);
+    //     await pipelineAsync(fs.createReadStream(item), writable.stream());
+    //     return stream;
+    //   }));
+    //   return { streams };
+    // }
     return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
-  }
+  // }
 
   const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {
     if (typeof item === 'string') {

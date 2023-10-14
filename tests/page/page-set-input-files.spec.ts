@@ -614,3 +614,35 @@ it('input should trigger events when files changed second time', async ({ page, 
   expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('pptr.png');
   expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
 });
+
+it('should support directory uploads', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <input type="file" id="filepicker" name="fileList" webkitdirectory multiple />
+    <ul id="listing"></ul>
+    <script>
+    document.getElementById("filepicker").addEventListener(
+      "change",
+      (event) => {
+        let output = document.getElementById("listing");
+        for (const file of event.target.files) {
+          let item = document.createElement("li");
+          item.textContent = file.webkitRelativePath;
+          output.appendChild(item);
+        }
+      },
+      false,
+    );
+    </script>
+    `);
+  await page.locator('input').setInputFiles('/Users/yurys/Downloads/logs_19775');
+  // const fileChooserPromise = page.waitForEvent('filechooser');
+  // await page.locator('input').click();
+  // console.log('waiting filechooser');
+  // const fileChooser = await fileChooserPromise;
+  // console.log('setting files');
+  // await fileChooser.setFiles('/Users/yurys/Downloads/logs_19775');
+  console.log('done');
+  // expect(chooser).toBeTruthy();
+  await new Promise(() => {});
+});
