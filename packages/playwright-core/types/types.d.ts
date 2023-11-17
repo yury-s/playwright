@@ -3610,6 +3610,12 @@ export interface Page {
      * How often a route should be used. By default it will be used every time.
      */
     times?: number;
+
+    /**
+     * If the options is set to true, when underlying page is being closed, it will not wait for running route handlers to
+     * finish.
+     */
+    value?: boolean;
   }): Promise<void>;
 
   /**

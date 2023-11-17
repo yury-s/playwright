@@ -3330,6 +3330,13 @@ handler function to route the request.
 
 How often a route should be used. By default it will be used every time.
 
+### option: Page.route.nowWaitAfterClose
+* since: v1.15
+- `value` <[boolean]>
+
+If the options is set to true, when underlying page is being closed, it will not wait for running
+route handlers to finish.
+
 ## async method: Page.routeFromHAR
 * since: v1.23
 
