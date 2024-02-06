@@ -30,6 +30,7 @@ export type ImageDiff = {
   expected?: { attachment: TestAttachment, title: string },
   actual?: { attachment: TestAttachment },
   diff?: { attachment: TestAttachment },
+  snapshotPath?: string,
 };
 
 async function loadImage(src?: string): Promise<HTMLImageElement> {

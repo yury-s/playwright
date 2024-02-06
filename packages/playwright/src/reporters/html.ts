@@ -205,6 +205,28 @@ export function startHtmlReportServer(folder: string): HttpServer {
     const absolutePath = path.join(folder, ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
+  server.routePrefix('/api/version', (request, response) => {
+    response.end('1');
+    return true;
+  });
+  server.routePrefix('/api/patch_image', (request, response) => {
+    const body: Buffer[] = [];
+    request.on('data', chunk => body.push(chunk));
+    request.on('end', () => {
+      try {
+        const text = Buffer.concat(body).toString('utf-8');
+        const json = JSON.parse(text);
+        fs.copyFileSync(path.join(folder, json.actualPath), json.snapshotPath);
+        response.statusCode = 200;
+        response.end();
+      } catch (e) {
+        console.error(e);
+        response.statusCode = 500;
+        response.end(e.message);
+      }
+    });
+    return true;
+  });
   return server;
 }
 
@@ -419,6 +441,7 @@ class HtmlBuilder {
           name: a.name,
           contentType: a.contentType,
           path: fileName,
+          originalPath: a.path,
           body: a.body,
         };
       }

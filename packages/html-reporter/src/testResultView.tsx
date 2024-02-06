@@ -26,6 +26,7 @@ import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import { TestErrorView } from './testErrorView';
 import './testResultView.css';
+import { PatchSupport } from './patchSupport';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
   const snapshotNameToImageDiff = new Map<string, ImageDiff>();
@@ -42,8 +43,10 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
     }
     if (category === 'actual')
       imageDiff.actual = { attachment };
-    if (category === 'expected')
+    if (category === 'expected') {
       imageDiff.expected = { attachment, title: 'Expected' };
+      imageDiff.snapshotPath = attachment.originalPath;
+    }
     if (category === 'previous')
       imageDiff.expected = { attachment, title: 'Previous' };
     if (category === 'diff')
@@ -92,6 +95,15 @@ export const TestResultView: React.FC<{
       imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
   }, [scrolled, anchor, setScrolled, videoRef]);
 
+  function headerForDiff(diff: ImageDiff) {
+    console.log('headerForDiff', diff.snapshotPath);
+    if (!PatchSupport.instance().isEnabled() || !diff.snapshotPath)
+      return `Image mismatch: ${diff.name}`;
+    return <>
+      Image mismatch: {diff.name} <AcceptImageButton diff={diff}></AcceptImageButton>
+      </>;;
+  }
+
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
@@ -101,7 +113,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} header={headerForDiff(diff)} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -158,3 +170,28 @@ const StepTreeItem: React.FC<{
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
+
+export const AcceptImageButton: React.FunctionComponent<{
+  diff: ImageDiff,
+}> = ({ diff }) => {
+  const [status, setStatus] = React.useState<'ok'|'failed'|undefined>(undefined);
+  async function doAccept() {
+    const result = await PatchSupport.instance().patchImage(diff.actual!.attachment.path!, diff.snapshotPath!);
+    if (result)
+      setStatus('ok');
+    else
+      setStatus('failed');
+  }
+  if (status === undefined)
+    return <button onClick={
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+        doAccept();
+      }
+    }>accept image</button>
+  if (status === 'ok')
+    return <button disabled>Image Accepted</button>
+  return <button disabled>Image FAILED</button>
+}
+
