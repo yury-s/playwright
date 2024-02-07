@@ -95,12 +95,18 @@ export const ImageDiffView: React.FC<{
   };
   return <div data-testid='test-result-image-mismatch' style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 'auto' }} ref={ref}>
     {isLoaded && <>
-      <div data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
-        {diff.diff && <div style={{ ...modeStyle, fontWeight: mode === 'diff' ? 600 : 'initial' }} onClick={() => setMode('diff')}>Diff</div>}
-        <div style={{ ...modeStyle, fontWeight: mode === 'actual' ? 600 : 'initial' }} onClick={() => setMode('actual')}>Actual</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>Expected</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flex: 'auto', width: '100%' }}>
+        <div style={{ flex: 1 }}></div>
+        <div data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
+          {diff.diff && <div style={{ ...modeStyle, fontWeight: mode === 'diff' ? 600 : 'initial' }} onClick={() => setMode('diff')}>Diff</div>}
+          <div style={{ ...modeStyle, fontWeight: mode === 'actual' ? 600 : 'initial' }} onClick={() => setMode('actual')}>Actual</div>
+          <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>Expected</div>
+          <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
+          <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'row-reverse' }}>
+          <div style={{ margin: '10px 0px 20px;' }}>Accept image</div>
+        </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
