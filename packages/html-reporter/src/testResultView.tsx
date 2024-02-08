@@ -24,9 +24,10 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
+import { AcceptImageButton } from '@web/shared/acceptImageButton';
+import { PatchSupport } from '@web/shared/patchSupport';
 import { TestErrorView } from './testErrorView';
 import './testResultView.css';
-import { PatchSupport } from './patchSupport';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
   const snapshotNameToImageDiff = new Map<string, ImageDiff>();
@@ -170,28 +171,3 @@ const StepTreeItem: React.FC<{
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
-
-export const AcceptImageButton: React.FunctionComponent<{
-  diff: ImageDiff,
-}> = ({ diff }) => {
-  const [status, setStatus] = React.useState<'ok'|'failed'|undefined>(undefined);
-  async function doAccept() {
-    const result = await PatchSupport.instance().patchImage(diff.actual!.attachment.path!, diff.snapshotPath!);
-    if (result)
-      setStatus('ok');
-    else
-      setStatus('failed');
-  }
-  if (status === undefined)
-    return <button onClick={
-      event => {
-        event.preventDefault();
-        event.stopPropagation();
-        doAccept();
-      }
-    }>accept image</button>
-  if (status === 'ok')
-    return <button disabled>Image Accepted</button>
-  return <button disabled>Image FAILED</button>
-}
-

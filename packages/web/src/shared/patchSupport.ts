@@ -18,16 +18,23 @@ const MIN_API_VERSION = 1;
 
 export class PatchSupport {
   private _enabled: boolean | undefined;
+  private _baseScope: string;
+
+  constructor() {
+    const pathname = new URL(self.location.href).pathname;
+    this._baseScope = pathname.substring(0, pathname.lastIndexOf('/'));
+  }
 
   static instance(): PatchSupport {
     return gInstance;
   }
 
   async initialize() {
+    console.log('initialize!!!', new URL(self.location.href).pathname);
     if (this._enabled !== undefined)
       return;
     try {
-      const response = await fetch('/api/version');
+      const response = await fetch(`${this._baseScope}/api/version`);
       const text = await response.text();
       const version = JSON.parse(text);
       this._enabled = version !== undefined && version >= MIN_API_VERSION;
@@ -38,6 +45,7 @@ export class PatchSupport {
   }
 
   isEnabled() {
+    console.log('isEnabled', this._enabled);
     return this._enabled;
   }
 
@@ -45,7 +53,7 @@ export class PatchSupport {
     if (!this._enabled)
       throw new Error('patch support is not available!');
     try {
-      const response = await fetch('/api/patch_image', {
+      const response = await fetch(`${this._baseScope}/api/patch_image`, {
         method: 'POST',
         body: JSON.stringify({ actualPath, snapshotPath }),
       });

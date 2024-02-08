@@ -23,7 +23,7 @@ import * as ReactDOM from 'react-dom';
 import './colors.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
-import { PatchSupport } from './patchSupport';
+import { PatchSupport } from '../../web/src/shared/patchSupport';
 
 // @ts-ignore
 const zipjs = zipImport as typeof zip;

@@ -187,6 +187,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
 }
 
 export function startHtmlReportServer(folder: string): HttpServer {
+  console.log('Starting HTML report server at ' + folder);
   const server = new HttpServer();
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;

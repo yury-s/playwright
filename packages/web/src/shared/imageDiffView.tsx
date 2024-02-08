@@ -17,6 +17,8 @@
 import * as React from 'react';
 import { useMeasure } from '../uiUtils';
 import { ResizeView } from './resizeView';
+import { PatchSupport } from './patchSupport';
+import { AcceptImageButton } from './acceptImageButton';
 
 type TestAttachment = {
   name: string;
@@ -78,6 +80,12 @@ export const ImageDiffView: React.FC<{
     })();
   }, [diff]);
 
+  React.useEffect(() => {
+    (async () => {
+      PatchSupport.instance().initialize();
+    })();
+  }, []);
+
   const isLoaded = expectedImage && actualImage && diffImage;
 
   const imageWidth = isLoaded ? Math.max(expectedImage.naturalWidth, actualImage.naturalWidth, 200) : 500;
@@ -105,7 +113,7 @@ export const ImageDiffView: React.FC<{
           <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'row-reverse' }}>
-          <div style={{ margin: '10px 0px 20px;' }}>Accept image</div>
+          {PatchSupport.instance().isEnabled() && diff.snapshotPath && <AcceptImageButton diff={diff}></AcceptImageButton>}
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
