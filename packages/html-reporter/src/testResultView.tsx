@@ -79,6 +79,10 @@ export const TestResultView: React.FC<{
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
+    for (const [name, value] of diffs.entries()) {
+      console.log('name', name, 'value', value.expected, value.actual);
+    }
+
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
   }, [result]);
 

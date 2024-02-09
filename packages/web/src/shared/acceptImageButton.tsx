@@ -23,7 +23,23 @@ export const AcceptImageButton: React.FunctionComponent<{
 }> = ({ diff }) => {
   const [status, setStatus] = React.useState<'ok'|'failed'|undefined>(undefined);
   async function doAccept() {
-    const result = await PatchSupport.instance().patchImage(diff.actual!.attachment.path!, diff.snapshotPath!);
+    let base64String: string | undefined = undefined;
+    console.log('diff.actual?.attachment.path:', diff.actual?.attachment.path)
+    if (diff.actual?.attachment.path && diff.actual?.attachment.path.startsWith('sha1')) {
+      const response = await fetch(diff.actual?.attachment.path);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      base64String = await new Promise((fulfill, reject) => {
+        reader.onloadend = function() {
+          const base64String = (reader.result as string)
+            .replace(/^data:.+;base64,/, ''); // Remove data URL scheme to get only the base64 string
+          fulfill(base64String);
+        };
+        reader.onerror = reject;
+      });
+    }
+    const result = await PatchSupport.instance().patchImage(diff.actual!.attachment.path!, base64String, diff.snapshotPath!);
     if (result)
       setStatus('ok');
     else

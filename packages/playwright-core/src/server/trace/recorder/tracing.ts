@@ -389,6 +389,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
       return;
+    console.log('attachments:', event.attachments);
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);

@@ -112,7 +112,7 @@ export const ImageDiffView: React.FC<{
           <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
           <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'row-reverse' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'row-reverse', paddingRight: '15px' }}>
           {PatchSupport.instance().isEnabled() && diff.snapshotPath && <AcceptImageButton diff={diff}></AcceptImageButton>}
         </div>
       </div>

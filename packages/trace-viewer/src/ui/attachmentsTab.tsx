@@ -35,7 +35,7 @@ export const AttachmentsTab: React.FunctionComponent<{
       for (const attachment of action.attachments || [])
         attachments.add({ ...attachment, traceUrl });
     }
-    const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
+    const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined, snapshotPath: string | undefined }>();
 
     for (const attachment of attachments) {
       if (!attachment.path && !attachment.sha1)
@@ -44,9 +44,13 @@ export const AttachmentsTab: React.FunctionComponent<{
       if (match) {
         const name = match[1];
         const type = match[2] as 'expected' | 'actual' | 'diff';
-        const entry = diffMap.get(name) || { expected: undefined, actual: undefined, diff: undefined };
+        const entry = diffMap.get(name) || { expected: undefined, actual: undefined, diff: undefined, snapshotPath: undefined };
         entry[type] = attachment;
         diffMap.set(name, entry);
+        if (type === 'expected') {
+          console.log('name:', name, 'attachment.name:', attachment.name, 'expected path:', attachment.path, 'sha1:', attachment.sha1);
+          entry.snapshotPath = attachment.path;
+        }
       }
       if (attachment.contentType.startsWith('image/')) {
         screenshots.add(attachment);
@@ -60,7 +64,7 @@ export const AttachmentsTab: React.FunctionComponent<{
     return <PlaceholderPanel text='No attachments' />;
 
   return <div className='attachments-tab'>
-    {[...diffMap.values()].map(({ expected, actual, diff }) => {
+    {[...diffMap.values()].map(({ expected, actual, diff, snapshotPath }) => {
       return <>
         {expected && actual && <div className='attachments-section'>Image diff</div>}
         {expected && actual && <ImageDiffView diff={{
@@ -68,6 +72,7 @@ export const AttachmentsTab: React.FunctionComponent<{
           expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
           actual: { attachment: { ...actual, path: attachmentURL(actual) } },
           diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
+          snapshotPath,
         }} />}
       </>;
     })}

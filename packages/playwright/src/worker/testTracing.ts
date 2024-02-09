@@ -156,7 +156,8 @@ export class TestTracing {
 
         const sha1 = calculateSha1(content);
         attachment.sha1 = sha1;
-        delete attachment.path;
+        // TODO: store original path.
+        // delete attachment.path;
         delete attachment.base64;
         if (sha1s.has(sha1))
           continue;

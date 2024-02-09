@@ -42,20 +42,20 @@ export class PatchSupport {
       console.error(e);
       this._enabled = false;
     }
+    console.log('isEnabled', this._enabled);
   }
 
   isEnabled() {
-    console.log('isEnabled', this._enabled);
     return this._enabled;
   }
 
-  async patchImage(actualPath: string, snapshotPath: string) {
+  async patchImage(actualPath: string, base64String: string | undefined, snapshotPath: string) {
     if (!this._enabled)
       throw new Error('patch support is not available!');
     try {
       const response = await fetch(`${this._baseScope}/api/patch_image`, {
         method: 'POST',
-        body: JSON.stringify({ actualPath, snapshotPath }),
+        body: JSON.stringify({ actualPath, snapshotPath, base64String }),
       });
       return response.status === 200;
     } catch (e) {

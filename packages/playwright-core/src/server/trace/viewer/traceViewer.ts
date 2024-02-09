@@ -100,7 +100,14 @@ async function startTraceViewerServer(traceUrls: string[], options?: OpenTraceVi
         try {
           const text = Buffer.concat(body).toString('utf-8');
           const json = JSON.parse(text);
-          fs.copyFileSync(path.join(folder, json.actualPath), json.snapshotPath);
+          // fs.writeFileSync()
+          if (json.base64String) {
+            console.log('wrigint base64')
+            const buffer = Buffer.from(json.base64String, 'base64');
+            fs.writeFileSync(json.snapshotPath, buffer);
+          } else {
+            fs.copyFileSync(path.join(folder, json.actualPath), json.snapshotPath);
+          }
           response.statusCode = 200;
           response.end();
         } catch (e) {
