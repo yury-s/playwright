@@ -24,8 +24,6 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { AcceptImageButton } from '@web/shared/acceptImageButton';
-import { PatchSupport } from '@web/shared/patchSupport';
 import { TestErrorView } from './testErrorView';
 import './testResultView.css';
 
@@ -100,15 +98,6 @@ export const TestResultView: React.FC<{
       imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
   }, [scrolled, anchor, setScrolled, videoRef]);
 
-  function headerForDiff(diff: ImageDiff) {
-    console.log('headerForDiff', diff.snapshotPath);
-    if (!PatchSupport.instance().isEnabled() || !diff.snapshotPath)
-      return `Image mismatch: ${diff.name}`;
-    return <>
-      Image mismatch: {diff.name} <AcceptImageButton diff={diff}></AcceptImageButton>
-      </>;;
-  }
-
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
@@ -118,7 +107,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={headerForDiff(diff)} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}

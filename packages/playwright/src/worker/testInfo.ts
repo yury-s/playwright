@@ -317,7 +317,7 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        console.log('appendAfterActionForStep', stepId, result.attachments)
+        // console.log('appendAfterActionForStep', stepId, result.attachments)
         this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
 
         if (step.isSoft && result.error)

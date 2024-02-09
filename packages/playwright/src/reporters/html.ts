@@ -191,6 +191,7 @@ export function startHtmlReportServer(folder: string): HttpServer {
   const server = new HttpServer();
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;
+    console.log(relativePath);
     if (relativePath.startsWith('/trace/file')) {
       const url = new URL('http://localhost' + request.url!);
       try {
@@ -198,6 +199,35 @@ export function startHtmlReportServer(folder: string): HttpServer {
       } catch (e) {
         return false;
       }
+    }
+    if (relativePath.startsWith('/trace/api/version')) {
+      response.end('1');
+      return true;
+    }
+    if (relativePath.startsWith('/trace/api/patch_image')) {
+      const body: Buffer[] = [];
+      request.on('data', chunk => body.push(chunk));
+      request.on('end', () => {
+        try {
+          const text = Buffer.concat(body).toString('utf-8');
+          const json = JSON.parse(text);
+          // console.log('patching image', JSON.stringify(json, null, 2));
+          if (json.base64String) {
+            console.log('wrigint base64')
+            const buffer = Buffer.from(json.base64String, 'base64');
+            fs.writeFileSync(json.snapshotPath, buffer);
+          } else {
+            fs.copyFileSync(path.join(folder, json.actualPath), json.snapshotPath);
+          }
+          response.statusCode = 200;
+          response.end();
+        } catch (e) {
+          console.error(e);
+          response.statusCode = 500;
+          response.end(e.message);
+        }
+      });
+      return true;
     }
     if (relativePath.endsWith('/stall.js'))
       return true;
