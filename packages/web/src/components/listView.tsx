@@ -85,6 +85,22 @@ export function ListView<T>({
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
 
+  const [userSelected, setUserSelected] = React.useState(false);
+  function doSelect(item: T, index: number) {
+    setUserSelected(true);
+    onSelected?.(item, index);
+  }
+  React.useEffect(() => {
+    console.log('userSelected', userSelected);
+    if (userSelected)
+      return;
+    const index = selectedItem ? items.indexOf(selectedItem) : -1;
+    if (index === -1)
+      return;
+    const element = itemListRef.current?.children.item(index);
+    scrollIntoViewIfNeeded(element || undefined);
+  }, [selectedItem, userSelected]);
+
   return <div className={`list-view vbox ` + name + '-list-view' } role={items.length > 0 ? 'list' : undefined} data-testid={dataTestId || (name + '-list')}>
     <div
       className='list-view-content'
@@ -128,7 +144,7 @@ export function ListView<T>({
         const element = itemListRef.current?.children.item(newIndex);
         scrollIntoViewIfNeeded(element || undefined);
         onHighlighted?.(undefined);
-        onSelected?.(items[newIndex], newIndex);
+        doSelect(items[newIndex], newIndex);
       }}
       ref={itemListRef}
     >
@@ -145,7 +161,7 @@ export function ListView<T>({
           key={id?.(item, index) || index}
           role='listitem'
           className={'list-view-entry' + selectedSuffix + highlightedSuffix + errorSuffix + warningSuffix + infoSuffix}
-          onClick={() => onSelected?.(item, index)}
+          onClick={() => doSelect(item, index)}
           onMouseEnter={() => setHighlightedItem(item)}
           onMouseLeave={() => setHighlightedItem(undefined)}
         >

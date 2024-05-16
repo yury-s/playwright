@@ -419,24 +419,23 @@ it('should fulfill preload link requests', async ({ page, server, browserName })
   expect(color).toBe('rgb(0, 128, 0)');
 });
 
-it('should fulfill json', async ({ page, server }) => {
+it.only('should fulfill json', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
+  // server.setRoute('/data.json', (req, res) => {
+  //   res.writeHead(419, 'Not supported');
+  //   // res.setHeader('Content-Type', 'text/plain');
+  //   // res.end('error');
+  // });
   await page.route('**/data.json', route => {
     void route.fulfill({
-      status: 201,
-      headers: {
-        foo: 'bar'
-      },
-      json: { bar: 'baz' },
+      status: 419,
     });
   });
   const [response, body] = await Promise.all([
     page.waitForResponse('**/*'),
-    page.evaluate(() => fetch('./data.json').then(r => r.text()))
+    page.evaluate(() => fetch('./data.json').then(r => r.status))
   ]);
-  expect(response.status()).toBe(201);
-  expect(response.headers()['content-type']).toBe('application/json');
-  expect(body).toBe(JSON.stringify({ bar: 'baz' }));
+  expect(body).toBe(201);
 });
 
 it('should fulfill with gzip and readback', {

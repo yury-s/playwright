@@ -112,6 +112,74 @@ test('should update trace live', async ({ runUITest, server }) => {
   ]);
 });
 
+test('scroll action list', async ({ runUITest, server, createLatch }) => {
+  const latch = createLatch();
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+    import {expect, test} from 'playwright/test';
+
+    test.use({
+        launchOptions: {
+            slowMo: 100
+        }
+    })
+    
+    test('live test', async ({page}) => {
+        await page.setContent(\`
+        <div style="position: absolute; top: 0; left: 0; width: 100px; height: 100px; background: red;">
+        <div style="position: absolute; top: 10; left: 10; width: 100px; height: 100px; background: green;">
+        \`)
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(1).click();
+        await page.locator('div').nth(2).click();
+    });
+        `,
+  });
+
+  // Start test.
+  await page.getByText('live test').dblclick();
+
+  await new Promise(f => setTimeout(f, 100000));
+  // It should wait on the latch.
+  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  
+
+});
+
 test('should preserve action list selection upon live trace update', async ({ runUITest, server, createLatch }) => {
   const latch = createLatch();
 

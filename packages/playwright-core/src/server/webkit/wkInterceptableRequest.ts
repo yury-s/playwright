@@ -128,7 +128,7 @@ export class WKRouteImpl implements network.RouteDelegate {
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
       status: response.status,
-      statusText: network.STATUS_TEXTS[String(response.status)],
+      statusText: network.STATUS_TEXTS[String(response.status)] || 'Unknown status',
       mimeType,
       headers,
       base64Encoded: response.isBase64,
