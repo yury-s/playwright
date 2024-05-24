@@ -72,6 +72,53 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
   expect(cookies[0].expires).toBeGreaterThan((Date.now() + FOUR_HUNDRED_DAYS - FIVE_MINUTES) / 1000);
 });
 
+it.use({
+  ignoreHTTPSErrors: true
+});
+
+it.only('SameSite: Lax behavior', async ({ context, page, httpsServer }) => {
+  const server = httpsServer;
+  server.setRoute('/empty.html', (req, res) => {
+    console.log('empty.html cookie: ', req.headers.cookie);
+    // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=Lax');
+    // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=Strict');
+    res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=None; Secure');
+    // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/;');  
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const cookies = await context.cookies();
+  expect(cookies.length).toBe(1);
+  let sameSite = cookies[0].sameSite;
+  // const sameSite = 'None';
+  // sameSite = 'Lax';
+  console.log(sameSite);
+  {
+    // Lax and None are sent on click navigation.
+    const requestPromise = server.waitForRequest('/empty.html');
+    server.setRoute('/cross-site', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<a href='${server.EMPTY_PAGE}'>Go</a>`);
+    });
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/cross-site');
+    await page.locator('a').click();
+    const request = await requestPromise;
+    expect(request.headers['cookie']).toBe(sameSite !== 'Strict' ? 'name=value' : undefined);
+  }
+  {
+    // Only None is sent for iframe.
+    const requestPromise = server.waitForRequest('/empty.html');
+    server.setRoute('/cross-site', (req, res) => {
+      res.setHeader('Content-Type', 'text/html');
+      res.end(`<iframe src='${server.EMPTY_PAGE}'>Go</iframe>`);
+    });
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/cross-site');
+    const request = await requestPromise;
+    // expect(request.headers['cookie']).toBe('name=value');
+    expect(request.headers['cookie']).toBe(sameSite === 'None' ? 'name=value' : undefined);
+  }
+});
+
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/');
