@@ -82,8 +82,8 @@ it.only('SameSite: Lax behavior', async ({ context, page, httpsServer }) => {
     console.log('empty.html cookie: ', req.headers.cookie);
     // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=Lax');
     // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=Strict');
-    res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=None; Secure');
-    // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/;');  
+    // res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/; SameSite=None; Secure');
+    res.setHeader('Set-Cookie', 'name=value;HttpOnly; Path=/;');
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);
@@ -107,10 +107,11 @@ it.only('SameSite: Lax behavior', async ({ context, page, httpsServer }) => {
   }
   {
     // Only None is sent for iframe.
-    const requestPromise = server.waitForRequest('/empty.html');
+    const requestPromise = server.waitForRequest('/pptr.png');
     server.setRoute('/cross-site', (req, res) => {
       res.setHeader('Content-Type', 'text/html');
-      res.end(`<iframe src='${server.EMPTY_PAGE}'>Go</iframe>`);
+      // res.end(`<iframe src='${server.EMPTY_PAGE}'>Go</iframe>`);
+      res.end(`<img src='${server.PREFIX}/pptr.png'>Go</img>`);
     });
     await page.goto(server.CROSS_PROCESS_PREFIX + '/cross-site');
     const request = await requestPromise;
