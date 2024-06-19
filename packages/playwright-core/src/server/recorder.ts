@@ -46,6 +46,7 @@ import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { quoteCSSAttributeValue } from '../utils/isomorphic/stringUtils';
 import { eventsHelper, type RegisteredListener } from './../utils/eventsHelper';
 import type { Dialog } from './dialog';
+import { APIRequestContext } from './fetch';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -72,14 +73,14 @@ export class Recorder implements InstrumentationListener {
     Recorder.recorderAppFactory = recorderAppFactory;
   }
 
-  static showInspector(context: BrowserContext) {
+  static showInspector(context: BrowserContext|APIRequestContext) {
     const params: channels.BrowserContextRecorderSupplementEnableParams = {};
     if (isUnderTest())
       params.language = process.env.TEST_INSPECTOR_LANGUAGE;
     Recorder.show(context, params).catch(() => {});
   }
 
-  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
+  static show(context: BrowserContext|APIRequestContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
     let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
     if (!recorderPromise) {
       const recorder = new Recorder(context, params);
@@ -89,7 +90,7 @@ export class Recorder implements InstrumentationListener {
     return recorderPromise;
   }
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext|APIRequestContext, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._mode = params.mode || 'none';
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;

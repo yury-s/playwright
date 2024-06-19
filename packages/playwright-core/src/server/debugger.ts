@@ -19,6 +19,7 @@ import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions, slowMoActions } from '../protocol/debug';
+import { APIRequestContext } from './fetch';
 
 const symbol = Symbol('Debugger');
 
@@ -26,7 +27,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   private _pauseOnNextStatement = false;
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
-  private _context: BrowserContext;
+  private _context: BrowserContext|APIRequestContext;
 
   static Events = {
     PausedStateChanged: 'pausedstatechanged'
@@ -34,7 +35,7 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   private _muted = false;
   private _slowMo: number | undefined;
 
-  constructor(context: BrowserContext) {
+  constructor(context: BrowserContext|APIRequestContext) {
     super();
     this._context = context;
     (this._context as any)[symbol] = this;
@@ -42,10 +43,16 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     if (this._enabled)
       this.pauseOnNextStatement();
     context.instrumentation.addListener(this, context);
-    this._context.once(BrowserContext.Events.Close, () => {
-      this._context.instrumentation.removeListener(this);
-    });
-    this._slowMo = this._context._browser.options.slowMo;
+    if ('_browser' in this._context) {
+      this._context.once(BrowserContext.Events.Close, () => {
+        this._context.instrumentation.removeListener(this);
+      });
+      this._slowMo = this._context._browser.options.slowMo;
+    } else {
+      this._context.once(APIRequestContext.Events.Dispose, () => {
+        this._context.instrumentation.removeListener(this);
+      });
+    }
   }
 
   async setMuted(muted: boolean) {

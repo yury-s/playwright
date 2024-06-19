@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
-import { assert, createGuid, monotonicTime } from '../utils';
+import { assert, createGuid, debugMode, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
@@ -40,6 +40,8 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { kMaxCookieExpiresDateInSeconds } from './network';
+import { Debugger } from './debugger';
+import { Recorder } from './recorder';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -92,6 +94,7 @@ export abstract class APIRequestContext extends SdkObject {
   protected static allInstances: Set<APIRequestContext> = new Set();
   readonly _activeProgressControllers = new Set<ProgressController>();
   _closeReason: string | undefined;
+  private _debugger!: Debugger;
 
   static findResponseBody(guid: string): Buffer | undefined {
     for (const request of APIRequestContext.allInstances) {
@@ -106,6 +109,30 @@ export abstract class APIRequestContext extends SdkObject {
     super(parent, 'request-context');
     APIRequestContext.allInstances.add(this);
   }
+
+  debug(): Debugger {
+    return this._debugger;
+  }
+
+  async _initialize() {
+    if (this.attribution.playwright.options.isInternalPlaywright)
+      return;
+    
+    // Debugger will pause execution upon page.pause in headed mode.
+    this._debugger = new Debugger(this);
+
+    // When PWDEBUG=1, show inspector for each context.
+    if (debugMode() === 'inspector')
+      await Recorder.show(this, { pauseOnNextStatement: true });
+
+    // When paused, show inspector.
+    if (this._debugger.isPaused())
+      Recorder.showInspector(this);
+    this._debugger.on(Debugger.Events.PausedStateChanged, () => {
+      Recorder.showInspector(this);
+    });
+  }
+
 
   protected _disposeImpl() {
     APIRequestContext.allInstances.delete(this);

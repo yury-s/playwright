@@ -22,6 +22,15 @@ import { kTargetClosedErrorMessage } from 'tests/config/errors';
 
 it.skip(({ mode }) => mode !== 'default');
 
+it('get started link', async ({ request, page }) => {
+  await page.request.get('https://playwright.dev/');
+  await page.pause();
+  await page.request.get('https://playwright.dev/');
+  await page.goto('https://playwright.dev/');
+  await request.get('https://playwright.dev/');
+  await request.get('https://playwright.dev/docs/intro');
+});
+
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
   it(`${method} should work @smoke`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
