@@ -37,7 +37,7 @@ export type InputFilesItems = {
   localDirectory?: string
 };
 
-type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
+type ActionName = 'click' | 'hover' | 'dblclick' | 'swipe' | 'tap' | 'move and up' | 'move and down';
 type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
@@ -425,7 +425,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult))
         return frameCheckResult;
       const hitPoint = frameCheckResult.framePoint;
-      const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
+      const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap' || actionName === 'swipe') ? actionName : 'mouse');
       const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const);
       if (handle === 'error:notconnected')
         return handle;
@@ -525,6 +525,36 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(point.x, point.y), options);
+  }
+
+  _swipe(progress: Progress, direction: 'left'|'right'|'up'|'down', options: channels.FrameSwipeOptions & types.TimeoutOptions & types.StrictOptions & { noWaitAfter?: boolean | undefined; }): Promise<"error:notconnected" | "done"> {
+    return this._retryPointerAction(progress, 'swipe', true /* waitForEnabled */, async point => {
+      const box = await this.boundingBox();
+      if (!box)
+        return;
+      const percent = options.percent ?? 0.3;
+      let xDistance = 0;
+      let yDistance = 0;
+      switch (direction) {
+        case 'left':
+          xDistance = - box.width * percent;
+          break;
+        case 'right':
+          xDistance = box.width * percent;
+          break;
+        case 'up':
+          yDistance = - box.height * percent;
+          break;
+        case 'down':
+          yDistance = box.height * percent;
+          break;
+      }
+      const distance = Math.max(Math.abs(xDistance), Math.abs(yDistance));
+      const speed = options.speed ?? 1000;
+      // Assume 20 steps per second.
+      const steps = Math.max(1, Math.round((distance / speed) * 20));
+      await this._page.touchscreen.swipe({ x: point.x, y: point.y, xDistance, yDistance, ...options, steps });
+    }, options);
   }
 
   async selectOption(metadata: CallMetadata, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions & types.ForceOptions): Promise<string[]> {

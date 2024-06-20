@@ -293,6 +293,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.dragAndDrop({ source, target, ...options });
   }
 
+  async swipe(selector: string, direction: 'left'|'right'|'up'|'down', options: channels.FrameTapOptions = {}) {
+    return await this._channel.swipe({ selector, direction, ...options });
+  }
+
   async tap(selector: string, options: channels.FrameTapOptions = {}) {
     return await this._channel.tap({ selector, ...options });
   }

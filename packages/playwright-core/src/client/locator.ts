@@ -311,6 +311,10 @@ export class Locator implements api.Locator {
     return await this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
   }
 
+  async swipe(direction: 'left'|'right'|'up'|'down', options: channels.FrameSwipeOptions = {}): Promise<void> {
+    return await this._frame.swipe(this._selector, direction, { strict: true, ...options });
+  }
+
   async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
     return await this._frame.tap(this._selector, { strict: true, ...options });
   }

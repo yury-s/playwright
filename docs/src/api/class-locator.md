@@ -2295,8 +2295,69 @@ This method expects [Locator] to point to an
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-## async method: Locator.tap
+## async method: Locator.swipe
 * since: v1.14
+
+Perform a swipe gesture on the element matching the locator.
+
+**Details**
+
+This method swipes the element by performing the following steps:
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Scroll the element into view if needed.
+1. Use [`property: Page.touchscreen`] to swipe the center of the element, or the specified [`option: position`].
+<!-- 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. -->
+
+If the element is detached from the DOM at any moment during the action, this method throws.
+
+When all steps combined have not finished during the specified [`option: timeout`], this method throws a
+[TimeoutError]. Passing zero timeout disables this.
+
+:::note
+`swipe()` requires that the `hasTouch` option of the browser context be set to true.
+:::
+
+### param: Locator.swipe.direction
+* since: v1.46
+- `direction` <[SwipeDirection]<"up"|"down"|"left"|"right">>
+
+Direction of the swipe.
+
+### option: Locator.swipe.percent
+* since: v1.46
+- `percent` <[int]>
+
+The length of the swipe as a percentage of this object's size.
+
+### option: Locator.swipe.speed
+* since: v1.46
+- `speed` <[float]>
+
+The speed at which to perform this gesture in pixels per second.
+
+### option: Locator.swipe.position = %%-input-position-%%
+* since: v1.46
+
+### option: Locator.swipe.modifiers = %%-input-modifiers-%%
+* since: v1.46
+
+### option: Locator.swipe.force = %%-input-force-%%
+* since: v1.46
+
+### option: Locator.swipe.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.46
+
+### option: Locator.swipe.timeout = %%-input-timeout-%%
+* since: v1.46
+
+### option: Locator.swipe.timeout = %%-input-timeout-js-%%
+* since: v1.46
+
+### option: Locator.swipe.trial = %%-input-trial-%%
+* since: v1.46
+
+## async method: Locator.tap
+* since: v1.46
 
 Perform a tap gesture on the element matching the locator.
 

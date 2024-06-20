@@ -1195,6 +1195,16 @@ export class Frame extends SdkObject {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async swipe(metadata: CallMetadata, selector: string, direction: 'left'|'right'|'up'|'down', options: channels.FrameSwipeOptions & types.NavigatingActionWaitOptions) {
+    if (!this._page._browserContext._options.hasTouch)
+      throw new Error('The page does not support swipe. Use hasTouch context option to enable touch support.');
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performLocatorHandlersCheckpoint */, handle => handle._swipe(progress, direction, options)));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     if (!this._page._browserContext._options.hasTouch)
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');

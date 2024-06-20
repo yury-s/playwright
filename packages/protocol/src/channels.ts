@@ -1890,6 +1890,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseClick(params: PageMouseClickParams, metadata?: CallMetadata): Promise<PageMouseClickResult>;
   mouseWheel(params: PageMouseWheelParams, metadata?: CallMetadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
+  touchscreenSwipe(params: PageTouchscreenSwipeParams, metadata?: CallMetadata): Promise<PageTouchscreenSwipeResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
   startJSCoverage(params: PageStartJSCoverageParams, metadata?: CallMetadata): Promise<PageStartJSCoverageResult>;
@@ -2257,6 +2258,19 @@ export type PageTouchscreenTapOptions = {
 
 };
 export type PageTouchscreenTapResult = void;
+export type PageTouchscreenSwipeParams = {
+  x: number,
+  y: number,
+  xDistance: number,
+  yDistance: number,
+  speed?: number,
+  steps?: number,
+};
+export type PageTouchscreenSwipeOptions = {
+  speed?: number,
+  steps?: number,
+};
+export type PageTouchscreenSwipeResult = void;
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,
@@ -2435,6 +2449,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   selectOption(params: FrameSelectOptionParams, metadata?: CallMetadata): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, metadata?: CallMetadata): Promise<FrameSetContentResult>;
   setInputFiles(params: FrameSetInputFilesParams, metadata?: CallMetadata): Promise<FrameSetInputFilesResult>;
+  swipe(params: FrameSwipeParams, metadata?: CallMetadata): Promise<FrameSwipeResult>;
   tap(params: FrameTapParams, metadata?: CallMetadata): Promise<FrameTapResult>;
   textContent(params: FrameTextContentParams, metadata?: CallMetadata): Promise<FrameTextContentResult>;
   title(params?: FrameTitleParams, metadata?: CallMetadata): Promise<FrameTitleResult>;
@@ -2946,6 +2961,31 @@ export type FrameSetInputFilesOptions = {
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
+export type FrameSwipeParams = {
+  selector: string,
+  direction: 'left' | 'right' | 'up' | 'down',
+  percent?: number,
+  speed?: number,
+  strict?: boolean,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
+  position?: Point,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameSwipeOptions = {
+  percent?: number,
+  speed?: number,
+  strict?: boolean,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
+  position?: Point,
+  timeout?: number,
+  trial?: boolean,
+};
+export type FrameSwipeResult = void;
 export type FrameTapParams = {
   selector: string,
   strict?: boolean,

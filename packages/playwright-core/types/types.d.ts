@@ -12818,6 +12818,83 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Perform a swipe gesture on the element matching the locator.
+   *
+   * **Details**
+   *
+   * This method swipes the element by performing the following steps:
+   * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
+   * 1. Scroll the element into view if needed.
+   * 1. Use [page.touchscreen](https://playwright.dev/docs/api/class-page#page-touchscreen) to swipe the center of
+   *    the element, or the specified `position`.
+   *
+   * <!-- 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. -->
+   *
+   * If the element is detached from the DOM at any moment during the action, this method throws.
+   *
+   * When all steps combined have not finished during the specified `timeout`, this method throws a {@link
+   * TimeoutError}. Passing zero timeout disables this.
+   *
+   * **NOTE** `swipe()` requires that the `hasTouch` option of the browser context be set to true.
+   * @param direction Direction of the swipe.
+   * @param options
+   */
+  swipe(direction: "up"|"down"|"left"|"right", options?: {
+    /**
+     * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
+     */
+    force?: boolean;
+
+    /**
+     * Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores
+     * current modifiers back. If not specified, currently pressed modifiers are used. "ControlOrMeta" resolves to
+     * "Control" on Windows and Linux and to "Meta" on macOS.
+     */
+    modifiers?: Array<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">;
+
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You
+     * can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as
+     * navigating to inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * The length of the swipe as a percentage of this object's size.
+     */
+    percent?: number;
+
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+     * the element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * The speed at which to perform this gesture in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
+     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     */
+    trial?: boolean;
+  }): Promise<void>;
+
+  /**
    * Perform a tap gesture on the element matching the locator.
    *
    * **Details**
@@ -19674,6 +19751,26 @@ export interface Selectors {
  * the touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
  */
 export interface Touchscreen {
+  /**
+   * Synthesizes a scroll gesture over a time period by issuing appropriate touch events.
+   * @param x X coordinate of the start of the gesture in CSS pixels.
+   * @param y Y coordinate of the start of the gesture in CSS pixels.
+   * @param xDistance The distance to scroll along the X axis (positive to scroll left).
+   * @param yDistance The distance to scroll along the Y axis (positive to scroll up).
+   * @param options
+   */
+  swipe(x: number, y: number, xDistance: number, yDistance: number, options?: {
+    /**
+     * Swipe speed in pixels per second. Defaults to `1000`.
+     */
+    speed?: number;
+
+    /**
+     * The number of `touchmove` events that will be fired for the gesture. Defaults to `1`.
+     */
+    steps?: number;
+  }): Promise<void>;
+
   /**
    * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
    *

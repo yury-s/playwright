@@ -875,7 +875,7 @@ export class InjectedScript {
   //     2k. (injected) Event interceptor is removed.
   //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
   //     2m. If failed, wait for increasing amount of time before the next retry.
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number } | undefined, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'swipe' | 'mouse' | 'drag', hitPoint: { x: number, y: number } | undefined, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
     const element = this.retarget(node, 'button-link');
     if (!element || !element.isConnected)
       return 'error:notconnected';
@@ -897,6 +897,7 @@ export class InjectedScript {
 
     const events = {
       'hover': kHoverHitTargetInterceptorEvents,
+      'swipe': kTapHitTargetInterceptorEvents,
       'tap': kTapHitTargetInterceptorEvents,
       'mouse': kMouseHitTargetInterceptorEvents,
     }[action];

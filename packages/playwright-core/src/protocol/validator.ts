@@ -1237,6 +1237,15 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tNumber,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
+scheme.PageTouchscreenSwipeParams = tObject({
+  x: tNumber,
+  y: tNumber,
+  xDistance: tNumber,
+  yDistance: tNumber,
+  speed: tOptional(tNumber),
+  steps: tOptional(tNumber),
+});
+scheme.PageTouchscreenSwipeResult = tOptional(tObject({}));
 scheme.PageAccessibilitySnapshotParams = tObject({
   interestingOnly: tOptional(tBoolean),
   root: tOptional(tChannel(['ElementHandle'])),
@@ -1636,6 +1645,20 @@ scheme.FrameSetInputFilesParams = tObject({
   noWaitAfter: tOptional(tBoolean),
 });
 scheme.FrameSetInputFilesResult = tOptional(tObject({}));
+scheme.FrameSwipeParams = tObject({
+  selector: tString,
+  direction: tEnum(['left', 'right', 'up', 'down']),
+  percent: tOptional(tNumber),
+  speed: tOptional(tNumber),
+  strict: tOptional(tBoolean),
+  force: tOptional(tBoolean),
+  noWaitAfter: tOptional(tBoolean),
+  modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
+  position: tOptional(tType('Point')),
+  timeout: tOptional(tNumber),
+  trial: tOptional(tBoolean),
+});
+scheme.FrameSwipeResult = tOptional(tObject({}));
 scheme.FrameTapParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),

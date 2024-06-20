@@ -1603,6 +1603,18 @@ Page:
         slowMo: true
         snapshot: true
 
+    touchscreenSwipe:
+      parameters:
+        x: number
+        y: number
+        xDistance: number
+        yDistance: number
+        speed: number?
+        steps: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?
@@ -2204,6 +2216,39 @@ Frame:
           items: WritableStream
         timeout: number?
         noWaitAfter: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pausesBeforeInput: true
+
+    swipe:
+      parameters:
+        selector: string
+        direction:
+          type: enum
+          literals:
+          - left
+          - right
+          - up
+          - down
+        percent: number?
+        speed: number?
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        timeout: number?
+        trial: boolean?
       flags:
         slowMo: true
         snapshot: true

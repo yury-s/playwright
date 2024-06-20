@@ -148,6 +148,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return await this._frame.dragAndDrop(metadata, params.source, params.target, params);
   }
 
+  async swipe(params: channels.FrameSwipeParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.swipe(metadata, params.selector, params.direction, params);
+  }
+
   async tap(params: channels.FrameTapParams, metadata: CallMetadata): Promise<void> {
     return await this._frame.tap(metadata, params.selector, params);
   }
