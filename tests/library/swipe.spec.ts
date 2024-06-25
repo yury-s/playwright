@@ -21,7 +21,7 @@ import type { ElementHandle } from 'playwright-core';
 // it.use({ hasTouch: true });
 it.use({
   ...devices['iPhone 12'],
-})
+});
 
 async function swipe(page, locator, direction: 'up' | 'down' | 'left' | 'right') {
   const box = await locator.boundingBox();

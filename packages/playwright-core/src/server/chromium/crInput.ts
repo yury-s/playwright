@@ -188,7 +188,7 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
     });
     const xStep = xDistance / steps;
     const yStep = yDistance / steps;
-    for (let i = 0; i < steps; i++) {
+    for (let i = 1; i < steps; i++) {
       await this._client.send('Input.dispatchTouchEvent', {
         type: 'touchMove',
         touchPoints: [{

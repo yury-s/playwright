@@ -182,7 +182,32 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       modifiers: toModifiersMask(modifiers),
     });
   }
-  async swipe(options: {x: number, y: number, xDistance: number, yDistance: number, speed?: number, stps?: number}) {
-    throw new Error('emulate swipe is not supported in WebKit');
+  async swipe(options: {x: number, y: number, xDistance: number, yDistance: number, speed: number, steps: number}) {
+    const { x, y, xDistance, yDistance, speed, steps } = options;
+    await this._pageProxySession.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x, y, id: 0 }]
+    });
+    const xStep = xDistance / steps;
+    const yStep = yDistance / steps;
+    for (let i = 1; i < steps; i++) {
+      await this._pageProxySession.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{
+          x: x + xStep * i,
+          y: y + yStep * i,
+          id: 0
+        }]
+      });
+      await new Promise(f => setTimeout(f, Math.max(xStep, yStep) / speed * 1000));
+    }
+    await this._pageProxySession.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: x + xDistance, y: y + yDistance, id: 0 }]
+    });
+    await this._pageProxySession.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [{ x: x + xDistance, y: y + yDistance, id: 0 }]
+    });
   }
 }
