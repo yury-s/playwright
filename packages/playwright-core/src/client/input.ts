@@ -93,4 +93,16 @@ export class Touchscreen implements api.Touchscreen {
   async touch(type: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[]) {
     await this._page._channel.touchscreenTouch({ type, touchPoints });
   }
+
+  async down(touchPoints: { x: number, y: number, id?: number }[]) {
+    await this._page._channel.touchscreenDown({ touchPoints });
+  }
+
+  async move(touchPoints: { x: number, y: number, id?: number }[]) {
+    await this._page._channel.touchscreenMove({ touchPoints });
+  }
+
+  async up(touchPoints: { x: number, y: number, id?: number }[]) {
+    await this._page._channel.touchscreenUp({ touchPoints });
+  }
 }

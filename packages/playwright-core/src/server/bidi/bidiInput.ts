@@ -130,6 +130,10 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
     this._session = session;
   }
 
+  touch(type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', touchPoints: { x: number; y: number; id?: number; }[], modifiers: Set<types.KeyboardModifier>): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
   }
 }

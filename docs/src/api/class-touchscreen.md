@@ -44,3 +44,45 @@ Type of the touch event.
   - `id` ?<[int]> Identifier used to track the touch point between events, must be unique within an event. Optional.
 
 List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between touch events for the duration of its movement around the surface.
+
+## async method: Touchscreen.down
+* since: v1.46
+
+Synthesizes a touch event.
+
+### param: Touchscreen.down.touches
+* since: v1.46
+- `touchPoints` <[Array]<[Object]>>
+  - `x` <[float]> x coordinate of the event in CSS pixels.
+  - `y` <[float]> y coordinate of the event in CSS pixels.
+  - `id` ?<[int]> Identifier used to track the touch point between events, must be unique within an event. Optional.
+
+List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between touch events for the duration of its movement around the surface.
+
+## async method: Touchscreen.move
+* since: v1.46
+
+Synthesizes a touch event.
+
+### param: Touchscreen.move.touches
+* since: v1.46
+- `touchPoints` <[Array]<[Object]>>
+  - `x` <[float]> x coordinate of the event in CSS pixels.
+  - `y` <[float]> y coordinate of the event in CSS pixels.
+  - `id` ?<[int]> Identifier used to track the touch point between events, must be unique within an event. Optional.
+
+List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between touch events for the duration of its movement around the surface.
+
+## async method: Touchscreen.up
+* since: v1.46
+
+Synthesizes a touch event.
+
+### param: Touchscreen.up.touches
+* since: v1.46
+- `touchPoints` <[Array]<[Object]>>
+  - `x` <[float]> x coordinate of the event in CSS pixels.
+  - `y` <[float]> y coordinate of the event in CSS pixels.
+  - `id` ?<[int]> Identifier used to track the touch point between events, must be unique within an event. Optional.
+
+List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between touch events for the duration of its movement around the surface.

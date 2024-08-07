@@ -277,6 +277,18 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.touchscreen.tap(params.x, params.y, metadata);
   }
 
+  async touchscreenDown(params: channels.PageTouchscreenDownParams, metadata: CallMetadata) {
+    await this._page.touchscreen.down(params.touchPoints, metadata);
+  }
+
+  async touchscreenMove(params: channels.PageTouchscreenMoveParams, metadata: CallMetadata) {
+    await this._page.touchscreen.move(params.touchPoints, metadata);
+  }
+
+  async touchscreenUp(params: channels.PageTouchscreenUpParams, metadata: CallMetadata) {
+    await this._page.touchscreen.up(params.touchPoints, metadata);
+  }
+
   async touchscreenTouch(params: channels.PageTouchscreenTouchParams, metadata: CallMetadata) {
     await this._page.touchscreen.touch(params.type, params.touchPoints, metadata);
   }

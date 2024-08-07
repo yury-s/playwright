@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Demonstration</title>
+    <style>
+        .target {
+            margin: 1px;
+            padding: 2em;
+            border: 1px solid green;
+
+            overflow: scroll;
+            height: 200px;
+            text-align: center;
+            line-height: 200px;
+            user-select: none;
+        }
+        body {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="target" id="t1">Tap, Hold or Swipe 1</div>
+    <div class="target" id="t2">Tap, Hold or Swipe 2</div>
+
+    <script>
+        globalThis.touchEvents = [];
+        function trackEvents(target) {
+            for (const event of [
+                'touchstart',
+                'touchend',
+                'touchmove',
+                'touchcancel',
+            ]) {
+                target.addEventListener(event, e => {
+                    // e.preventDefault();
+                    touchEvents.push(touchEventToJson(event, e));
+                });
+            }
+        }
+
+        trackEvents(document.getElementById('t1'));
+        trackEvents(document.getElementById('t2'));
+
+        function touchEventToJson(type, ev) {
+          return {
+            type,
+            taget: ev.target.id || ev.target.tagName,
+            touches: Array.from(ev.touches).map(touchToJson),
+            changedTouches: Array.from(ev.changedTouches).map(touchToJson),
+            targetTouches: Array.from(ev.targetTouches).map(touchToJson),
+          };
+        }
+
+        function touchToJson(touch) {
+          return {
+            identifier: touch.identifier,
+            target: touch.target.id || touch.target.tagName,
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            pageX: touch.pageX,
+            pageY: touch.pageY,
+            screenX: touch.screenX,
+            screenY: touch.screenY,
+          };
+        }
+
+    </script>
+</body>
+</html>

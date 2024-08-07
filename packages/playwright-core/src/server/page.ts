@@ -802,6 +802,21 @@ export class Page extends SdkObject {
   markAsServerSideOnly() {
     this._isServerSideOnly = true;
   }
+
+  async elementFromPoint(x: number, y: number): Promise<dom.ElementHandle | null> {
+    let frame: frames.Frame | null = this.mainFrame();
+    const point = { x, y };
+    while (frame) {
+      const context = await frame._mainContext();
+      const target = (await context.evaluateHandle((p: { x: number, y: number }) => document.elementFromPoint(p.x, p.y), point)).asElement();
+      if (!target)
+        return null;
+      frame = await target.contentFrame();
+      if (!frame)
+        return target;
+    }
+    return null;
+  }
 }
 
 export class Worker extends SdkObject {

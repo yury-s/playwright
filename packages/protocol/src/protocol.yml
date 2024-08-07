@@ -1665,6 +1665,48 @@ Page:
         slowMo: true
         snapshot: true
 
+    touchscreenDown:
+      parameters:
+        touchPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              x: number
+              y: number
+              id: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
+    touchscreenMove:
+      parameters:
+        touchPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              x: number
+              y: number
+              id: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
+    touchscreenUp:
+      parameters:
+        touchPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              x: number
+              y: number
+              id: number?
+      flags:
+        slowMo: true
+        snapshot: true
+
     touchscreenTouch:
       parameters:
         type:

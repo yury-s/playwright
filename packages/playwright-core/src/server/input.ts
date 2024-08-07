@@ -16,8 +16,10 @@
 
 import { assert } from '../utils';
 import * as keyboardLayout from './usKeyboardLayout';
+import type * as dom from './dom';
 import type * as types from './types';
 import type { Page } from './page';
+import type { Frame } from './frames';
 import type { CallMetadata } from './instrumentation';
 
 export const keypadLocation = keyboardLayout.keypadLocation;
@@ -311,9 +313,19 @@ export interface RawTouchscreen {
   touch(type: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], modifiers: Set<types.KeyboardModifier>): Promise<void>;
 }
 
+type Touch = {
+  x: number,
+  y: number,
+  id: number,
+  target: dom.ElementHandle,
+};
+
 export class Touchscreen {
   private _raw: RawTouchscreen;
   private _page: Page;
+
+  private _currentTouches = new Map<number, Touch>();
+  private _touchActiveDocumentFrame: Frame | undefined;
 
   constructor(raw: RawTouchscreen, page: Page) {
     this._raw = raw;
@@ -327,6 +339,47 @@ export class Touchscreen {
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
   }
+
+  async down(touchPoints: { x: number, y: number, id?: number }[], metadata?: CallMetadata) {
+    if (metadata && touchPoints.length === 1)
+      metadata.point = { x: touchPoints[0].x, y: touchPoints[0].y };
+    if (!this._page._browserContext._options.hasTouch)
+      throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
+    checkNoDuplicates(touchPoints);
+
+    for (const point of touchPoints) {
+      if (point.id !== undefined && this._currentTouches.has(point.id))
+        throw new Error(`Touch point with id ${point.id} is already active`);
+    }
+
+    const changedTouches = [];
+    for (const point of touchPoints) {
+      // TODO: scroll ?
+      const target = await this._page.elementFromPoint(point.x, point.y);
+      if (!target)
+        throw new Error(`No element at point ${point.x}, ${point.y}`);
+      if (!this._touchActiveDocumentFrame)
+        this._touchActiveDocumentFrame = target._frame;
+      // TODO: Throw?
+      if (target._frame !== this._touchActiveDocumentFrame)
+        continue;
+      const changedTouch = {
+        x: point.x,
+        y: point.y,
+        id: point.id || this._unusedTouchId(),
+        target,
+      };
+      changedTouches.push(changedTouch);
+      this._currentTouches.set(changedTouch.id, changedTouch);
+    }
+
+    
+  }
+  async move(touchPoints: { x: number, y: number, id?: number }[], metadata?: CallMetadata) {
+  }
+  async up(touchPoints: { x: number, y: number, id?: number }[], metadata?: CallMetadata) {
+  }
+
   async touch(type: 'touchstart'|'touchmove'|'touchend'|'touchcancel', touchPoints: { x: number, y: number, id?: number }[], metadata?: CallMetadata) {
     if (metadata && touchPoints.length === 1)
       metadata.point = { x: touchPoints[0].x, y: touchPoints[0].y };
@@ -340,6 +393,58 @@ export class Touchscreen {
         ids.add(point.id);
       }
     }
+
+    const touches = [];
+    const changedTouches = [];
+    for (const point of touchPoints) {
+      let changedTouch;
+      if (point.id !== undefined && this._currentTouches.has(point.id)) {
+        const touch = this._currentTouches.get(point.id)!;
+        changedTouch = {
+          ...touch,
+          x: point.x,
+          y: point.y,
+        };
+        continue;
+      } else {
+        // TODO: scroll ?
+        const target = await this._page.elementFromPoint(point.x, point.y);
+        if (!target)
+          throw new Error(`No element at point ${point.x}, ${point.y}`);
+        if (!this._touchActiveDocumentFrame)
+          this._touchActiveDocumentFrame = target._frame;
+        // TODO: Throw?
+        if (target._frame !== this._touchActiveDocumentFrame)
+          continue;
+        changedTouch = {
+          x: point.x,
+          y: point.y,
+          id: point.id || this._unusedTouchId(),
+          target,
+        };
+      }
+      changedTouches.push(changedTouch);
+      touches.push(changedTouch);
+    }
     await this._raw.touch(type, touchPoints, this._page.keyboard._modifiers());
+  }
+
+  private _unusedTouchId(): number {
+    for (let i = 1; i < 100; i++) {
+      if (!this._currentTouches.has(i))
+        return i;
+    }
+    throw new Error('Too many active touch points');
+  }
+}
+
+function checkNoDuplicates(touchPoints: { x: number, y: number, id?: number }[]) {
+  const ids = new Set<number>();
+  for (const point of touchPoints) {
+    if (point.id !== undefined) {
+      if (ids.has(point.id))
+        throw new Error(`Duplicate touch point id: ${point.id}`);
+      ids.add(point.id);
+    }
   }
 }

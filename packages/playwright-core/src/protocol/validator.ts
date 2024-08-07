@@ -1297,6 +1297,30 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tNumber,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
+scheme.PageTouchscreenDownParams = tObject({
+  touchPoints: tArray(tObject({
+    x: tNumber,
+    y: tNumber,
+    id: tOptional(tNumber),
+  })),
+});
+scheme.PageTouchscreenDownResult = tOptional(tObject({}));
+scheme.PageTouchscreenMoveParams = tObject({
+  touchPoints: tArray(tObject({
+    x: tNumber,
+    y: tNumber,
+    id: tOptional(tNumber),
+  })),
+});
+scheme.PageTouchscreenMoveResult = tOptional(tObject({}));
+scheme.PageTouchscreenUpParams = tObject({
+  touchPoints: tArray(tObject({
+    x: tNumber,
+    y: tNumber,
+    id: tOptional(tNumber),
+  })),
+});
+scheme.PageTouchscreenUpResult = tOptional(tObject({}));
 scheme.PageTouchscreenTouchParams = tObject({
   type: tEnum(['touchstart', 'touchend', 'touchmove', 'touchcancel']),
   touchPoints: tArray(tObject({

@@ -20965,6 +20965,50 @@ export interface Selectors {
  */
 export interface Touchscreen {
   /**
+   * Synthesizes a touch event.
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
+   * touch events for the duration of its movement around the surface.
+   */
+  down(touchPoints: ReadonlyArray<{
+    /**
+     * x coordinate of the event in CSS pixels.
+     */
+    x: number;
+
+    /**
+     * y coordinate of the event in CSS pixels.
+     */
+    y: number;
+
+    /**
+     * Identifier used to track the touch point between events, must be unique within an event. Optional.
+     */
+    id?: number;
+  }>): Promise<void>;
+
+  /**
+   * Synthesizes a touch event.
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
+   * touch events for the duration of its movement around the surface.
+   */
+  move(touchPoints: ReadonlyArray<{
+    /**
+     * x coordinate of the event in CSS pixels.
+     */
+    x: number;
+
+    /**
+     * y coordinate of the event in CSS pixels.
+     */
+    y: number;
+
+    /**
+     * Identifier used to track the touch point between events, must be unique within an event. Optional.
+     */
+    id?: number;
+  }>): Promise<void>;
+
+  /**
    * Dispatches a `touchstart` and `touchend` event with a single touch at the position
    * ([`x`](https://playwright.dev/docs/api/class-touchscreen#touchscreen-tap-option-x),[`y`](https://playwright.dev/docs/api/class-touchscreen#touchscreen-tap-option-y)).
    *
@@ -20984,6 +21028,28 @@ export interface Touchscreen {
    * touch events for the duration of its movement around the surface.
    */
   touch(type: "touchstart"|"touchend"|"touchmove"|"touchcancel", touchPoints: ReadonlyArray<{
+    /**
+     * x coordinate of the event in CSS pixels.
+     */
+    x: number;
+
+    /**
+     * y coordinate of the event in CSS pixels.
+     */
+    y: number;
+
+    /**
+     * Identifier used to track the touch point between events, must be unique within an event. Optional.
+     */
+    id?: number;
+  }>): Promise<void>;
+
+  /**
+   * Synthesizes a touch event.
+   * @param touchPoints List of touch points for this event. `id` is a unique identifier of a touch point that helps identify it between
+   * touch events for the duration of its movement around the surface.
+   */
+  up(touchPoints: ReadonlyArray<{
     /**
      * x coordinate of the event in CSS pixels.
      */

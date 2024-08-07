@@ -989,6 +989,41 @@ export class InjectedScript {
     node.dispatchEvent(event);
   }
 
+  dispatchTouchEvent(node: Node, type: string, eventInit: Object) {
+    let event;
+    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+    switch (eventType.get(type)) {
+      case 'mouse': event = new MouseEvent(type, eventInit); break;
+      case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
+      case 'touch': event = new TouchEvent(type, eventInit); break;
+      case 'pointer': event = new PointerEvent(type, eventInit); break;
+      case 'focus': event = new FocusEvent(type, eventInit); break;
+      case 'drag': event = new DragEvent(type, eventInit); break;
+      case 'wheel': event = new WheelEvent(type, eventInit); break;
+      case 'deviceorientation':
+        try {
+          event = new DeviceOrientationEvent(type, eventInit);
+        } catch {
+          const { bubbles, cancelable, alpha, beta, gamma, absolute } = eventInit as {bubbles: boolean, cancelable: boolean, alpha: number, beta: number, gamma: number, absolute: boolean};
+          event = this.document.createEvent('DeviceOrientationEvent') as WebKitLegacyDeviceOrientationEvent;
+          event.initDeviceOrientationEvent(type, bubbles, cancelable, alpha, beta, gamma, absolute);
+        }
+        break;
+      case 'devicemotion':
+        try {
+          event = new DeviceMotionEvent(type, eventInit);
+        } catch {
+          const { bubbles, cancelable, acceleration, accelerationIncludingGravity, rotationRate, interval } = eventInit as {bubbles: boolean, cancelable: boolean, acceleration: DeviceMotionEventAcceleration, accelerationIncludingGravity: DeviceMotionEventAcceleration, rotationRate: DeviceMotionEventRotationRate, interval: number};
+          event = this.document.createEvent('DeviceMotionEvent') as WebKitLegacyDeviceMotionEvent;
+          event.initDeviceMotionEvent(type, bubbles, cancelable, acceleration, accelerationIncludingGravity, rotationRate, interval);
+        }
+        break;
+      default: event = new Event(type, eventInit); break;
+    }
+    node.dispatchEvent(event);
+  }
+
+
   previewNode(node: Node): string {
     if (node.nodeType === Node.TEXT_NODE)
       return oneLine(`#text=${node.nodeValue || ''}`);

@@ -21,6 +21,49 @@ it.use({ hasTouch: true });
 
 it.fixme(({ browserName }) => browserName === 'firefox');
 
+it('generate touch events', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/touch-log.html');
+  const center1 = await centerPoint(page.locator('#t1'));
+  const center2 = await centerPoint(page.locator('#t2'));
+
+  const p1 = { ...center1, id: 11 };
+  const p2 = { ...center1, id: 12 };
+  const p3 = { ...center2, id: 21 };
+  const p4 = { ...center2, id: 22 };
+
+  async function takeLog() {
+    const log = await page.evaluate(() => {
+      const events = (window as any).touchEvents;
+      (window as any).touchEvents = [];
+      return events;
+    });
+    return JSON.stringify(log, null, 2);
+  }
+
+  await page.touchscreen.touch('touchstart', [p1]);
+  console.log(await takeLog());
+  p1.x += 20;
+  await page.touchscreen.touch('touchmove', [p1]);
+  await page.touchscreen.touch('touchstart', [p1, p2]);
+  // console.log(await takeLog());
+  p1.y += 20;
+  p2.y += 20;
+  await page.touchscreen.touch('touchmove', [p1, p2]);
+
+  await page.touchscreen.touch('touchstart', [p1, p2, p3]);
+  p1.y -= 40;
+  p3.y += 30;
+  await page.touchscreen.touch('touchmove', [p1, p2, p3]);
+
+
+  await page.touchscreen.touch('touchstart', [p1, p2, p3, p4]);
+  p4.x += 20;
+  await page.touchscreen.touch('touchmove', [p1, p2, p3, p4]);
+
+  // await new Promise(() => {});
+});
+
+
 it('slow swipe events @smoke', async ({ page }) => {
   it.fixme();
   await page.setContent(`<div id="a" style="background: lightblue; width: 200px; height: 200px">a</div>`);
@@ -53,6 +96,23 @@ it('slow swipe events @smoke', async ({ page }) => {
     'touchend',
   ]);
 });
+
+async function logTouchEvents(page) {
+  await page.evaluate(() => {
+  });
+  const eventsHandle = await target.evaluateHandle(target => {
+    const events: string[] = [];
+    for (const event of [
+      'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'click',
+      'pointercancel', 'pointerdown', 'pointerenter', 'pointerleave', 'pointermove', 'pointerout', 'pointerover', 'pointerup',
+      'touchstart', 'touchend', 'touchmove', 'touchcancel',])
+      target.addEventListener(event, () => events.push(event), { passive: false });
+    return events;
+  });
+  return eventsHandle;
+}
+
+
 
 
 async function trackEvents(target: Locator) {
