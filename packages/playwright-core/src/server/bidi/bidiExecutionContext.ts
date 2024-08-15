@@ -19,6 +19,7 @@ import * as js from '../javascript';
 import * as bidiTypes from './bidi-types';
 import { BidiSerializer } from './bidi-serializer';
 import { BidiDeserializer } from './bidi-deserializer';
+import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
@@ -58,7 +59,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       userActivation: true,
     });
     if (response.type === 'success')
-      return response.result;
+      return BidiDeserializer.deserialize(response.result);
     if (response.type === 'exception')
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
@@ -69,6 +70,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       expression,
       target: this._target,
       resultOwnership: bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
       awaitPromise: true,
       userActivation: true,
     });
@@ -96,6 +98,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
         ...objectIds.map(handle => ({ handle })),
       ],
       resultOwnership: returnByValue ? undefined : bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      serializationOptions: returnByValue ? {} : { maxObjectDepth:0, maxDomDepth:0 },
       awaitPromise: true,
       userActivation: true,
     });
@@ -103,7 +106,8 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
     if (response.type === 'success') {
       if (returnByValue)
-        return BidiDeserializer.deserialize(response.result);
+        if (returnByValue)
+          return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
       if ('handle' in response.result)
         return utilityScript._context.createHandle({ objectId: response.result.handle! });
       throw new js.JavaScriptErrorInEvaluate('Cannot get response handle: ' + JSON.stringify(response.result));
