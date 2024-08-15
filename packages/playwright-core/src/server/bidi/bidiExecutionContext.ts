@@ -108,9 +108,8 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       if (returnByValue)
         if (returnByValue)
           return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
-      if ('handle' in response.result)
-        return utilityScript._context.createHandle({ objectId: response.result.handle! });
-      throw new js.JavaScriptErrorInEvaluate('Cannot get response handle: ' + JSON.stringify(response.result));
+      const objectId = 'handle' in response.result ? response.result.handle : undefined ;
+      return utilityScript._context.createHandle({ objectId, ...response.result });
     }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
@@ -119,10 +118,9 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new Error('Method not implemented.');
   }
 
-  createHandle(context: js.ExecutionContext, remoteObject: js.RemoteObject): js.JSHandle {
-    // const isPromise = remoteObject.className === 'Promise';
-    // return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
-    throw new Error('Method not implemented.');
+  createHandle(context: js.ExecutionContext, jsRemoteObject: js.RemoteObject): js.JSHandle {
+    const remoteObject: bidiTypes.Script.RemoteValue = jsRemoteObject as bidiTypes.Script.RemoteValue;
+    return new js.JSHandle(context, remoteObject.type, renderPreview(remoteObject), jsRemoteObject.objectId, remoteObjectValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -132,4 +130,26 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   objectCount(objectId: js.ObjectId): Promise<number> {
     throw new Error('Method not implemented.');
   }
+}
+
+function renderPreview(remoteObject: bidiTypes.Script.RemoteValue): string | undefined {
+  if (remoteObject.type === 'undefined')
+    return 'undefined';
+  if (remoteObject.type === 'null')
+    return 'null';
+  if ('value' in remoteObject)
+    return String(remoteObject.value);
+  return `<${remoteObject.type}>`;
+}
+
+function remoteObjectValue(remoteObject: bidiTypes.Script.RemoteValue): any {
+  if (remoteObject.type === 'undefined')
+    return undefined;
+  if (remoteObject.type === 'null')
+    return null;
+  if (remoteObject.type === 'number' && typeof remoteObject.value === 'string')
+    return js.parseUnserializableValue(remoteObject.value);
+  if ('value' in remoteObject)
+    return remoteObject.value;
+  return undefined;
 }

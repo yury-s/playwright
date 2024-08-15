@@ -283,8 +283,8 @@ export class BidiPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  isElementHandle(remoteObject: any): boolean {
-    throw new Error('Method not implemented.');
+  isElementHandle(remoteObject: bidiTypes.Script.RemoteValue): boolean {
+    return remoteObject.type === 'node';
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
