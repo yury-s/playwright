@@ -141,7 +141,7 @@ export class BidiPage implements PageDelegate {
     const frame = this._page._frameManager.frame(realmInfo.context);
     if (!frame)
       return;
-    const delegate = new BidiExecutionContext(this._session, realmInfo.realm);
+    const delegate = new BidiExecutionContext(this._session, realmInfo);
     let worldName: types.World|null = null;
     if (!realmInfo.sandbox)
       worldName = 'main';

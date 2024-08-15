@@ -17,14 +17,26 @@
 import type { BidiSession } from './bidiConnection';
 import * as js from '../javascript';
 import * as bidiTypes from './bidi-types';
+import { BidiSerializer } from './bidi-serializer';
+import { BidiDeserializer } from './bidi-deserializer';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
-  readonly _realm: string;
+  private readonly _target: bidiTypes.Script.Target;
 
-  constructor(session: BidiSession, realm: string) {
+  constructor(session: BidiSession, realmInfo: bidiTypes.Script.RealmInfo) {
     this._session = session;
-    this._realm = realm;
+    if (realmInfo.type === 'window') {
+      // Simple realm does not seem to work for Window contexts.
+      this._target = {
+        context: realmInfo.context,
+        sandbox: realmInfo.sandbox,
+      };
+    } else {
+      this._target = {
+        realm: realmInfo.realm
+      };
+    }
   }
 
   // rawCallFunctionNoReply(func: Function, ...args: any[]): void;
@@ -37,9 +49,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   async rawEvaluateJSON(expression: string): Promise<any> {
     const response = await this._session.send('script.evaluate', {
       expression,
-      target: {
-        realm: this._realm,
-      },
+      target: this._target,
       serializationOptions: {
         maxObjectDepth: 10,
         maxDomDepth: 10,
@@ -57,9 +67,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
     const response = await this._session.send('script.evaluate', {
       expression,
-      target: {
-        realm: this._realm,
-      },
+      target: this._target,
       resultOwnership: bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
       awaitPromise: true,
       userActivation: true,
@@ -78,8 +86,29 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new Error('Method not implemented.');
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
-    throw new Error('Method not implemented.');
+  async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+    const response = await this._session.send('script.callFunction', {
+      functionDeclaration,
+      target: this._target,
+      arguments: [
+        { handle: utilityScript._objectId! },
+        ...values.map(BidiSerializer.serialize),
+        ...objectIds.map(handle => ({ handle })),
+      ],
+      resultOwnership: returnByValue ? undefined : bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      awaitPromise: true,
+      userActivation: true,
+    });
+    if (response.type === 'exception')
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    if (response.type === 'success') {
+      if (returnByValue)
+        return BidiDeserializer.deserialize(response.result);
+      if ('handle' in response.result)
+        return utilityScript._context.createHandle({ objectId: response.result.handle! });
+      throw new js.JavaScriptErrorInEvaluate('Cannot get response handle: ' + JSON.stringify(response.result));
+    }
+    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
   async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
@@ -87,6 +116,8 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   createHandle(context: js.ExecutionContext, remoteObject: js.RemoteObject): js.JSHandle {
+    // const isPromise = remoteObject.className === 'Promise';
+    // return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
     throw new Error('Method not implemented.');
   }
 
