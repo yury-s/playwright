@@ -18,6 +18,7 @@ import * as input from '../input';
 import type { Page } from '../page';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
+import * as bidiTypes from './bidi-types';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
@@ -67,25 +68,62 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private readonly _pageProxySession: BidiSession;
-  private _session?: BidiSession;
+  private readonly _session: BidiSession;
   private _page?: Page;
 
   constructor(session: BidiSession) {
-    this._pageProxySession = session;
-  }
-
-  setSession(session: BidiSession) {
     this._session = session;
   }
 
   async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+    // TODO: bidi throws when x/y are not integers.
+    x = Math.round(x);
+    y = Math.round(y);
+    this._session.send('input.performActions', {
+      context: this._session.sessionId,
+      actions: [
+        {
+          type: 'pointer',
+          id: 'pw_mouse',
+          parameters: {
+            pointerType: bidiTypes.Input.PointerType.Mouse,
+          },
+          actions: [{ type: 'pointerMove', x, y }],
+        }
+      ]
+    });
   }
 
   async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+    this._session.send('input.performActions', {
+      context: this._session.sessionId,
+      actions: [
+        {
+          type: 'pointer',
+          id: 'pw_mouse',
+          parameters: {
+            pointerType: bidiTypes.Input.PointerType.Mouse,
+          },
+          actions: [{ type: 'pointerDown', button: toBidiButton(button) }],
+        }
+      ]
+    });
   }
 
   async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+    this._session.send('input.performActions', {
+      context: this._session.sessionId,
+      actions: [
+        {
+          type: 'pointer',
+          id: 'pw_mouse',
+          parameters: {
+            pointerType: bidiTypes.Input.PointerType.Mouse,
+          },
+          actions: [{ type: 'pointerUp', button: toBidiButton(button) }],
+        }
+      ]
+    });
   }
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
@@ -105,4 +143,13 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
 
   async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
   }
+}
+
+function toBidiButton(button: string): number {
+  switch (button) {
+    case 'left': return 0;
+    case 'right': return 2;
+    case 'middle': return 1;
+  }
+  throw new Error('Unknown button: ' + button);
 }

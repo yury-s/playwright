@@ -309,8 +309,20 @@ export class BidiPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
-    throw new Error('Method not implemented.');
+  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle<Element>, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
+    return await handle.evaluateInUtility(([injected, node]) => {
+      node.scrollIntoView({
+        block: 'center',
+        inline: 'center',
+        behavior: 'instant',
+      });
+    }, null).then(() => 'done' as const).catch(e => {
+      if (e instanceof Error && e.message.includes('Node is detached from document'))
+        return 'error:notconnected';
+      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
+        return 'error:notvisible';
+      throw e;
+    });
   }
 
   async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
@@ -320,8 +332,21 @@ export class BidiPage implements PageDelegate {
     return process.platform === 'win32' ? 5 : 1;
   }
 
-  async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
-    return null;
+  async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null> {
+    const rects = await handle.evaluateInUtility(([injected, node]) => {
+      const rects = node.getClientRects();
+      if (!rects)
+        return null;
+      return [...rects].map(rect => [
+        { x: rect.left, y: rect.top },
+        { x: rect.right, y: rect.top },
+        { x: rect.right, y: rect.bottom },
+        { x: rect.left, y: rect.bottom },
+      ]);
+    }, null);
+    if (rects === 'error:notconnected')
+      return null;
+    return rects as types.Quad[];
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
