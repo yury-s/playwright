@@ -143,15 +143,33 @@ export class BidiPage implements PageDelegate {
       return;
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     let worldName: types.World|null = null;
-    if (!realmInfo.sandbox)
+    if (!realmInfo.sandbox) {
       worldName = 'main';
-    else if (realmInfo.sandbox === UTILITY_WORLD_NAME)
+      // Force creating utility world every time the main world is created (e.g. due to navigation).
+      this._touchUtilityWorld(realmInfo.context);
+    } else if (realmInfo.sandbox === UTILITY_WORLD_NAME)
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
       frame._contextCreated(worldName, context);
     this._realmToContext.set(realmInfo.realm, context);
+  }
+
+  private async _touchUtilityWorld(context: bidiTypes.BrowsingContext.BrowsingContext) {
+    await this._session.send('script.evaluate', {
+      expression: '1 + 1',
+      target: {
+        context,
+        sandbox: UTILITY_WORLD_NAME,
+      },
+      serializationOptions: {
+        maxObjectDepth: 10,
+        maxDomDepth: 10,
+      },
+      awaitPromise: true,
+      userActivation: true,
+    });
   }
 
   private _onRealmDestroyed(params: bidiTypes.Script.RealmDestroyedParameters) {
