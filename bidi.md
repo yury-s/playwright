@@ -46,4 +46,8 @@ reuse core/bidi from pptr?
 
 - ff: script.callFunction does NOT work with playwright build of FF, throws 'Not allowed to define cross-origin object as property on [Object] or [Array] XrayWrapper'
 
+- getContentQuads impl
+- Expected "x" to be an integer, got [object Number] 49.48 in pointerDown
+- performActions need to contain down/up in one command to generate doubleclick
+
 gotoAction await for event??
