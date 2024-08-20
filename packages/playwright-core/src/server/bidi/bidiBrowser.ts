@@ -115,22 +115,42 @@ export class BidiBrowser extends Browser {
   }
 
   private _onBrowsingContextCreated(event: bidi.BrowsingContext.Info) {
-    if (event.parent)
+    if (event.parent) {
+      const parentFrameId = event.parent;
+      for (const page of this._bidiPages.values()) {
+        const parentFrame = page._page._frameManager.frame(parentFrameId);
+        if (!parentFrame)
+          continue;
+        page._session.addFrameBrowsingContext(event.context);
+        page._page._frameManager.frameAttached(event.context, parentFrameId);
+        return;
+      }
       return;
+    }
     let context = this._contexts.get(event.userContext);
     if (!context)
       context = this._defaultContext as BidiBrowserContext;
     if (!context)
       return;
+    const session = this._connection.createMainFrameBrowsingContextSession(event.context);
     const opener = event.originalOpener && this._bidiPages.get(event.originalOpener);
-    const session = this._connection.createBrowsingContextSession(event.context);
     const page = new BidiPage(context, session, opener || null);
     this._bidiPages.set(event.context, page);
   }
 
   _onBrowsingContextDestroyed(event: bidi.BrowsingContext.Info) {
-    if (event.parent)
+    if (event.parent) {
+      this._browserSession.removeFrameBrowsingContext(event.context);
+      const parentFrameId = event.parent;
+      for (const page of this._bidiPages.values()) {
+        const parentFrame = page._page._frameManager.frame(parentFrameId);
+        if (!parentFrame)
+          continue;
+        page._page._frameManager.frameDetached(event.context);
+        return;
+      }
       return;
+    }
     const bidiPage = this._bidiPages.get(event.context);
     if (!bidiPage)
       return

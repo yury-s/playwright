@@ -50,4 +50,10 @@ reuse core/bidi from pptr?
 - Expected "x" to be an integer, got [object Number] 49.48 in pointerDown
 - performActions need to contain down/up in one command to generate doubleclick
 
+- element.contentWindow will not work for cross-origin iframes?
+
+
+
 gotoAction await for event??
+
+_adoptTo - replace with adoptElementIfNeeded

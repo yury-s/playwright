@@ -39,7 +39,7 @@ export class BidiPage implements PageDelegate {
   readonly _page: Page;
   // private readonly _pagePromise = new ManualPromise<Page | Error>();
   private readonly _pagePromise: Promise<Page | Error>;
-  private readonly _session: BidiSession;
+  readonly _session: BidiSession;
   readonly _opener: BidiPage | null;
   private readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
@@ -185,18 +185,20 @@ export class BidiPage implements PageDelegate {
     this._browserContext._browser._onBrowsingContextDestroyed(params);
   }
 
-  // TODO
   private _onNavigationStarted(params: bidiTypes.BrowsingContext.NavigationInfo) {
-    this._page._frameManager.frameRequestedNavigation(params.context, params.url);
-  }
-
-  private _onDomContentLoaded(params: bidiTypes.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
+    this._page._frameManager.frameRequestedNavigation(frameId, params.url);
+
+    // TODO: there is no separate event for committed navigation.
     const frame = this._page._frameManager.frame(frameId);
     assert(frame);
     this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url,  '', params.navigation || '', /* initial */ false);
     // if (!initial)
     //   this._firstNonInitialNavigationCommittedFulfill();
+  }
+
+  private _onDomContentLoaded(params: bidiTypes.BrowsingContext.NavigationInfo) {
+    const frameId = params.context;
     this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 
@@ -294,7 +296,14 @@ export class BidiPage implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
-    throw new Error('Method not implemented.');
+    const executionContext = toBidiExecutionContext(handle._context);
+    const contentWindow = await executionContext.rawCallFunction('e => e.contentWindow', { handle: handle._objectId });
+    if (contentWindow.type === 'window') {
+      const frameId = contentWindow.value.context;
+      const result = this._page._frameManager.frame(frameId);
+      return result;
+    }
+    return null;
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
@@ -306,7 +315,29 @@ export class BidiPage implements PageDelegate {
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
-    throw new Error('Method not implemented.');
+    const box = await handle.evaluate(element => {
+      if (!(element instanceof Element))
+        return null;
+      const rect = element.getBoundingClientRect();
+      return {x: rect.x, y: rect.y, width: rect.width, height: rect.height};
+    });
+    if (!box)
+      return null;
+    const position = await this._framePosition(handle._frame);
+    if (!position)
+      return null;
+    box.x += position.x;
+    box.y += position.y;
+    return box
+  }
+
+  // TODO: move to Frame.
+  private async _framePosition(frame: frames.Frame): Promise<types.Point | null> {
+    if (frame === this._page.mainFrame())
+      return { x: 0, y: 0 };
+    const element = await frame.frameElement();
+    const box = await element.boundingBox();
+    return box;
   }
 
   async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle<Element>, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -358,7 +389,17 @@ export class BidiPage implements PageDelegate {
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    throw new Error('Method not implemented.');
+    const fromContext = toBidiExecutionContext(handle._context);
+    const shared = await fromContext.rawCallFunction('x => x',  { handle: handle._objectId });
+    // TODO: store sharedId in the handle.
+    if (!('sharedId' in shared))
+      throw new Error('Element is not a node');
+    const sharedId = shared.sharedId!;
+    const executionContext = toBidiExecutionContext(to);
+    const result = await executionContext.rawCallFunction('x => x',  { sharedId });
+    if ('handle' in result)
+      return to.createHandle({ objectId: result.handle!, ...result }) as dom.ElementHandle<T>;
+    throw new Error('Failed to adopt element handle.');
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
@@ -372,12 +413,36 @@ export class BidiPage implements PageDelegate {
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
-    throw new Error('Method not implemented.');
+    const parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    const parentContext = await parent._mainContext();
+    const list = await parentContext.evaluateHandle(() => { return [...document.querySelectorAll('iframe,frame')]; });
+    const length = await list.evaluate(list => list.length);
+    let foundElement = null;
+    for (let i = 0; i < length; i++) {
+      const element = await list.evaluateHandle((list, i) => list[i], i);
+      const candidate = await element.contentFrame();
+      if (frame === candidate) {
+        foundElement = element;
+        break;
+      } else {
+        element.dispose();
+      }
+    }
+    list.dispose();
+    if (!foundElement)
+      throw new Error('Frame has been detached.');
+    return foundElement;
   }
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+}
+
+function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
+  return (executionContext as any)[contextDelegateSymbol] as BidiExecutionContext;
 }
 
 const contextDelegateSymbol = Symbol('delegate');

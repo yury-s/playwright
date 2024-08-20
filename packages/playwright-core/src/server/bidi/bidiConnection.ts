@@ -38,7 +38,7 @@ export class BidiConnection {
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: BidiSession;
-  readonly _sessions = new Map<string, BidiSession>;
+  readonly _browsingContextToSession = new Map<string, BidiSession>;
 
   constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     this._transport = transport;
@@ -70,7 +70,7 @@ export class BidiConnection {
     if (object.type === 'event') {
       // Route page events to the right session.
       if ('context' in object.params) {
-        const session = this._sessions.get(object.params.context!);
+        const session = this._browsingContextToSession.get(object.params.context!);
         if (session) {
           session.dispatchMessage(message);
           return;
@@ -78,7 +78,7 @@ export class BidiConnection {
       }
     } else if (message.id) {
       // Find caller session.
-      for (const session of this._sessions.values()) {
+      for (const session of this._browsingContextToSession.values()) {
         if (session.hasCallback(message.id)) {
           session.dispatchMessage(message);
           return;
@@ -106,9 +106,9 @@ export class BidiConnection {
       this._transport.close();
   }
 
-  createBrowsingContextSession(bowsingContextId: bidi.BrowsingContext.BrowsingContext): BidiSession {
+  createMainFrameBrowsingContextSession(bowsingContextId: bidi.BrowsingContext.BrowsingContext): BidiSession {
     const result = new BidiSession(this, bowsingContextId, message => this.rawSend(message));
-    this._sessions.set(bowsingContextId, result);
+    this._browsingContextToSession.set(bowsingContextId, result);
     return result;
   }
 }
@@ -122,13 +122,14 @@ export type BidiEvents = {
 // };
 
 export class BidiSession extends EventEmitter {
-  connection: BidiConnection;
+  readonly connection: BidiConnection;
   readonly sessionId: string;
 
   private _disposed = false;
   private readonly _rawSend: (message: any) => void;
   private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
   private _crashed: boolean = false;
+  private readonly _browsingContexts = new Set<string>();
 
   override on: <T extends keyof BidiEvents | symbol>(event: T, listener: (payload: T extends symbol ? any : BidiEvents[T extends keyof BidiEvents ? T : never]['params']) => void) => this;
   override addListener: <T extends keyof BidiEvents | symbol>(event: T, listener: (payload: T extends symbol ? any : BidiEvents[T extends keyof BidiEvents ? T : never]['params']) => void) => this;
@@ -148,6 +149,16 @@ export class BidiSession extends EventEmitter {
     this.addListener = super.addListener;
     this.removeListener = super.removeListener;
     this.once = super.once;
+  }
+
+  addFrameBrowsingContext(context: string) {
+    this._browsingContexts.add(context);
+    this.connection._browsingContextToSession.set(context, this);
+  }
+
+  removeFrameBrowsingContext(context: string) {
+    this._browsingContexts.delete(context);
+    this.connection._browsingContextToSession.delete(context);
   }
 
   async send<T extends keyof bidiTypes.Commands>(
@@ -178,7 +189,10 @@ export class BidiSession extends EventEmitter {
 
   dispose() {
     this._disposed = true;
-    this.connection._sessions.delete(this.sessionId);
+    this.connection._browsingContextToSession.delete(this.sessionId);
+    for (const context of this._browsingContexts)
+      this.connection._browsingContextToSession.delete(context);
+    this._browsingContexts.clear();
     for (const callback of this._callbacks.values()) {
       callback.error.type = this._crashed ? 'crashed' : 'closed';
       callback.error.logs = this.connection._browserDisconnectedLogs;

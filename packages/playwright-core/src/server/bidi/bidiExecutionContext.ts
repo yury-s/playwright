@@ -40,13 +40,6 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  // rawCallFunctionNoReply(func: Function, ...args: any[]): void;
-  // evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
-  // getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
-  // createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
-  // releaseHandle(objectId: ObjectId): Promise<void>;
-  // objectCount(objectId: ObjectId): Promise<number>;
-
   async rawEvaluateJSON(expression: string): Promise<any> {
     const response = await this._session.send('script.evaluate', {
       expression,
@@ -124,11 +117,31 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
-    throw new Error('Method not implemented.');
+    await this._session.send('script.disown', {
+      target: this._target,
+      handles: [objectId],
+    });
   }
 
   objectCount(objectId: js.ObjectId): Promise<number> {
     throw new Error('Method not implemented.');
+  }
+
+  async rawCallFunction(functionDeclaration: string, arg: bidiTypes.Script.LocalValue): Promise<bidiTypes.Script.RemoteValue> {
+    const response = await this._session.send('script.callFunction', {
+      functionDeclaration,
+      target: this._target,
+      arguments: [ arg ],
+      resultOwnership: bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
+      awaitPromise: true,
+      userActivation: true,
+    });
+    if (response.type === 'exception')
+      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    if (response.type === 'success')
+      return response.result;
+    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 }
 
