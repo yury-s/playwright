@@ -66,11 +66,16 @@ export class BidiConnection {
     this._protocolLogger('receive', message);
     const object = message as bidi.Message;
     // Bidi messages do not have a common session identifier, so we
-    // route them based on various criteria.
+    // route them based on BrowsingContext.
     if (object.type === 'event') {
       // Route page events to the right session.
-      if ('context' in object.params) {
-        const session = this._browsingContextToSession.get(object.params.context!);
+      let context;
+      if ('context' in object.params)
+        context = object.params.context;
+      else if (object.method === 'log.entryAdded')
+        context = object.params.source?.context;
+      if (context) {
+        const session = this._browsingContextToSession.get(context);
         if (session) {
           session.dispatchMessage(message);
           return;

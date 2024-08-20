@@ -98,6 +98,8 @@ export interface PageDelegate {
   resetForReuse(): Promise<void>;
   // WebKit hack.
   shouldToggleStyleSheetToSyncAnimations(): boolean;
+  // Bidi throws on attempt to document.open() in utility context.
+  useMainWorldForSetContent?(): boolean;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };

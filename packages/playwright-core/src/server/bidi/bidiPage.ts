@@ -16,7 +16,6 @@
 
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { ManualPromise } from '../../utils/manualPromise';
 import { assert } from '../../utils';
 import type * as accessibility from '../accessibility';
 import * as dom from '../dom';
@@ -67,6 +66,7 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.fragmentNavigated', this._onFragmentNavigated.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.domContentLoaded', this._onDomContentLoaded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.load', this._onLoad.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
     ];
 
     // Initialize main frame.
@@ -216,6 +216,18 @@ export class BidiPage implements PageDelegate {
 
   private _onFragmentNavigated(params: bidiTypes.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
+  }
+
+  private _onLogEntryAdded(params: bidiTypes.Log.Entry) {
+    if (params.type !== 'console')
+      return;
+    const entry: bidiTypes.Log.ConsoleLogEntry = params as bidiTypes.Log.ConsoleLogEntry;
+    const context = this._realmToContext.get(params.source.realm);
+    if (!context)
+      return;
+    const callFrame = params.stackTrace?.callFrames[0];
+    const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
+    this._page._addConsoleMessage(entry.method, entry.args.map(arg => context.createHandle({ objectId: (arg as any).handle, ...arg })), location, params.text || undefined);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -437,6 +449,10 @@ export class BidiPage implements PageDelegate {
   }
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {
+    return true;
+  }
+
+  useMainWorldForSetContent(): boolean {
     return true;
   }
 }
