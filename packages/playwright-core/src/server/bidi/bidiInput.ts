@@ -107,7 +107,7 @@ export class RawMouseImpl implements input.RawMouse {
       if (delay && cc < clickCount)
         actions.push({ type: 'pause', duration: delay });
     }
-    this._performActions(actions);
+    await this._performActions(actions);
   }
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
