@@ -348,6 +348,14 @@ export class BidiPage implements PageDelegate {
       return { x: 0, y: 0 };
     const element = await frame.frameElement();
     const box = await element.boundingBox();
+    if (!box)
+      return null;
+    const style = await element.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe as Element), {}).catch(e => 'error:notconnected' as const);
+    if (style === 'error:notconnected' || style === 'transformed')
+      return null;
+    // Content box is offset by border and padding widths.
+    box.x += style.left;
+    box.y += style.top;
     return box;
   }
 
@@ -375,7 +383,7 @@ export class BidiPage implements PageDelegate {
   }
 
   async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null> {
-    const rects = await handle.evaluateInUtility(([injected, node]) => {
+    let quads = await handle.evaluateInUtility(([injected, node]) => {
       const rects = node.getClientRects();
       if (!rects)
         return null;
@@ -386,9 +394,38 @@ export class BidiPage implements PageDelegate {
         { x: rect.left, y: rect.bottom },
       ]);
     }, null);
-    if (rects === 'error:notconnected')
+    if (!quads || quads === 'error:notconnected')
       return null;
-    return rects as types.Quad[];
+    // TODO: consider transforming quads to support clicks in iframes.
+    //
+    // if (handle._frame !== this._page.mainFrame()) {
+    //   const frameElement = await handle._frame.frameElement();
+    //   quads = await frameElement.evaluateInUtility(([injected, iframe, quads]) => {
+    //     const transform = getComputedStyle(iframe as Element).transform;
+    //     if (transform === 'none')
+    //       return quads;
+    //     const matrix = new DOMMatrixReadOnly(transform);
+    //     for (const quad of quads) {
+    //       for (const point of quad) {
+    //         const p = new DOMPoint(point.x, point.y);
+    //         const transformed = matrix.transformPoint(p);
+    //         point.x = transformed.x;
+    //         point.y = transformed.y;
+    //       }
+    //     }
+    //     return quads;
+    //   }, quads).catch(e => 'error:notconnected' as const);
+    //   if (!quads || quads === 'error:notconnected')
+    //     return null;
+    // }
+    const position = await this._framePosition(handle._frame);
+    if (!position)
+      return null;
+    quads.forEach(quad => quad.forEach(point => {
+      point.x += position.x;
+      point.y += position.y;
+    }));
+    return quads as types.Quad[];
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
