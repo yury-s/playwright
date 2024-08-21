@@ -53,7 +53,6 @@ export class BidiPage implements PageDelegate {
     this.rawTouchscreen = new RawTouchscreenImpl(bidiSession);
     this._realmToContext = new Map();
     this._page = new Page(this, browserContext);
-    this.rawMouse.setPage(this._page);
     this._browserContext = browserContext;
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [

@@ -15,42 +15,16 @@
  */
 
 import * as input from '../input';
-import type { Page } from '../page';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 import * as bidiTypes from './bidi-types';
-
-function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
-  // From Source/WebKit/Shared/WebEvent.h
-  let mask = 0;
-  if (modifiers.has('Shift'))
-    mask |= 1;
-  if (modifiers.has('Control'))
-    mask |= 2;
-  if (modifiers.has('Alt'))
-    mask |= 4;
-  if (modifiers.has('Meta'))
-    mask |= 8;
-  return mask;
-}
-
-function toButtonsMask(buttons: Set<types.MouseButton>): number {
-  let mask = 0;
-  if (buttons.has('left'))
-    mask |= 1;
-  if (buttons.has('right'))
-    mask |= 2;
-  if (buttons.has('middle'))
-    mask |= 4;
-  return mask;
-}
+import { getBidiKeyValue } from './bidi-keyboard';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
-  private readonly _pageProxySession: BidiSession;
-  private _session?: BidiSession;
+  private _session: BidiSession;
 
   constructor(session: BidiSession) {
-    this._pageProxySession = session;
+    this._session = session;
   }
 
   setSession(session: BidiSession) {
@@ -58,18 +32,46 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+    console.log('keydown modifiers:', [...modifiers], 'key:', key, 'code:', code, 'keyCode:', keyCode);
+    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    actions.push({ type: 'keyDown', value: getBidiKeyValue(key) });
+    // TODO: add modifiers?
+    await this._performActions(actions);
   }
 
   async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+    console.log('keyup modifiers:', [...modifiers], 'key:', key, 'code:', code, 'keyCode:', keyCode);
+    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    actions.push({ type: 'keyUp', value: getBidiKeyValue(key) });
+    await this._performActions(actions);
   }
 
   async sendText(text: string): Promise<void> {
+    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    for (const char of text) {
+      const value = getBidiKeyValue(char);
+      actions.push({ type: 'keyDown', value });
+      actions.push({ type: 'keyUp', value });
+    }
+    await this._performActions(actions);
+  }
+
+  private async _performActions(actions: bidiTypes.Input.KeySourceAction[]) {
+    await this._session.send('input.performActions', {
+      context: this._session.sessionId,
+      actions: [
+        {
+          type: 'key',
+          id: 'pw_keyboard',
+          actions,
+        }
+      ]
+    });
   }
 }
 
 export class RawMouseImpl implements input.RawMouse {
   private readonly _session: BidiSession;
-  private _page?: Page;
 
   constructor(session: BidiSession) {
     this._session = session;
@@ -109,10 +111,6 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
-  }
-
-  setPage(page: Page) {
-    this._page = page;
   }
 
   private async _performActions(actions: bidiTypes.Input.PointerSourceAction[]) {
