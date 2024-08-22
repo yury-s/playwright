@@ -54,3 +54,5 @@ reuse core/bidi from pptr?
 
 - element.contentWindow will not work for cross-origin iframes?
 
+- FF impl bug: 'ensure events are dispatched in the individual tasks'
+

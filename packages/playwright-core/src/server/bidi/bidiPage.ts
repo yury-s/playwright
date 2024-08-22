@@ -382,8 +382,10 @@ export class BidiPage implements PageDelegate {
     return process.platform === 'win32' ? 5 : 1;
   }
 
-  async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null> {
+  async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null | 'error:notconnected'> {
     let quads = await handle.evaluateInUtility(([injected, node]) => {
+      if (!node.isConnected)
+        return 'error:notconnected';
       const rects = node.getClientRects();
       if (!rects)
         return null;
@@ -395,7 +397,7 @@ export class BidiPage implements PageDelegate {
       ]);
     }, null);
     if (!quads || quads === 'error:notconnected')
-      return null;
+      return quads;
     // TODO: consider transforming quads to support clicks in iframes.
     //
     // if (handle._frame !== this._page.mainFrame()) {
