@@ -158,7 +158,7 @@ export class BidiPage implements PageDelegate {
   }
 
   private async _touchUtilityWorld(context: bidiTypes.BrowsingContext.BrowsingContext) {
-    await this._session.send('script.evaluate', {
+    await this._session.sendMayFail('script.evaluate', {
       expression: '1 + 1',
       target: {
         context,
@@ -189,6 +189,15 @@ export class BidiPage implements PageDelegate {
   private _onNavigationStarted(params: bidiTypes.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
     this._page._frameManager.frameRequestedNavigation(frameId, params.navigation!);
+
+    const url = params.url.toLowerCase();
+    if (url.startsWith('file:') || url.startsWith('data:') || url === 'about:blank') {
+      // Navigation to file urls doesn't emit network events, so we fire 'commit' event right when navigation is started.
+      // Doing it in domcontentload would be too late as we'd clear frame tree.
+      const frame = this._page._frameManager.frame(frameId)!;
+      if (frame)
+        this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation!, /* initial */ false);
+    }
   }
 
   // TODO: there is no separate event for committed navigation, so we approximate it with responseStarted.
@@ -201,13 +210,8 @@ export class BidiPage implements PageDelegate {
     //   this._firstNonInitialNavigationCommittedFulfill();
   }
 
-
   private _onDomContentLoaded(params: bidiTypes.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
-    // Navigation to file urls doesn't emit network events, so we 'commit' event on dom content loaded.
-    const frame = this._page._frameManager.frame(frameId)!;
-    if (frame && frame.pendingDocument()?.documentId === params.navigation)
-      this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation, /* initial */ false);
     this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 

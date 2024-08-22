@@ -65,6 +65,8 @@ reuse core/bidi from pptr?
 - no security details on response
 - no timing details on response
 
+- navigation id stays the same for different navigations, see 'should return from goto if new navigation is started'
+
 - Intermittent Error: Protocol error (script.evaluate): unknown error
   Message: AbortError: Actor 'MessageHandlerFrame' destroyed before query 'MessageHandlerFrameParent:sendCommand' was resolved
 

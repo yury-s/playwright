@@ -124,7 +124,19 @@ export class BidiNetworkManager {
   }
 
   private _onFetchError(params: bidiTypes.Network.FetchErrorParameters) {
-    console.log('onFetchError:', params);
+    const request = this._requests.get(params.request.request);
+    if (!request)
+      return;
+    this._requests.delete(request._id);
+    const response = request.request._existingResponse();
+    if (response) {
+      response.setTransferSize(null);
+      response.setEncodedBodySize(null);
+      response._requestFinished(-1);
+    }
+    request.request._setFailureText(params.errorText);
+    // TODO: support canceled flag
+    this._page._frameManager.requestFailed(request.request, params.errorText === 'NS_BINDING_ABORTED');
   }
 
   private _onAuthRequired(params: bidiTypes.Network.AuthRequiredParameters) {
