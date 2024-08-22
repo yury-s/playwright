@@ -73,7 +73,8 @@ export class BidiNetworkManager {
     const getResponseBody = async () => {
       throw new Error(`Response body is not available for requests in Bidi`);
     };
-    const startTime = request.startTime;
+    const timings = params.request.timings;
+    const startTime = timings.requestTime;
     function relativeToStart(time: number): number {
       if (!time)
         return -1;
@@ -81,13 +82,13 @@ export class BidiNetworkManager {
     }
     const timing: network.ResourceTiming = {
       startTime: startTime / 1000,
-      requestStart: -1,
-      responseStart: relativeToStart(params.timestamp),
-      domainLookupStart: -1,
-      domainLookupEnd: -1,
-      connectStart: -1,
-      secureConnectionStart: -1,
-      connectEnd: -1
+      requestStart: relativeToStart(timings.requestStart),
+      responseStart: relativeToStart(timings.responseStart),
+      domainLookupStart: relativeToStart(timings.dnsStart),
+      domainLookupEnd: relativeToStart(timings.dnsEnd),
+      connectStart: relativeToStart(timings.connectStart),
+      secureConnectionStart: relativeToStart(timings.tlsStart),
+      connectEnd: relativeToStart(timings.connectEnd),
     };
     const response = new network.Response(request.request, params.response.status, params.response.statusText, bidiToHeadersArray(params.response.headers), timing, getResponseBody, false);
     response._serverAddrFinished();
@@ -111,7 +112,7 @@ export class BidiNetworkManager {
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
-    const responseEndTime = params.timestamp / 1000 - response.timing().startTime;
+    const responseEndTime = params.request.timings.responseEnd / 1000 - response.timing().startTime;
     if (isRedirected) {
       response._requestFinished(responseEndTime);
     } else {
@@ -180,7 +181,7 @@ function bidiToHeadersArray(bidiHeaders: bidiTypes.Network.Header[]): types.Head
     if (value.type === 'string')
       valueString = value.value;
     else if (value.type === 'base64')
-      Buffer.from(value.type, 'base64').toString('binary');    
+      Buffer.from(value.type, 'base64').toString('binary');
     result.push({ name, value: valueString });
   }
   return result;
