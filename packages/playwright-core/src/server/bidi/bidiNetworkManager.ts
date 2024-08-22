@@ -151,7 +151,6 @@ class BidiRequest {
   readonly request: network.Request;
   readonly _id: string;
   private _redirectedTo: BidiRequest | undefined;
-  startTime: number;
 
   constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidiTypes.Network.BeforeRequestSentParameters) {
     this._id = payload.request.request;
@@ -163,7 +162,7 @@ class BidiRequest {
         payload.request.url, 'other', payload.request.method, postDataBuffer, bidiToHeadersArray(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
-    this.startTime = payload.timestamp;
+    this.request._setBodySize(payload.request.bodySize || 0);
   }
 
   _finalRequest(): BidiRequest {

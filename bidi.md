@@ -29,6 +29,8 @@ reuse core/bidi from pptr?
 
 - no way to pass overridden 'referrer' in goto()
 
+- no fromServiceWorker bit
+
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
 
@@ -76,7 +78,6 @@ reuse core/bidi from pptr?
 
 
 TODO:
-- network observation
 - emulation
 - network interception
 - expose bindings
