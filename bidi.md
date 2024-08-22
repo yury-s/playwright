@@ -27,6 +27,8 @@ reuse core/bidi from pptr?
 
 - How to create a 'sandbox' aka isolated world?
 
+- no way to pass overridden 'referrer' in goto()
+
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
 
@@ -69,6 +71,8 @@ reuse core/bidi from pptr?
 
 - Intermittent Error: Protocol error (script.evaluate): unknown error
   Message: AbortError: Actor 'MessageHandlerFrame' destroyed before query 'MessageHandlerFrameParent:sendCommand' was resolved
+
+-  lazy loading iframes are not reported (can be disabled in settings I think)
 
 
 TODO:
