@@ -28,6 +28,7 @@ import { BidiSession } from './bidiConnection';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import * as bidiTypes from './bidi-types';
 import { BidiExecutionContext } from './bidiExecutionContext';
+import { BidiNetworkManager } from './bidiNetworkManager';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -43,6 +44,7 @@ export class BidiPage implements PageDelegate {
   private readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
+  readonly _networkManager: BidiNetworkManager;
   _initializedPage: Page | null = null;
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
@@ -54,6 +56,7 @@ export class BidiPage implements PageDelegate {
     this._realmToContext = new Map();
     this._page = new Page(this, browserContext);
     this._browserContext = browserContext;
+    this._networkManager = new BidiNetworkManager(this._session, this._page, this._onNavigationResponseStarted.bind(this));
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [
       eventsHelper.addEventListener(bidiSession, 'script.realmCreated', this._onRealmCreated.bind(this)),
@@ -79,7 +82,6 @@ export class BidiPage implements PageDelegate {
       this._page.reportAsNew(e);
       return e;
     });
-
   }
 
   private async _initialize() {
@@ -186,18 +188,26 @@ export class BidiPage implements PageDelegate {
 
   private _onNavigationStarted(params: bidiTypes.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
-    this._page._frameManager.frameRequestedNavigation(frameId, params.url);
+    this._page._frameManager.frameRequestedNavigation(frameId, params.navigation!);
+  }
 
-    // TODO: there is no separate event for committed navigation.
+  // TODO: there is no separate event for committed navigation, so we approximate it with responseStarted.
+  private _onNavigationResponseStarted(params: bidiTypes.Network.ResponseStartedParameters) {
+    const frameId = params.context!;
     const frame = this._page._frameManager.frame(frameId);
     assert(frame);
-    this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url,  '', params.navigation || '', /* initial */ false);
+    this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.response.url, '', params.navigation!, /* initial */ false);
     // if (!initial)
     //   this._firstNonInitialNavigationCommittedFulfill();
   }
 
+
   private _onDomContentLoaded(params: bidiTypes.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
+    // Navigation to file urls doesn't emit network events, so we 'commit' event on dom content loaded.
+    const frame = this._page._frameManager.frame(frameId)!;
+    if (frame && frame.pendingDocument()?.documentId === params.navigation)
+      this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation, /* initial */ false);
     this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 

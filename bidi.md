@@ -40,7 +40,7 @@ reuse core/bidi from pptr?
 
 - script.realmDestroyed comes after browsingContext.contextDestroyed
 
-- browsingContext.navigationStarted is it navigation requested or committed?
+- browsingContext.navigationStarted is it navigation requested or committed? There is no navigation committed event. file:// url navigation is a problem.
 
 - ff: script.evaluate exception have no details/message
 
@@ -58,6 +58,21 @@ reuse core/bidi from pptr?
 
 - browsingContext.contextDestroyed comes before input.performActions response, see 'should not throw UnhandledPromiseRejection when page closes'. I.e. some events can come after browsingContext was destroyed.
 
-- browsingContext.contextCreated comes with no `originalOpener` for popups, see 'should issue clicks in parallel in page and popup'
+- browsingContext.contextCreated comes with no `originalOpener` for popups, see 'should issue clicks in parallel in page and popup' ==> fixed in 129!
+
+- network request resourceType is missing?
+- network request events do not provide postData
+- no security details on response
+- no timing details on response
+
+- Intermittent Error: Protocol error (script.evaluate): unknown error
+  Message: AbortError: Actor 'MessageHandlerFrame' destroyed before query 'MessageHandlerFrameParent:sendCommand' was resolved
 
 
+TODO:
+- network observation
+- emulation
+- network interception
+- expose bindings
+- addInitScript
+- browsercontext-*
