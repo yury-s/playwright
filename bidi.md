@@ -56,3 +56,8 @@ reuse core/bidi from pptr?
 
 - FF impl bug: 'ensure events are dispatched in the individual tasks'
 
+- browsingContext.contextDestroyed comes before input.performActions response, see 'should not throw UnhandledPromiseRejection when page closes'. I.e. some events can come after browsingContext was destroyed.
+
+- browsingContext.contextCreated comes with no `originalOpener` for popups, see 'should issue clicks in parallel in page and popup'
+
+
