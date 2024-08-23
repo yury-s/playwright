@@ -19,6 +19,7 @@ import { eventsHelper } from '../../utils/eventsHelper';
 import { assert } from '../../utils';
 import type * as accessibility from '../accessibility';
 import * as dom from '../dom';
+import * as dialog from '../dialog';
 import type * as frames from '../frames';
 import { type InitScript, Page, type PageDelegate } from '../page';
 import type { Progress } from '../progress';
@@ -29,6 +30,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import * as bidiTypes from './bidi-types';
 import { BidiExecutionContext } from './bidiExecutionContext';
 import { BidiNetworkManager } from './bidiNetworkManager';
+import { BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -68,6 +70,7 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.fragmentNavigated', this._onFragmentNavigated.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.domContentLoaded', this._onDomContentLoaded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.load', this._onLoad.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
     ];
 
@@ -230,6 +233,17 @@ export class BidiPage implements PageDelegate {
 
   private _onFragmentNavigated(params: bidiTypes.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
+  }
+
+  private _onUserPromptOpened(event: bidiTypes.BrowsingContext.UserPromptOpenedParameters) {
+    this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
+        this._page,
+        event.type as dialog.DialogType,
+        event.message,
+        async (accept: boolean, userText?: string) => {
+          await this._session.send('browsingContext.handleUserPrompt', { context: event.context, accept, userText });
+        },
+        event.defaultValue));
   }
 
   private _onLogEntryAdded(params: bidiTypes.Log.Entry) {

@@ -9,36 +9,30 @@ reuse core/bidi from pptr?
 - browsingContext.CreateType = "tab" / "window"
   why is it important at all?
 - referenceContext?: BrowsingContext.BrowsingContext; passed when creating a new page, is it like a popup opener?
+- command responses are not attributed to sessions, contain only command id
 
 - wait: browsingContext.ReadinessState in browsingContext.navigate
-
-- command responses are not attributed to sessions, contain only commend id
-
-- log.entryAdded contains only reference to script.Realm (no browsing context)
 
 - browsingContext.navigationFailed/Aborted - no reason
 
 - script.Target vs. script.realm - for window contexts realm doesn't work, only {context, sandbox}
 
 - script.RemoteValue and return handle
--- Script.InternalId?
+-- what's Script.InternalId?
 
-- Any notes on the semantics of things like Script.ResultOwnership?
+- Any notes on the semantics of things like Script.ResultOwnership? - currently only works if passed 'root'
 
 - How to create a 'sandbox' aka isolated world? - created automatically it seems
-
 - no way to pass overridden 'referrer' in goto()  - use interception?
-
 - no fromServiceWorker bit
 
 - no way to specify screen different from viewport
-
 - no support for isMobile
-
 - no support for landscape
-
 - no request body (https://github.com/w3c/webdriver-bidi/issues/748)
 - no response body (https://github.com/w3c/webdriver-bidi/issues/747)
+
+- user agent emulation is client side: https://github.com/w3c/webdriver-bidi/issues/448#issuecomment-1944294296
 
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
@@ -87,11 +81,14 @@ reuse core/bidi from pptr?
 
 - setViewport does not affect window.screen.width/height, matchMedia (pptr with cdp is same), see 'should emulate device width'
 
+- CSP tests are failing
 
 
 TODO:
 - emulation
 - network interception
+- downloads
+- proxy
 - expose bindings
 - addInitScript
 - browsercontext-*
