@@ -25,11 +25,20 @@ reuse core/bidi from pptr?
 
 - Any notes on the semantics of things like Script.ResultOwnership?
 
-- How to create a 'sandbox' aka isolated world?
+- How to create a 'sandbox' aka isolated world? - created automatically it seems
 
-- no way to pass overridden 'referrer' in goto()
+- no way to pass overridden 'referrer' in goto()  - use interception?
 
 - no fromServiceWorker bit
+
+- no way to specify screen different from viewport
+
+- no support for isMobile
+
+- no support for landscape
+
+- no request body (https://github.com/w3c/webdriver-bidi/issues/748)
+- no response body (https://github.com/w3c/webdriver-bidi/issues/747)
 
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
@@ -72,9 +81,12 @@ reuse core/bidi from pptr?
 - navigation id stays the same for different navigations, see 'should return from goto if new navigation is started'
 
 - Intermittent Error: Protocol error (script.evaluate): unknown error
-  Message: AbortError: Actor 'MessageHandlerFrame' destroyed before query 'MessageHandlerFrameParent:sendCommand' was resolved
+  Message: AbortError: Actor 'MessageHandlerFrame' destroyed before query 'MessageHandlerFrameParent:sendCommand' was resolved - apparently fails if a command is sent before about:blank navigation finishes.
 
 -  lazy loading iframes are not reported (can be disabled in settings I think)
+
+- setViewport does not affect window.screen.width/height, matchMedia (pptr with cdp is same), see 'should emulate device width'
+
 
 
 TODO:

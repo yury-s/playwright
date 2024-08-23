@@ -89,8 +89,6 @@ export class BidiBrowser extends Browser {
   // }
 
   async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
-    if (options.isMobile)
-      throw new Error('options.isMobile is not supported in Firefox');
     const { userContext } = await this._browserSession.send('browser.createUserContext', {});
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();

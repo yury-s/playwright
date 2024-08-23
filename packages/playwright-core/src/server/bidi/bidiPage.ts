@@ -87,6 +87,7 @@ export class BidiPage implements PageDelegate {
   private async _initialize() {
     const { contexts } = await this._session.send('browsingContext.getTree', { root: this._session.sessionId});
     this._handleFrameTree(contexts[0]);
+    await this._updateViewport();
   }
 
   private _handleFrameTree(frameTree: bidiTypes.BrowsingContext.Info ) {
@@ -268,6 +269,20 @@ export class BidiPage implements PageDelegate {
   }
 
   async _updateViewport(): Promise<void> {
+    const options = this._browserContext._options;
+    const deviceSize = this._page.emulatedSize();
+    if (deviceSize === null)
+      return;
+    const viewportSize = deviceSize.viewport;
+    this._session.send('browsingContext.setViewport', {
+      context: this._session.sessionId,
+      viewport: {
+        width: viewportSize.width,
+        height: viewportSize.height,
+      },
+      devicePixelRatio: options.deviceScaleFactor || 1
+    });
+    // setOrientationOverride
   }
 
   async updateRequestInterception(): Promise<void> {
