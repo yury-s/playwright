@@ -90,7 +90,11 @@ export class BidiPage implements PageDelegate {
   private async _initialize() {
     const { contexts } = await this._session.send('browsingContext.getTree', { root: this._session.sessionId});
     this._handleFrameTree(contexts[0]);
-    await this._updateViewport();
+    await Promise.all([
+      this.updateHttpCredentials(),
+      this.updateRequestInterception(),
+      this._updateViewport(),
+    ]);
   }
 
   private _handleFrameTree(frameTree: bidiTypes.BrowsingContext.Info ) {
@@ -282,7 +286,7 @@ export class BidiPage implements PageDelegate {
   async bringToFront(): Promise<void> {
   }
 
-  async _updateViewport(): Promise<void> {
+  private async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
     const deviceSize = this._page.emulatedSize();
     if (deviceSize === null)
@@ -300,12 +304,14 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
+    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
   async updateOffline() {
   }
 
   async updateHttpCredentials() {
+    await this._networkManager.setCredentials(this._browserContext._options.httpCredentials);
   }
 
   async updateFileChooserInterception() {

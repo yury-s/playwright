@@ -32,6 +32,8 @@ reuse core/bidi from pptr?
 - no request body (https://github.com/w3c/webdriver-bidi/issues/748)
 - no response body (https://github.com/w3c/webdriver-bidi/issues/747)
 
+- network.failRequest doesn't accept error code
+
 - user agent emulation is client side: https://github.com/w3c/webdriver-bidi/issues/448#issuecomment-1944294296
 
 ## Problems
@@ -82,6 +84,15 @@ reuse core/bidi from pptr?
 - setViewport does not affect window.screen.width/height, matchMedia (pptr with cdp is same), see 'should emulate device width'
 
 - CSP tests are failing
+
+- \"url\" not supported yet in network.continueRequest
+
+- FF: 'should not throw if request was cancelled by the page' - no requestfailed event when it's cancelled by the page
+
+- FF: 'should amend utf8 post data' - doesn't work with non-latin post data
+- FF: 'redirected requests should report overridden headers' - does not allow to override headers on redirects
+
+- FF: browsingContext.create sometimes hangs in parallel tests
 
 
 TODO:

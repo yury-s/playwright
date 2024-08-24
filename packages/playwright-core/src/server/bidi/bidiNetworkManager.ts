@@ -30,6 +30,10 @@ export class BidiNetworkManager {
   private readonly _page: Page;
   private readonly _eventListeners: RegisteredListener[];
   private readonly _onNavigationResponseStarted: (params: bidiTypes.Network.ResponseStartedParameters) => void;
+  private _userRequestInterceptionEnabled: boolean = false;
+  private _protocolRequestInterceptionEnabled: boolean = false;
+  private _credentials: types.Credentials | undefined;
+  private _intercepId: bidiTypes.Network.Intercept | undefined;
 
   constructor(bidiSession: BidiSession, page: Page, onNavigationResponseStarted: (params: bidiTypes.Network.ResponseStartedParameters) => void) {
     this._session = bidiSession;
@@ -58,10 +62,19 @@ export class BidiNetworkManager {
       return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
-    const request = new BidiRequest(frame, redirectedFrom, param);
     let route;
-    // if (param.intercepts)
-    //   route = new FFRouteImpl(this._session, request);
+    if (param.intercepts) {
+      // We do not support intercepting redirects.
+      if (redirectedFrom) {
+        this._session.sendMayFail('network.continueRequest', {
+          request: param.request.request,
+          headers: redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders,
+        });
+      } else {
+        route = new BidiRouteImpl(this._session, param.request.request);
+      }
+    }
+    const request = new BidiRequest(frame, redirectedFrom, param, route);
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request, route);
   }
@@ -90,7 +103,7 @@ export class BidiNetworkManager {
       secureConnectionStart: relativeToStart(timings.tlsStart),
       connectEnd: relativeToStart(timings.connectEnd),
     };
-    const response = new network.Response(request.request, params.response.status, params.response.statusText, bidiToHeadersArray(params.response.headers), timing, getResponseBody, false);
+    const response = new network.Response(request.request, params.response.status, params.response.statusText, fromBidiHeaders(params.response.headers), timing, getResponseBody, false);
     response._serverAddrFinished();
     response._securityDetailsFinished();
     // "raw" headers are the same as "provisional" headers in Bidi.
@@ -144,6 +157,39 @@ export class BidiNetworkManager {
     console.log('onAuthRequired:', params);
   }
 
+  async setRequestInterception(value: boolean) {
+    this._userRequestInterceptionEnabled = value;
+    await this._updateProtocolRequestInterception();
+  }
+
+  async setCredentials(credentials: types.Credentials | undefined) {
+    this._credentials = credentials;
+    await this._updateProtocolRequestInterception();
+  }
+
+  async _updateProtocolRequestInterception(initial?: boolean) {
+    const enabled = this._userRequestInterceptionEnabled || !!this._credentials;
+    if (enabled === this._protocolRequestInterceptionEnabled)
+      return;
+    this._protocolRequestInterceptionEnabled = enabled;
+    if (initial && !enabled)
+      return;
+    const cachePromise = this._session.send('network.setCacheBehavior', { cacheBehavior: enabled ? 'bypass' : 'default' });
+    let interceptPromise = Promise.resolve<any>(undefined);
+    if (enabled) {
+      interceptPromise = this._session.send('network.addIntercept', {
+        phases: [bidiTypes.Network.InterceptPhase.AuthRequired, bidiTypes.Network.InterceptPhase.BeforeRequestSent],
+        urlPatterns: [{ type: 'pattern' }],
+        // urlPatterns: [{ type: 'string', pattern: '*' }],
+      }).then(r => {
+        this._intercepId = r.intercept;
+      });
+    } else if (this._intercepId) {
+      interceptPromise = this._session.send('network.removeIntercept', { intercept: this._intercepId });
+      this._intercepId = undefined;
+    }
+    await Promise.all([cachePromise, interceptPromise]);
+  }
 }
 
 
@@ -151,18 +197,22 @@ class BidiRequest {
   readonly request: network.Request;
   readonly _id: string;
   private _redirectedTo: BidiRequest | undefined;
+  // Only first request in the chain can be intercepted, so this will
+  // store the first and only Route in the chain (if any).
+  _originalRequestRoute: BidiRouteImpl | undefined;
 
-  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidiTypes.Network.BeforeRequestSentParameters) {
+  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidiTypes.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
     this._id = payload.request.request;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
     // TODO: missing in the spec?
     let postDataBuffer = null;
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
-        payload.request.url, 'other', payload.request.method, postDataBuffer, bidiToHeadersArray(payload.request.headers));
+        payload.request.url, 'other', payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);
+    this._originalRequestRoute = route ?? redirectedFrom?._originalRequestRoute;
   }
 
   _finalRequest(): BidiRequest {
@@ -173,7 +223,56 @@ class BidiRequest {
   }
 }
 
-function bidiToHeadersArray(bidiHeaders: bidiTypes.Network.Header[]): types.HeadersArray {
+class BidiRouteImpl implements network.RouteDelegate {
+  private _requestId: bidiTypes.Network.Request;
+  private _session: BidiSession;
+  _alreadyContinuedHeaders: bidiTypes.Network.Header[] | undefined;
+
+  constructor(session: BidiSession, requestId: bidiTypes.Network.Request) {
+    this._session = session;
+    this._requestId = requestId;
+  }
+
+  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+    // Firefox does not update content-length header.
+    let headers = overrides.headers || request.headers();
+    if (overrides.postData && headers) {
+      headers = headers.map(header => {
+        if (header.name.toLowerCase() === 'content-length')
+          return { name: header.name, value: overrides.postData!.byteLength.toString() };
+        return header;
+      });
+    }
+    this._alreadyContinuedHeaders = toBidiHeaders(headers);
+    await this._session.sendMayFail('network.continueRequest', {
+      request: this._requestId,
+      url: overrides.url,
+      method: overrides.method,
+      // TODO: cookies!
+      headers: this._alreadyContinuedHeaders,
+      body: overrides.postData ? { type: 'base64', value: Buffer.from(overrides.postData).toString('base64') } : undefined,
+    });
+  }
+
+  async fulfill(response: types.NormalizedFulfillResponse) {
+    const base64body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
+    await this._session.sendMayFail('network.provideResponse', {
+      request: this._requestId,
+      statusCode: response.status,
+      reasonPhrase: network.statusText(response.status),
+      headers: toBidiHeaders(response.headers),
+      body: { type: 'base64', value: base64body },
+    });
+  }
+
+  async abort(errorCode: string) {
+    await this._session.sendMayFail('network.failRequest', {
+      request: this._requestId
+    });
+  }
+}
+
+function fromBidiHeaders(bidiHeaders: bidiTypes.Network.Header[]): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (const {name, value} of bidiHeaders) {
     let valueString = 'unsupported header value type';
@@ -184,4 +283,8 @@ function bidiToHeadersArray(bidiHeaders: bidiTypes.Network.Header[]): types.Head
     result.push({ name, value: valueString });
   }
   return result;
+}
+
+function toBidiHeaders(headers: types.HeadersArray): bidiTypes.Network.Header[] {
+  return headers.map(({ name, value }) => ({ name, value: { type: 'string', value} }));
 }
