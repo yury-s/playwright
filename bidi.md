@@ -98,6 +98,7 @@ reuse core/bidi from pptr?
 TODO:
 - emulation
 - network interception
+- cookies
 - downloads
 - proxy
 - expose bindings

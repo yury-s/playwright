@@ -16,6 +16,7 @@
 
 import type * as channels from '@protocol/channels';
 import type * as types from '../types';
+import * as network from '../network';
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContext';
@@ -26,6 +27,8 @@ import * as bidi from './bidi-types';
 import { InitScript, Page, PageDelegate } from '../page';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { BidiPage } from './bidiPage';
+import { toTitleCase } from '../../utils/isomorphic/stringUtils';
+import { bidiBytesValueToString } from './bidiNetworkManager';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
 const BROWSER_VERSION = '18.0';
@@ -179,7 +182,22 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
-    throw new Error();
+    // throw new Error();
+    const { cookies } = await this._browser._browserSession.send('storage.getCookies',
+        { partition: { type: 'storageKey', userContext: this._browserContextId } });
+    return network.filterCookies(cookies.map((c: bidi.Network.Cookie) => {
+      const copy: channels.NetworkCookie = {
+        name: c.name,
+        value: bidiBytesValueToString(c.value),
+        domain: c.domain,
+        path: c.path,
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        expires: c.expiry ? c.expiry / 1000 : -1,
+        sameSite: c.sameSite ? fromBidiSameSite(c.sameSite) : 'None',
+      };
+      return copy;
+    }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
@@ -240,4 +258,13 @@ export class BidiBrowserContext extends BrowserContext {
 
   async cancelDownload(uuid: string) {
   }
+}
+
+function fromBidiSameSite(sameSite: bidi.Network.SameSite): channels.NetworkCookie['sameSite'] {
+  switch (sameSite) {
+    case 'strict': return 'Strict';
+    case 'lax': return 'Lax';
+    case 'none': return 'None';
+  }
+  return 'None';
 }

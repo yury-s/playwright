@@ -274,17 +274,20 @@ class BidiRouteImpl implements network.RouteDelegate {
 
 function fromBidiHeaders(bidiHeaders: bidiTypes.Network.Header[]): types.HeadersArray {
   const result: types.HeadersArray = [];
-  for (const {name, value} of bidiHeaders) {
-    let valueString = 'unsupported header value type';
-    if (value.type === 'string')
-      valueString = value.value;
-    else if (value.type === 'base64')
-      Buffer.from(value.type, 'base64').toString('binary');
-    result.push({ name, value: valueString });
-  }
+  for (const {name, value} of bidiHeaders)
+    result.push({ name, value: bidiBytesValueToString(value) });
   return result;
 }
 
 function toBidiHeaders(headers: types.HeadersArray): bidiTypes.Network.Header[] {
   return headers.map(({ name, value }) => ({ name, value: { type: 'string', value} }));
+}
+
+export function bidiBytesValueToString(value: bidiTypes.Network.BytesValue): string {
+  if (value.type === 'string')
+    return value.value;
+  if (value.type === 'base64')
+    return Buffer.from(value.type, 'base64').toString('binary');
+  return 'unknown value type: ' + (value as any).type;
+
 }
