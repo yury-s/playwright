@@ -104,3 +104,10 @@ TODO:
 - expose bindings
 - addInitScript
 - browsercontext-*
+- ignoreHTTPSErrors
+
+
+- browser download url
+- maybe install?
+- _firefoxBidi
+- test project with allow list of passing tests

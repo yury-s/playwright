@@ -29,9 +29,6 @@ import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { BidiPage } from './bidiPage';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
-const BROWSER_VERSION = '18.0';
-
 export class BidiBrowser extends Browser {
   private readonly _connection: BidiConnection;
   readonly _browserSession: BidiSession;
@@ -97,11 +94,11 @@ export class BidiBrowser extends Browser {
   }
 
   version(): string {
-    return BROWSER_VERSION;
+    return this._bidiSessionInfo.capabilities.browserVersion;
   }
 
   userAgent(): string {
-    return DEFAULT_USER_AGENT;
+    return this._bidiSessionInfo.capabilities.userAgent;
   }
 
   isConnected(): boolean {
@@ -175,7 +172,6 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
-    // throw new Error();
     const { cookies } = await this._browser._browserSession.send('storage.getCookies',
         { partition: { type: 'storageKey', userContext: this._browserContextId } });
     return network.filterCookies(cookies.map((c: bidi.Network.Cookie) => {
@@ -186,7 +182,7 @@ export class BidiBrowserContext extends BrowserContext {
         path: c.path,
         httpOnly: c.httpOnly,
         secure: c.secure,
-        expires: c.expiry ? c.expiry / 1000 : -1,
+        expires: c.expiry ?? -1,
         sameSite: c.sameSite ? fromBidiSameSite(c.sameSite) : 'None',
       };
       return copy;
@@ -194,11 +190,27 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    throw new Error();
+    cookies = network.rewriteCookies(cookies);
+    const promises = cookies.map((c: channels.SetNetworkCookie) => {
+      const cookie: bidi.Storage.PartialCookie = {
+        name: c.name,
+        value: { type: 'string', value: c.value },
+        domain: c.domain!,
+        path: c.path,
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        sameSite: c.sameSite && toBidiSameSite(c.sameSite),
+        expiry: (c.expires === -1 || c.expires === undefined) ? undefined : Math.round(c.expires),
+      };
+      return this._browser._browserSession.send('storage.setCookie',
+          { cookie, partition: { type: 'storageKey', userContext: this._browserContextId } });
+    });
+    await Promise.all(promises);
   }
 
   async doClearCookies() {
-    throw new Error();
+    await this._browser._browserSession.send('storage.deleteCookies',
+        { partition: { type: 'storageKey', userContext: this._browserContextId } });
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
@@ -260,4 +272,21 @@ function fromBidiSameSite(sameSite: bidi.Network.SameSite): channels.NetworkCook
     case 'none': return 'None';
   }
   return 'None';
+}
+
+function toBidiSameSite(sameSite: channels.SetNetworkCookie['sameSite']): bidi.Network.SameSite {
+  switch (sameSite) {
+    case 'Strict': return bidi.Network.SameSite.Strict;
+    case 'Lax': return bidi.Network.SameSite.Lax;
+    case 'None': return bidi.Network.SameSite.None;
+  }
+  return bidi.Network.SameSite.None;
+}
+
+export namespace Network {
+  export const enum SameSite {
+    Strict = 'strict',
+    Lax = 'lax',
+    None = 'none',
+  }
 }

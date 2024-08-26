@@ -107,12 +107,6 @@ export class BidiPage implements PageDelegate {
       this._handleFrameTree(child);
   }
 
-  // private _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-  //   this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
-  //   if (!initial)
-  //     this._firstNonInitialNavigationCommittedFulfill();
-  // }
-
   potentiallyUninitializedPage(): Page {
     return this._page;
   }
@@ -292,7 +286,7 @@ export class BidiPage implements PageDelegate {
     if (deviceSize === null)
       return;
     const viewportSize = deviceSize.viewport;
-    this._session.send('browsingContext.setViewport', {
+    await this._session.send('browsingContext.setViewport', {
       context: this._session.sessionId,
       viewport: {
         width: viewportSize.width,
@@ -300,7 +294,6 @@ export class BidiPage implements PageDelegate {
       },
       devicePixelRatio: options.deviceScaleFactor || 1
     });
-    // setOrientationOverride
   }
 
   async updateRequestInterception(): Promise<void> {
@@ -318,7 +311,11 @@ export class BidiPage implements PageDelegate {
   }
 
   async reload(): Promise<void> {
-    throw new Error('Method not implemented.');
+    await this._session.send('browsingContext.reload', {
+      context: this._session.sessionId,
+      // ignoreCache: true,
+      wait: bidi.BrowsingContext.ReadinessState.Interactive,
+    });
   }
 
   goBack(): Promise<boolean> {
