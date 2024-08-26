@@ -22,8 +22,8 @@ import { debugLogger } from '../../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
-import type * as bidi from './third_party/bidi-types';
-import type * as bidiTypes from './third_party/bidi-protocol';
+import type * as bidi from './third_party/bidiProtocol';
+import type * as bidiCommands from './third_party/bidiCommands';
 
 // BidiPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -118,13 +118,9 @@ export class BidiConnection {
   }
 }
 
-export type BidiEvents = {
+type BidiEvents = {
   [K in bidi.Event['method']]: Extract<bidi.Event, {method: K}>;
 };
-
-// export type BidiCommands = {
-//   [K in bidi.Command['method']]: Extract<bidi.Command, {method: K}>;
-// };
 
 export class BidiSession extends EventEmitter {
   readonly connection: BidiConnection;
@@ -166,21 +162,21 @@ export class BidiSession extends EventEmitter {
     this.connection._browsingContextToSession.delete(context);
   }
 
-  async send<T extends keyof bidiTypes.Commands>(
+  async send<T extends keyof bidiCommands.Commands>(
     method: T,
-    params?: bidiTypes.Commands[T]['params']
-  ): Promise<bidiTypes.Commands[T]['returnType']> {
+    params?: bidiCommands.Commands[T]['params']
+  ): Promise<bidiCommands.Commands[T]['returnType']> {
     if (this._crashed || this._disposed || this.connection._browserDisconnectedLogs)
       throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this.connection._browserDisconnectedLogs);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
-    return new Promise<bidiTypes.Commands[T]['returnType']>((resolve, reject) => {
+    return new Promise<bidiCommands.Commands[T]['returnType']>((resolve, reject) => {
       this._callbacks.set(id, { resolve, reject, error: new ProtocolError('error', method) });
     });
   }
 
-  sendMayFail<T extends keyof bidiTypes.Commands>(method: T, params?: bidiTypes.Commands[T]['params']): Promise<bidiTypes.Commands[T]['returnType'] | void> {
+  sendMayFail<T extends keyof bidiCommands.Commands>(method: T, params?: bidiCommands.Commands[T]['params']): Promise<bidiCommands.Commands[T]['returnType'] | void> {
     return this.send(method, params).catch(error => debugLogger.log('error', error));
   }
 

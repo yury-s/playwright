@@ -20,7 +20,7 @@ import type { Page } from '../page';
 import * as network from '../network';
 import type * as frames from '../frames';
 import type * as types from '../types';
-import * as bidiTypes from './third_party/bidi-types';
+import * as bidi from './third_party/bidiProtocol';
 import { BidiSession } from './bidiConnection';
 
 
@@ -29,13 +29,13 @@ export class BidiNetworkManager {
   private readonly _requests: Map<string, BidiRequest>;
   private readonly _page: Page;
   private readonly _eventListeners: RegisteredListener[];
-  private readonly _onNavigationResponseStarted: (params: bidiTypes.Network.ResponseStartedParameters) => void;
+  private readonly _onNavigationResponseStarted: (params: bidi.Network.ResponseStartedParameters) => void;
   private _userRequestInterceptionEnabled: boolean = false;
   private _protocolRequestInterceptionEnabled: boolean = false;
   private _credentials: types.Credentials | undefined;
-  private _intercepId: bidiTypes.Network.Intercept | undefined;
+  private _intercepId: bidi.Network.Intercept | undefined;
 
-  constructor(bidiSession: BidiSession, page: Page, onNavigationResponseStarted: (params: bidiTypes.Network.ResponseStartedParameters) => void) {
+  constructor(bidiSession: BidiSession, page: Page, onNavigationResponseStarted: (params: bidi.Network.ResponseStartedParameters) => void) {
     this._session = bidiSession;
     this._requests = new Map();
     this._page = page;
@@ -53,7 +53,7 @@ export class BidiNetworkManager {
     eventsHelper.removeEventListeners(this._eventListeners);
   }
 
-  private _onBeforeRequestSent(param: bidiTypes.Network.BeforeRequestSentParameters) {
+  private _onBeforeRequestSent(param: bidi.Network.BeforeRequestSentParameters) {
     if (param.request.url.startsWith('data:'))
       return;
     const redirectedFrom = param.redirectCount ? (this._requests.get(param.request.request) || null) : null;
@@ -79,7 +79,7 @@ export class BidiNetworkManager {
     this._page._frameManager.requestStarted(request.request, route);
   }
 
-  private _onResponseStarted(params: bidiTypes.Network.ResponseStartedParameters) {
+  private _onResponseStarted(params: bidi.Network.ResponseStartedParameters) {
     const request = this._requests.get(params.request.request);
     if (!request)
       return;
@@ -114,7 +114,7 @@ export class BidiNetworkManager {
       this._onNavigationResponseStarted(params);
   }
 
-  private _onResponseCompleted(params: bidiTypes.Network.ResponseCompletedParameters) {
+  private _onResponseCompleted(params: bidi.Network.ResponseCompletedParameters) {
     const request = this._requests.get(params.request.request);
     if (!request)
       return;
@@ -137,7 +137,7 @@ export class BidiNetworkManager {
 
   }
 
-  private _onFetchError(params: bidiTypes.Network.FetchErrorParameters) {
+  private _onFetchError(params: bidi.Network.FetchErrorParameters) {
     const request = this._requests.get(params.request.request);
     if (!request)
       return;
@@ -153,7 +153,7 @@ export class BidiNetworkManager {
     this._page._frameManager.requestFailed(request.request, params.errorText === 'NS_BINDING_ABORTED');
   }
 
-  private _onAuthRequired(params: bidiTypes.Network.AuthRequiredParameters) {
+  private _onAuthRequired(params: bidi.Network.AuthRequiredParameters) {
     console.log('onAuthRequired:', params);
   }
 
@@ -178,7 +178,7 @@ export class BidiNetworkManager {
     let interceptPromise = Promise.resolve<any>(undefined);
     if (enabled) {
       interceptPromise = this._session.send('network.addIntercept', {
-        phases: [bidiTypes.Network.InterceptPhase.AuthRequired, bidiTypes.Network.InterceptPhase.BeforeRequestSent],
+        phases: [bidi.Network.InterceptPhase.AuthRequired, bidi.Network.InterceptPhase.BeforeRequestSent],
         urlPatterns: [{ type: 'pattern' }],
         // urlPatterns: [{ type: 'string', pattern: '*' }],
       }).then(r => {
@@ -201,7 +201,7 @@ class BidiRequest {
   // store the first and only Route in the chain (if any).
   _originalRequestRoute: BidiRouteImpl | undefined;
 
-  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidiTypes.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
+  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidi.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
     this._id = payload.request.request;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
@@ -224,11 +224,11 @@ class BidiRequest {
 }
 
 class BidiRouteImpl implements network.RouteDelegate {
-  private _requestId: bidiTypes.Network.Request;
+  private _requestId: bidi.Network.Request;
   private _session: BidiSession;
-  _alreadyContinuedHeaders: bidiTypes.Network.Header[] | undefined;
+  _alreadyContinuedHeaders: bidi.Network.Header[] | undefined;
 
-  constructor(session: BidiSession, requestId: bidiTypes.Network.Request) {
+  constructor(session: BidiSession, requestId: bidi.Network.Request) {
     this._session = session;
     this._requestId = requestId;
   }
@@ -272,18 +272,18 @@ class BidiRouteImpl implements network.RouteDelegate {
   }
 }
 
-function fromBidiHeaders(bidiHeaders: bidiTypes.Network.Header[]): types.HeadersArray {
+function fromBidiHeaders(bidiHeaders: bidi.Network.Header[]): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (const {name, value} of bidiHeaders)
     result.push({ name, value: bidiBytesValueToString(value) });
   return result;
 }
 
-function toBidiHeaders(headers: types.HeadersArray): bidiTypes.Network.Header[] {
+function toBidiHeaders(headers: types.HeadersArray): bidi.Network.Header[] {
   return headers.map(({ name, value }) => ({ name, value: { type: 'string', value} }));
 }
 
-export function bidiBytesValueToString(value: bidiTypes.Network.BytesValue): string {
+export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {
   if (value.type === 'string')
     return value.value;
   if (value.type === 'base64')

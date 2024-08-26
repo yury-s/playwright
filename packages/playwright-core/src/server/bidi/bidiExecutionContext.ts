@@ -16,16 +16,16 @@
 
 import type { BidiSession } from './bidiConnection';
 import * as js from '../javascript';
-import * as bidiTypes from './third_party/bidi-types';
-import { BidiSerializer } from './third_party/bidi-serializer';
-import { BidiDeserializer } from './third_party/bidi-deserializer';
+import * as bidi from './third_party/bidiProtocol';
+import { BidiSerializer } from './third_party/bidiSerializer';
+import { BidiDeserializer } from './third_party/bidiDeserializer';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
-  private readonly _target: bidiTypes.Script.Target;
+  private readonly _target: bidi.Script.Target;
 
-  constructor(session: BidiSession, realmInfo: bidiTypes.Script.RealmInfo) {
+  constructor(session: BidiSession, realmInfo: bidi.Script.RealmInfo) {
     this._session = session;
     if (realmInfo.type === 'window') {
       // Simple realm does not seem to work for Window contexts.
@@ -62,7 +62,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     const response = await this._session.send('script.evaluate', {
       expression,
       target: this._target,
-      resultOwnership: bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      resultOwnership: bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
       serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
       awaitPromise: true,
       userActivation: true,
@@ -90,7 +90,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
         ...values.map(BidiSerializer.serialize),
         ...objectIds.map(handle => ({ handle })),
       ],
-      resultOwnership: returnByValue ? undefined : bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      resultOwnership: returnByValue ? undefined : bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
       serializationOptions: returnByValue ? {} : { maxObjectDepth:0, maxDomDepth:0 },
       awaitPromise: true,
       userActivation: true,
@@ -112,7 +112,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   createHandle(context: js.ExecutionContext, jsRemoteObject: js.RemoteObject): js.JSHandle {
-    const remoteObject: bidiTypes.Script.RemoteValue = jsRemoteObject as bidiTypes.Script.RemoteValue;
+    const remoteObject: bidi.Script.RemoteValue = jsRemoteObject as bidi.Script.RemoteValue;
     return new js.JSHandle(context, remoteObject.type, renderPreview(remoteObject), jsRemoteObject.objectId, remoteObjectValue(remoteObject));
   }
 
@@ -127,12 +127,12 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new Error('Method not implemented.');
   }
 
-  async rawCallFunction(functionDeclaration: string, arg: bidiTypes.Script.LocalValue): Promise<bidiTypes.Script.RemoteValue> {
+  async rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,
       arguments: [ arg ],
-      resultOwnership: bidiTypes.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      resultOwnership: bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
       serializationOptions: { maxObjectDepth:0, maxDomDepth:0 },
       awaitPromise: true,
       userActivation: true,
@@ -145,7 +145,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 }
 
-function renderPreview(remoteObject: bidiTypes.Script.RemoteValue): string | undefined {
+function renderPreview(remoteObject: bidi.Script.RemoteValue): string | undefined {
   if (remoteObject.type === 'undefined')
     return 'undefined';
   if (remoteObject.type === 'null')
@@ -155,7 +155,7 @@ function renderPreview(remoteObject: bidiTypes.Script.RemoteValue): string | und
   return `<${remoteObject.type}>`;
 }
 
-function remoteObjectValue(remoteObject: bidiTypes.Script.RemoteValue): any {
+function remoteObjectValue(remoteObject: bidi.Script.RemoteValue): any {
   if (remoteObject.type === 'undefined')
     return undefined;
   if (remoteObject.type === 'null')

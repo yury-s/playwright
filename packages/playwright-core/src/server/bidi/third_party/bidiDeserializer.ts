@@ -6,7 +6,7 @@
  */
 
 
-import type * as Bidi from './bidi-types';
+import type * as Bidi from './bidiProtocol';
 
 /**
  * @internal

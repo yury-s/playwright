@@ -27,7 +27,7 @@ import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
 import { BidiSession } from './bidiConnection';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
-import * as bidiTypes from './third_party/bidi-types';
+import * as bidi from './third_party/bidiProtocol';
 import { BidiExecutionContext } from './bidiExecutionContext';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BrowserContext } from '../browserContext';
@@ -97,7 +97,7 @@ export class BidiPage implements PageDelegate {
     ]);
   }
 
-  private _handleFrameTree(frameTree: bidiTypes.BrowsingContext.Info ) {
+  private _handleFrameTree(frameTree: bidi.BrowsingContext.Info ) {
     this._onFrameAttached(frameTree.context, frameTree.parent || null);
     // this._onFrameNavigated(frameTree.context, true);
     if (!frameTree.children)
@@ -142,7 +142,7 @@ export class BidiPage implements PageDelegate {
     }
   }
 
-  private _onRealmCreated(realmInfo: bidiTypes.Script.RealmInfo) {
+  private _onRealmCreated(realmInfo: bidi.Script.RealmInfo) {
     if (this._realmToContext.has(realmInfo.realm))
       return;
     if (realmInfo.type !== 'window')
@@ -165,7 +165,7 @@ export class BidiPage implements PageDelegate {
     this._realmToContext.set(realmInfo.realm, context);
   }
 
-  private async _touchUtilityWorld(context: bidiTypes.BrowsingContext.BrowsingContext) {
+  private async _touchUtilityWorld(context: bidi.BrowsingContext.BrowsingContext) {
     await this._session.sendMayFail('script.evaluate', {
       expression: '1 + 1',
       target: {
@@ -181,7 +181,7 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  private _onRealmDestroyed(params: bidiTypes.Script.RealmDestroyedParameters) {
+  private _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters) {
     const context = this._realmToContext.get(params.realm);
     if (!context)
       return;
@@ -190,11 +190,11 @@ export class BidiPage implements PageDelegate {
   }
 
   // TODO: route the message directly to the browser
-  private _onBrowsingContextDestroyed(params: bidiTypes.BrowsingContext.Info) {
+  private _onBrowsingContextDestroyed(params: bidi.BrowsingContext.Info) {
     this._browserContext._browser._onBrowsingContextDestroyed(params);
   }
 
-  private _onNavigationStarted(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onNavigationStarted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
     this._page._frameManager.frameRequestedNavigation(frameId, params.navigation!);
 
@@ -209,7 +209,7 @@ export class BidiPage implements PageDelegate {
   }
 
   // TODO: there is no separate event for committed navigation, so we approximate it with responseStarted.
-  private _onNavigationResponseStarted(params: bidiTypes.Network.ResponseStartedParameters) {
+  private _onNavigationResponseStarted(params: bidi.Network.ResponseStartedParameters) {
     const frameId = params.context!;
     const frame = this._page._frameManager.frame(frameId);
     assert(frame);
@@ -218,28 +218,28 @@ export class BidiPage implements PageDelegate {
     //   this._firstNonInitialNavigationCommittedFulfill();
   }
 
-  private _onDomContentLoaded(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onDomContentLoaded(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
     this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
 
-  private _onLoad(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onLoad(params: bidi.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameLifecycleEvent(params.context, 'load');
   }
 
-  private _onNavigationAborted(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onNavigationAborted(params: bidi.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameAbortedNavigation(params.context, 'Navigation aborted', params.navigation || undefined);
   }
 
-  private _onNavigationFailed(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onNavigationFailed(params: bidi.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameAbortedNavigation(params.context, 'Navigation failed', params.navigation || undefined);
   }
 
-  private _onFragmentNavigated(params: bidiTypes.BrowsingContext.NavigationInfo) {
+  private _onFragmentNavigated(params: bidi.BrowsingContext.NavigationInfo) {
     this._page._frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
   }
 
-  private _onUserPromptOpened(event: bidiTypes.BrowsingContext.UserPromptOpenedParameters) {
+  private _onUserPromptOpened(event: bidi.BrowsingContext.UserPromptOpenedParameters) {
     this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type as dialog.DialogType,
@@ -250,10 +250,10 @@ export class BidiPage implements PageDelegate {
         event.defaultValue));
   }
 
-  private _onLogEntryAdded(params: bidiTypes.Log.Entry) {
+  private _onLogEntryAdded(params: bidi.Log.Entry) {
     if (params.type !== 'console')
       return;
-    const entry: bidiTypes.Log.ConsoleLogEntry = params as bidiTypes.Log.ConsoleLogEntry;
+    const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;
     const context = this._realmToContext.get(params.source.realm);
     if (!context)
       return;
@@ -370,7 +370,7 @@ export class BidiPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  isElementHandle(remoteObject: bidiTypes.Script.RemoteValue): boolean {
+  isElementHandle(remoteObject: bidi.Script.RemoteValue): boolean {
     return remoteObject.type === 'node';
   }
 

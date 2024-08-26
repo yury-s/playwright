@@ -23,11 +23,10 @@ import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContex
 import type { SdkObject } from '../instrumentation';
 import type { ConnectionTransport } from '../transport';
 import { BidiConnection, BidiSession } from './bidiConnection';
-import * as bidi from './third_party/bidi-types';
+import * as bidi from './third_party/bidiProtocol';
 import { InitScript, Page, PageDelegate } from '../page';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { BidiPage } from './bidiPage';
-import { toTitleCase } from '../../utils/isomorphic/stringUtils';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
@@ -78,18 +77,12 @@ export class BidiBrowser extends Browser {
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [
       eventsHelper.addEventListener(this._browserSession, 'browsingContext.contextCreated', this._onBrowsingContextCreated.bind(this)),
-      // eventsHelper.addEventListener(this._browserSession, 'browsingContext.contextDestroyed', this._onBrowsingContextDestroyed.bind(this)),
     ];
   }
 
   _onDisconnect() {
     this._didClose();
   }
-  // override async close(options: { reason?: string; }): Promise<void> {
-  //   const { contexts } = await this._browserSession.send('browsingContext.getTree', { maxDepth: 1 });
-  //   await Promise.all(contexts.map(c => this._browserSession.send('browsingContext.close', { context: c.context })));
-  //   return super.close(options);
-  // }
 
   async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     const { userContext } = await this._browserSession.send('browser.createUserContext', {});

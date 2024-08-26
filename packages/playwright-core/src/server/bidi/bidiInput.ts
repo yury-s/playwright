@@ -17,8 +17,8 @@
 import * as input from '../input';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
-import * as bidiTypes from './third_party/bidi-types';
-import { getBidiKeyValue } from './third_party/bidi-keyboard';
+import * as bidi from './third_party/bidiProtocol';
+import { getBidiKeyValue } from './third_party/bidiKeyboard';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   private _session: BidiSession;
@@ -33,7 +33,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     console.log('keydown modifiers:', [...modifiers], 'key:', key, 'code:', code, 'keyCode:', keyCode);
-    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    const actions: bidi.Input.KeySourceAction[] = [];
     actions.push({ type: 'keyDown', value: getBidiKeyValue(key) });
     // TODO: add modifiers?
     await this._performActions(actions);
@@ -41,13 +41,13 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
   async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     console.log('keyup modifiers:', [...modifiers], 'key:', key, 'code:', code, 'keyCode:', keyCode);
-    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    const actions: bidi.Input.KeySourceAction[] = [];
     actions.push({ type: 'keyUp', value: getBidiKeyValue(key) });
     await this._performActions(actions);
   }
 
   async sendText(text: string): Promise<void> {
-    const actions: bidiTypes.Input.KeySourceAction[] = [];
+    const actions: bidi.Input.KeySourceAction[] = [];
     for (const char of text) {
       const value = getBidiKeyValue(char);
       actions.push({ type: 'keyDown', value });
@@ -56,7 +56,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     await this._performActions(actions);
   }
 
-  private async _performActions(actions: bidiTypes.Input.KeySourceAction[]) {
+  private async _performActions(actions: bidi.Input.KeySourceAction[]) {
     await this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
@@ -97,7 +97,7 @@ export class RawMouseImpl implements input.RawMouse {
     y = Math.round(y);
     const button = toBidiButton(options.button || 'left');
     const { delay = null, clickCount = 1 } = options;
-    const actions: bidiTypes.Input.PointerSourceAction[] = [];
+    const actions: bidi.Input.PointerSourceAction[] = [];
     actions.push({ type: 'pointerMove', x, y });
     for (let cc = 1; cc <= clickCount; ++cc) {
       actions.push({ type: 'pointerDown', button });
@@ -113,7 +113,7 @@ export class RawMouseImpl implements input.RawMouse {
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
   }
 
-  private async _performActions(actions: bidiTypes.Input.PointerSourceAction[]) {
+  private async _performActions(actions: bidi.Input.PointerSourceAction[]) {
     await this._session.send('input.performActions', {
       context: this._session.sessionId,
       actions: [
@@ -121,7 +121,7 @@ export class RawMouseImpl implements input.RawMouse {
           type: 'pointer',
           id: 'pw_mouse',
           parameters: {
-            pointerType: bidiTypes.Input.PointerType.Mouse,
+            pointerType: bidi.Input.PointerType.Mouse,
           },
           actions,
         }
