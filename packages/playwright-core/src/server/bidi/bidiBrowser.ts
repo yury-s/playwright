@@ -23,7 +23,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContex
 import type { SdkObject } from '../instrumentation';
 import type { ConnectionTransport } from '../transport';
 import { BidiConnection, BidiSession } from './bidiConnection';
-import * as bidi from './bidi-types';
+import * as bidi from './third_party/bidi-types';
 import { InitScript, Page, PageDelegate } from '../page';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { BidiPage } from './bidiPage';

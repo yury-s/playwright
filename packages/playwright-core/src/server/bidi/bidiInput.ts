@@ -17,8 +17,8 @@
 import * as input from '../input';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
-import * as bidiTypes from './bidi-types';
-import { getBidiKeyValue } from './bidi-keyboard';
+import * as bidiTypes from './third_party/bidi-types';
+import { getBidiKeyValue } from './third_party/bidi-keyboard';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   private _session: BidiSession;

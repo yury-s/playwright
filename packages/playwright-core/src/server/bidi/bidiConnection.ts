@@ -22,8 +22,8 @@ import { debugLogger } from '../../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
-import type * as bidi from './bidi-types';
-import type * as bidiTypes from './bidi-protocol';
+import type * as bidi from './third_party/bidi-types';
+import type * as bidiTypes from './third_party/bidi-protocol';
 
 // BidiPlaywright uses this special id to issue Browser.close command which we
 // should ignore.

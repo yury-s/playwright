@@ -27,7 +27,7 @@ import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
 import { BidiSession } from './bidiConnection';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
-import * as bidiTypes from './bidi-types';
+import * as bidiTypes from './third_party/bidi-types';
 import { BidiExecutionContext } from './bidiExecutionContext';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BrowserContext } from '../browserContext';

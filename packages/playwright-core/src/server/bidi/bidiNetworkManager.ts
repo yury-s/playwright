@@ -20,7 +20,7 @@ import type { Page } from '../page';
 import * as network from '../network';
 import type * as frames from '../frames';
 import type * as types from '../types';
-import * as bidiTypes from './bidi-types';
+import * as bidiTypes from './third_party/bidi-types';
 import { BidiSession } from './bidiConnection';
 
 

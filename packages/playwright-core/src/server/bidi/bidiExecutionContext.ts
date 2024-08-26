@@ -16,9 +16,9 @@
 
 import type { BidiSession } from './bidiConnection';
 import * as js from '../javascript';
-import * as bidiTypes from './bidi-types';
-import { BidiSerializer } from './bidi-serializer';
-import { BidiDeserializer } from './bidi-deserializer';
+import * as bidiTypes from './third_party/bidi-types';
+import { BidiSerializer } from './third_party/bidi-serializer';
+import { BidiDeserializer } from './third_party/bidi-deserializer';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
