@@ -62,7 +62,6 @@ export class BidiPage implements PageDelegate {
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [
       eventsHelper.addEventListener(bidiSession, 'script.realmCreated', this._onRealmCreated.bind(this)),
-      eventsHelper.addEventListener(bidiSession, 'script.realmDestroyed', this._onRealmDestroyed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.contextDestroyed', this._onBrowsingContextDestroyed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationStarted', this._onNavigationStarted.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationAborted', this._onNavigationAborted.bind(this)),
@@ -175,12 +174,13 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  private _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters) {
+  _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters): boolean {
     const context = this._realmToContext.get(params.realm);
     if (!context)
-      return;
+      return false;
     this._realmToContext.delete(params.realm);
     context.frame._contextDestroyed(context);
+    return true;
   }
 
   // TODO: route the message directly to the browser

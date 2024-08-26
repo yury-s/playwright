@@ -36,6 +36,9 @@ reuse core/bidi from pptr?
 
 - user agent emulation is client side: https://github.com/w3c/webdriver-bidi/issues/448#issuecomment-1944294296
 
+- no request.resourceType
+- no extraHTTPHeaders (set in client side interception)
+
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
 
@@ -94,11 +97,11 @@ reuse core/bidi from pptr?
 
 - FF: browsingContext.create sometimes hangs in parallel tests
 
+- FF: crash reporter dialog
 
 TODO:
 - emulation
 - network interception
-- cookies
 - downloads
 - proxy
 - expose bindings

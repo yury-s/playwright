@@ -74,6 +74,7 @@ export class BidiBrowser extends Browser {
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [
       eventsHelper.addEventListener(this._browserSession, 'browsingContext.contextCreated', this._onBrowsingContextCreated.bind(this)),
+      eventsHelper.addEventListener(this._browserSession, 'script.realmDestroyed', this._onScriptRealmDestroyed.bind(this)),
     ];
   }
 
@@ -147,6 +148,13 @@ export class BidiBrowser extends Browser {
       return
     bidiPage.didClose();
     this._bidiPages.delete(event.context);
+  }
+
+  private _onScriptRealmDestroyed(event: bidi.Script.RealmDestroyedParameters) {
+    for (const page of this._bidiPages.values()) {
+      if (page._onRealmDestroyed(event))
+        return;
+    }
   }
 }
 
