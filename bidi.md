@@ -99,6 +99,8 @@ reuse core/bidi from pptr?
 
 - FF: crash reporter dialog
 
+- FF: provide canonical settings for testing browser
+
 TODO:
 - emulation
 - network interception

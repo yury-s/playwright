@@ -28,7 +28,7 @@ import { debugLogger, type Language } from '../utils';
 import type { Page } from './page';
 import { DebugController } from './debugController';
 import type { BrowserType } from './browserType';
-import { WebDriverBiDi } from './bidi/bidi';
+import { BidiFirefox } from './bidi/bidiFirefox';
 
 type PlaywrightOptions = {
   socksProxyPort?: number;
@@ -42,6 +42,7 @@ export class Playwright extends SdkObject {
   readonly chromium: BrowserType;
   readonly android: Android;
   readonly electron: Electron;
+  readonly bidiFirefox;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
   readonly options: PlaywrightOptions;
@@ -63,8 +64,8 @@ export class Playwright extends SdkObject {
       }
     }, null);
     this.chromium = new Chromium(this);
-    // this.firefox = new Firefox(this);
-    this.firefox = new WebDriverBiDi(this);
+    this.bidiFirefox = new BidiFirefox(this);
+    this.firefox = new Firefox(this);
     this.webkit = new WebKit(this);
     this.electron = new Electron(this);
     this.android = new Android(this, new AdbBackend());

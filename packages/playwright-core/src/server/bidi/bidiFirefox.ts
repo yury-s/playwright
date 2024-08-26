@@ -27,9 +27,9 @@ import type * as types from '../types';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 
-export class WebDriverBiDi extends BrowserType {
+export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
-    super(parent, 'firefox');
+    super(parent, 'bidi-firefox');
     this._useBidi = true;
   }
 
