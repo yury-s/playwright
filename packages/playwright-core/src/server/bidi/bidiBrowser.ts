@@ -45,15 +45,46 @@ export class BidiBrowser extends Browser {
     if (!sessionStatus.ready)
       throw new Error('Bidi session is not ready. ' + sessionStatus.message);
 
+    let proxy: bidi.Session.ManualProxyConfiguration | undefined;
+    if (options.proxy) {
+      proxy = {
+        proxyType: 'manual',
+      };
+      const url = new URL(options.proxy.server);  // Validate proxy server.
+      console.log('options.proxy.server:', options.proxy.server, url.protocol, url.host);
+      switch (url.protocol) {
+        case 'http:':
+          proxy.httpProxy = url.host;
+          break;
+        case 'https:':
+          proxy.httpsProxy = url.host;
+          break;
+        case 'socks4:':
+          proxy.socksProxy = url.host;
+          proxy.socksVersion = 4;
+          break;
+        case 'socks5:':
+          proxy.socksProxy = url.host;
+          proxy.socksVersion = 5;
+          break;
+        default:
+          throw new Error('Invalid proxy server protocol: ' + options.proxy.server);
+      };
+      console.log('options.proxy.bypass:', options.proxy.bypass);
+      if (options.proxy.bypass)
+        proxy.noProxy = options.proxy.bypass.split(',');
+    }
+
     browser._bidiSessionInfo = await browser._browserSession.send('session.new', {
       capabilities: {
         alwaysMatch: {
           acceptInsecureCerts: false,
+          proxy,
           unhandledPromptBehavior: {
             default: bidi.Session.UserPromptHandlerType.Ignore,
           },
           webSocketUrl: true
-        }
+        },
       }
     });
 

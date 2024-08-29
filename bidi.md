@@ -39,6 +39,11 @@ reuse core/bidi from pptr?
 - no request.resourceType
 - no extraHTTPHeaders (set in client side interception)
 
+- no suggestedFileName in browsingContext.downloadWillBegin
+- no way to get the body of the download
+
+- ProxyConfiguration can only be specified per session
+
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
 
@@ -101,10 +106,14 @@ reuse core/bidi from pptr?
 
 - FF: provide canonical settings for testing browser
 
+- FF: browsingContext.downloadWillBegin is not fired
+
 TODO:
 - emulation
 - network interception
 - downloads
+
+- auth
 - proxy
 - expose bindings
 - addInitScript
