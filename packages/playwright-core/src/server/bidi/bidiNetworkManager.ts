@@ -154,7 +154,25 @@ export class BidiNetworkManager {
   }
 
   private _onAuthRequired(params: bidi.Network.AuthRequiredParameters) {
-    console.log('onAuthRequired:', params);
+    const isBasic = params.response.authChallenges?.some(challenge => challenge.scheme.startsWith('Basic'));
+    const credentials = this._page._browserContext._options.httpCredentials;
+    console.log('authRequired', isBasic, credentials);
+    if (isBasic && credentials) {
+      this._session.sendMayFail('network.continueWithAuth', {
+        request: params.request.request,
+        action: 'provideCredentials',
+        credentials: {
+          type: 'password',
+          username: credentials.username,
+          password: credentials.password,
+        }
+      });
+    } else {
+      this._session.sendMayFail('network.continueWithAuth', {
+        request: params.request.request,
+        action: 'default',
+      });
+    }
   }
 
   async setRequestInterception(value: boolean) {

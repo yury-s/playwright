@@ -51,7 +51,6 @@ export class BidiBrowser extends Browser {
         proxyType: 'manual',
       };
       const url = new URL(options.proxy.server);  // Validate proxy server.
-      console.log('options.proxy.server:', options.proxy.server, url.protocol, url.host);
       switch (url.protocol) {
         case 'http:':
           proxy.httpProxy = url.host;
@@ -70,9 +69,9 @@ export class BidiBrowser extends Browser {
         default:
           throw new Error('Invalid proxy server protocol: ' + options.proxy.server);
       };
-      console.log('options.proxy.bypass:', options.proxy.bypass);
       if (options.proxy.bypass)
         proxy.noProxy = options.proxy.bypass.split(',');
+      // TODO: support authentication.
     }
 
     browser._bidiSessionInfo = await browser._browserSession.send('session.new', {
