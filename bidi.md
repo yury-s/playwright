@@ -44,6 +44,10 @@ reuse core/bidi from pptr?
 
 - ProxyConfiguration can only be specified per session
 
+- there is no input.fill command, keydown/up may not work for emoji
+
+- get content quads is missing
+
 ## Problems
 - about:blank page is required for firefox to not close even in headless! (use --silent?)
 
@@ -109,6 +113,10 @@ reuse core/bidi from pptr?
 - FF: browsingContext.downloadWillBegin is not fired
 
 - FF: "Blocked request with id 15 not found" when sending network.continueWithAuth, authentication not working
+
+- mouseDown/mouseUp !== mouse.click
+
+- FF: pipe connection
 
 TODO:
 - emulation
