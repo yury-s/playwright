@@ -231,6 +231,7 @@ class BidiRequest {
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);
     this._originalRequestRoute = route ?? redirectedFrom?._originalRequestRoute;
+    route?._setRequest(this.request);
   }
 
   _finalRequest(): BidiRequest {
@@ -244,6 +245,7 @@ class BidiRequest {
 class BidiRouteImpl implements network.RouteDelegate {
   private _requestId: bidi.Network.Request;
   private _session: BidiSession;
+  private _request!: network.Request;
   _alreadyContinuedHeaders: bidi.Network.Header[] | undefined;
 
   constructor(session: BidiSession, requestId: bidi.Network.Request) {
@@ -251,9 +253,13 @@ class BidiRouteImpl implements network.RouteDelegate {
     this._requestId = requestId;
   }
 
-  async continue(request: network.Request, overrides: types.NormalizedContinueOverrides) {
+  _setRequest(request: network.Request) {
+    this._request = request;
+  }
+
+  async continue(overrides: types.NormalizedContinueOverrides) {
     // Firefox does not update content-length header.
-    let headers = overrides.headers || request.headers();
+    let headers = overrides.headers || this._request.headers();
     if (overrides.postData && headers) {
       headers = headers.map(header => {
         if (header.name.toLowerCase() === 'content-length')

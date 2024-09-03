@@ -117,6 +117,7 @@ TODO:
 
 - auth
 - proxy
+- support cookie overrides in request
 - expose bindings
 - addInitScript
 - browsercontext-*
