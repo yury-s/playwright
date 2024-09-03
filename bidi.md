@@ -108,7 +108,7 @@ reuse core/bidi from pptr?
 
 - FF: browsingContext.downloadWillBegin is not fired
 
-- FF: "Blocked request with id 15 not found" when sending network.continueWithAuth
+- FF: "Blocked request with id 15 not found" when sending network.continueWithAuth, authentication not working
 
 TODO:
 - emulation

@@ -556,9 +556,9 @@ export class Registry {
     }));
 
     this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
-      'linux': '',
+      'linux': '/usr/bin/firefox',
       'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
-      'win32': '',
+      'win32': '\\Mozilla Firefox\\firefox.exe',
     }));
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;

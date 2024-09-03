@@ -76,7 +76,7 @@ for (const folder of ['library', 'page']) {
       channel,
       video: 'off',
       launchOptions: {
-        channel: 'bidi-firefox-stable1',
+        channel: 'bidi-firefox-stable',
         executablePath,
       },
       trace: trace ? 'on' : undefined,
