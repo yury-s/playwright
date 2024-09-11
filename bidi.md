@@ -125,14 +125,9 @@ TODO:
 - auth
 - proxy
 - addInitScript
-
 - support cookie overrides in request
-- expose bindings
-- browsercontext-*
 - ignoreHTTPSErrors
+- expose bindings
 
+- browsercontext-*
 
-- browser download url
-- maybe install?
-- _firefoxBidi
-- test project with allow list of passing tests
