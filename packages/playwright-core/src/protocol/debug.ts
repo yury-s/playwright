@@ -78,6 +78,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Page.expectScreenshot',
   'Page.screenshot',
   'Page.setViewportSize',
+  'Page.setZoom',
   'Page.keyboardDown',
   'Page.keyboardUp',
   'Page.keyboardInsertText',

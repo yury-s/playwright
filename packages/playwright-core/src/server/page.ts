@@ -65,6 +65,7 @@ export interface PageDelegate {
 
   updateExtraHTTPHeaders(): Promise<void>;
   updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void>;
+  updateZoom(): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   updateFileChooserInterception(): Promise<void>;
@@ -176,6 +177,7 @@ export class Page extends SdkObject {
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
   _closeReason: string | undefined;
+  private _zoom: number = 1;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -277,6 +279,7 @@ export class Page extends SdkObject {
 
     await Promise.all([
       this._delegate.updateEmulatedViewportSize(),
+      this._delegate.updateZoom(),
       this._delegate.updateEmulateMedia(),
       this._delegate.updateFileChooserInterception(),
     ]);
@@ -552,6 +555,15 @@ export class Page extends SdkObject {
   async setViewportSize(viewportSize: types.Size) {
     this._emulatedSize = { viewport: { ...viewportSize }, screen: { ...viewportSize } };
     await this._delegate.updateEmulatedViewportSize();
+  }
+
+  async setZoom(zoom: number) {
+    this._zoom = zoom;
+    await this._delegate.updateZoom();
+  }
+
+  zoom(): number {
+    return this._zoom;
   }
 
   viewportSize(): types.Size | null {

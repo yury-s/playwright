@@ -106,6 +106,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _harRouters: HarRouter[] = [];
 
   private _locatorHandlers = new Map<number, { locator: Locator, handler: (locator: Locator) => any, times: number | undefined }>();
+  private _zoom: number = 1;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -503,6 +504,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async setViewportSize(viewportSize: Size) {
     this._viewportSize = viewportSize;
     await this._channel.setViewportSize({ viewportSize });
+  }
+
+  async setZoom(zoom: number) {
+    this._zoom = zoom;
+    await this._channel.setZoom({ zoom });
   }
 
   viewportSize(): Size | null {

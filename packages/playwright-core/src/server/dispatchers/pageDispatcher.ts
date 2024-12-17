@@ -171,6 +171,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.setViewportSize(params.viewportSize);
   }
 
+  async setZoom(params: channels.PageSetZoomParams, metadata: CallMetadata): Promise<void> {
+    await this._page.setZoom(params.zoom);
+  }
+
   async addInitScript(params: channels.PageAddInitScriptParams, metadata: CallMetadata): Promise<void> {
     await this._page.addInitScript(params.source);
   }

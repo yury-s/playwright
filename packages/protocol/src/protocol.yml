@@ -1626,6 +1626,12 @@ Page:
       flags:
         snapshot: true
 
+    setZoom:
+      parameters:
+        zoom: number
+      flags:
+        snapshot: true
+
     keyboardDown:
       parameters:
         key: string

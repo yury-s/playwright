@@ -4424,6 +4424,12 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Changes zoom factor of the page.
+   * @param zoom Page width in pixels.
+   */
+  setZoom(zoom: number): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
    * more about [locators](https://playwright.dev/docs/locators).
    *

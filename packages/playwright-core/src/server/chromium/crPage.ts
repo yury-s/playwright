@@ -1008,6 +1008,10 @@ class FrameSession {
     this._metricsOverride = metricsOverride;
   }
 
+  async updateZoom(): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
   async windowBounds(): Promise<WindowBounds> {
     const { bounds } = await this._client.send('Browser.getWindowBounds', {
       windowId: this._windowId!

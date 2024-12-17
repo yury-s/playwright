@@ -1,0 +1,21 @@
+- window.devicePixelRatio
+  - chromium, firefox: affected
+  - safari: not affected  
+- window.innerWidth
+  - safari, chromium, firefox: affected
+- window.outerWidth
+  - firefox: affected
+  - chromium, safari: not affected
+- CSS media-queries 
+  - chromium, firefox: affected
+  - safari: not affected
+- await page.check('input', { position: { x: 0, y: 0 } }); on zoomed in page
+  - chromium: works
+  - safari: does not work
+  - firefox: unknown
+- browser zoom is saved per domain
+- document.body.style.zoom - does not change
+
+
+- screenshot size is cropped to original resolution in Chromium but not in Playwright.
+- window.outer size stays the same in Chromium but not in Playwright.

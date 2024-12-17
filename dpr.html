@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DPR Background Colors</title>
+  <style>
+    /* Default background for DPR = 1 */
+    body {
+      background-color: lightgray;
+    }
+
+    /* DPR = 2 */
+    @media (min-resolution: 2dppx) and (max-resolution: 2.99dppx) {
+      body {
+        background-color: lightblue;
+      }
+    }
+
+    /* DPR = 3 */
+    @media (min-resolution: 3dppx) and (max-resolution: 3.99dppx) {
+      body {
+        background-color: lightgreen;
+      }
+    }
+
+    /* DPR = 4 */
+    @media (min-resolution: 4dppx) {
+      body {
+        background-color: lightcoral;
+      }
+    }
+
+    div {
+      margin: 1rem;
+    }
+
+    /* Informative text */
+    body, html {
+      margin: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 1rem;
+      color: black;
+      text-align: center;
+    }
+  </style>
+  <script>
+    function updateMetrics() {
+      const dpr = window.devicePixelRatio;
+      document.getElementById('dpr').textContent = dpr;
+
+      document.getElementById('innerSize').textContent = `${window.innerWidth} x ${window.innerHeight}`;
+
+      document.getElementById('outerSize').textContent = `${window.outerWidth} x ${window.outerHeight}`;
+
+      document.getElementById('screenSize').textContent = `${window.screen.width} x ${window.screen.height}`;
+
+      document.getElementById('zoom').textContent = document.body.style.zoom;
+
+      const media = [];
+      for (let i = 1; i <= 4; i++) {
+        if (window.matchMedia(`(resolution: ${i}dppx)`).matches)
+          media.push(i);
+      }
+      document.getElementById('matchMedia').textContent = media.join(', ');
+
+      const visualViewport = window.visualViewport;
+      document.getElementById('visualViewport').textContent = `${Math.round(visualViewport.width)} x ${Math.round(visualViewport.height)} scale=${visualViewport.scale}`;
+    }
+  </script>
+</head>
+<body onload="updateMetrics()" onresize="updateMetrics()">
+  <div>Your Device Pixel Ratio (DPR) determines this background color!</div>
+  <div>devicePixelRatio: <span id="dpr"></span></div>
+  <div>Window inner size: <span id="innerSize"></span></div>
+  <div>Window outer size: <span id="outerSize"></span></div>
+  <div>Screen size: <span id="screenSize"></span></div>
+  <div>matchMedia: <span id="matchMedia"></span></div>
+  <div>visualViewport: <span id="visualViewport"></span></div>
+  <div style="min-height: 20vh; background-color: brown; min-width: 20vw; zoom: 10%" >vh x vw</div>
+  <div style="position: absolute; top: 100px; left: 100px; background-color: green; width: 100px; height: 100px;" >vh x vw</div>
+  <div>body zoom: <span id="zoom"></span></div>
+</body>
+</html>
+

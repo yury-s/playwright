@@ -4086,6 +4086,16 @@ await page.GotoAsync("https://www.microsoft.com");
 
 Page width in pixels.
 
+## async method: Page.setZoom
+* since: v1.50
+
+Changes zoom factor of the page.
+
+### param: Page.setZoom.zoom
+* since: v1.50
+- `zoom` <[float]>
+
+Page width in pixels.
 ### param: Page.setViewportSize.height
 * since: v1.10
 * langs: csharp, java

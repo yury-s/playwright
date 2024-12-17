@@ -18,9 +18,12 @@
 import { test as it, expect } from './pageTest';
 
 it('should check the box @smoke', async ({ page }) => {
-  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
-  await page.check('input');
+  await page.setContent(`<input id='checkbox' type='checkbox' style='position: absolute; width: 100px; height: 20px; top: 10px; left: 10px;'></input>`);
+  await page.check('input', { position: { x: 0, y: 0 } });
+  await new Promise(f => setTimeout(f, 5000));
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+  await expect(page).toHaveScreenshot();
+  // await new Promise(() => {});
 });
 
 it('should not check the checked box', async ({ page }) => {
