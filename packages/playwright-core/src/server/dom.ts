@@ -439,6 +439,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
     if (typeof maybePoint === 'string')
       return maybePoint;
+    const actualPoint = { ...maybePoint };
+    maybePoint.x /= this._page.zoom();
+    maybePoint.y /= this._page.zoom();
+    console.log('maybePoint', maybePoint);
     const point = roundPoint(maybePoint);
     progress.metadata.point = point;
     await this.instrumentation.onBeforeInputAction(this, progress.metadata);
@@ -481,7 +485,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
-      await action(point);
+      await action(actualPoint);
       if (restoreModifiers)
         await this._page.keyboard.ensureModifiers(restoreModifiers);
       if (hitTargetInterceptionHandle) {

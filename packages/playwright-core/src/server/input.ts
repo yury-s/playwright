@@ -214,6 +214,7 @@ export class Mouse {
   }
 
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
+    console.log('click', x, y, options);
     if (metadata)
       metadata.point = { x, y };
     const { delay = null, clickCount = 1 } = options;
