@@ -1,11 +1,11 @@
 ---
 id: touch-events
-title: "Emulating legacy touch events"
+title: "Touch events (legacy)"
 ---
 
 ## Introduction
 
-Web applications that handle [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) to respond to gestures like swipe, pinch, and tap can be tested by manually dispatching [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s to the page. The examples below demonstrate how to use [`method: Locator.dispatchEvent`] and pass [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points as arguments.
+Web applications that handle legacy [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) to respond to gestures like swipe, pinch, and tap can be tested by manually dispatching [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s to the page. The examples below demonstrate how to use [`method: Locator.dispatchEvent`] and pass [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points as arguments.
 
 ### Emulating pan gesture
 
