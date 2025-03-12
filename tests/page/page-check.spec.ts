@@ -17,6 +17,45 @@
 
 import { test as it, expect } from './pageTest';
 
+
+async function setsAndClearsCookie(page) {
+  await page.goto('http://localhost:3000/');
+
+  await page.getByRole('link', { name: 'Set cookie' }).click();
+
+  expect(await page.evaluate(() => document.cookie)).toBe('test-cookie=test-value');
+
+  await expect(page.getByText('"test-cookie": "test-value"')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Clear cookie' }).click();
+
+  await expect(page.getByText('"test-cookie": "test-value"')).not.toBeVisible();
+}
+
+it.beforeEach(async ({ page }) => {
+  page.on('response', async (response) => {
+    console.log('Response URL:', response.url(), 'Headers:', (await response.allHeaders())['set-cookie']);
+    console.log('\n');
+  });
+});
+
+it('Sets and clears cookie - with interceptor touching headers', async ({ page }) => {
+  await page.route('**', (route) => {
+    const headers = route.request().headers();
+    return route.continue({ headers });
+  });
+
+  await setsAndClearsCookie(page);
+});
+
+it('Sets and clears cookie - with interceptor not touching headers', async ({ page }) => {
+  await page.route('**', (route) => {
+    return route.continue();
+  });
+
+  await setsAndClearsCookie(page);
+});
+
 it('should check the box @smoke', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
