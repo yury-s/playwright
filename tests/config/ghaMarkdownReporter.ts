@@ -36,6 +36,10 @@ class GHAMarkdownReporter extends MarkdownReporter {
     core.info(`Posting comment to PR ${prHref}`);
 
     const token = core.getInput('github-token');
+    if (!token) {
+      core.setFailed('Missing "github-token" input');
+      return;
+    }
     const octokit = github.getOctokit(token);
     const context = github.context;
 
