@@ -34,7 +34,6 @@ jobs:
       run: |
         npx playwright merge-reports --config .github/workflows/merge.config.ts ./all-blob-reports
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NODE_OPTIONS: --max-old-space-size=8192
         HTML_REPORT_URL: 'https://mspwblobreport.z1.web.core.windows.net/run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}/index.html'
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}

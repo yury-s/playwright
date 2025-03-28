@@ -35,7 +35,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
     }
     core.info(`Posting comment to PR ${prHref}`);
 
-    const token = core.getInput('github-token');
+    const token = process.env.GITHUB_TOKEN || core.getInput('github-token');
     if (!token) {
       core.setFailed('Missing "github-token" input');
       return;
