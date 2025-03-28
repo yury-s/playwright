@@ -16,7 +16,7 @@
 
 import { MarkdownReporter } from 'playwright/lib/internalsForTest';
 import github from '@actions/github';
-import core from '@actions/core';
+import * as core from '@actions/core';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
 
@@ -25,15 +25,15 @@ class GHAMarkdownReporter extends MarkdownReporter {
   // declare config: FullConfig;
 
   async publishReport(report: string) {
-    console.log('Publishing report to PR ' + report);
+    core.info('Publishing report to PR.');
     const metadata = this.config.metadata as MetadataWithCommitInfo;
     const prHref = metadata.ci?.prHref;
     const prNumber = parseInt(prHref?.split('/').pop(), 10);
     if (!prNumber) {
-      console.log('No PR number found, skipping GHA comment. prHref:', prHref);
+      core.info(`No PR number found, skipping GHA comment. prHref: ${prHref}`);
       return;
     }
-    console.log('Posting comment to PR ' + prHref);
+    core.info(`Posting comment to PR ${prHref}`);
 
     const token = core.getInput('github-token');
     const octokit = github.getOctokit(token);
@@ -50,7 +50,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
       });
       for (const comment of comments) {
         if (comment.user.login === 'github-actions[bot]' && comment.body.includes(magicComment)) {
-          console.log(`Minimizing comment: ${comment.html_url}`);
+          core.info(`Minimizing comment: ${comment.html_url}`);
           await octokit.graphql(`
             mutation {
               minimizeComment(input: {subjectId: "${comment.node_id}", classifier: OUTDATED}) {
@@ -73,7 +73,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
         `Merge [workflow run](${mergeWorkflowUrl}).`
       ]),
     });
-    core.info('Posted comment: ' + response.html_url);
+    core.info(`Posted comment:  ${response.html_url}`);
   }
 }
 
