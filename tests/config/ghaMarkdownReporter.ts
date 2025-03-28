@@ -15,7 +15,7 @@
  */
 
 import { MarkdownReporter } from 'playwright/lib/internalsForTest';
-import github from '@actions/github';
+import * as github from '@actions/github';
 import * as core from '@actions/core';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
