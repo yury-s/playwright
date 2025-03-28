@@ -21,7 +21,7 @@ it('should check the box @smoke', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
-
+  // 1
 });
 
 it('should not check the checked box', async ({ page }) => {

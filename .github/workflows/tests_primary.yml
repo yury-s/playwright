@@ -41,10 +41,19 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v4
-    - name: Upload blob report
-      # We only merge reports for PRs as per .github/workflows/create_test_report.yml.
-      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-      uses: ./.github/actions/upload-blob-report
+    - uses: ./.github/actions/run-test
       with:
-        report_dir: test-blob-report
-        job_name: ${{ inputs.bot-name }}
+        node-version: ${{ matrix.node-version }}
+        browsers-to-install: ${{ matrix.browser }} chromium
+        command: npm run test -- --project=${{ matrix.browser }}-* page-check:20
+        bot-name: "${{ matrix.browser }}-${{ matrix.os }}-node${{ matrix.node-version }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+    # - name: Upload blob report
+    #   # We only merge reports for PRs as per .github/workflows/create_test_report.yml.
+    #   if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    #   uses: ./.github/actions/upload-blob-report
+    #   with:
+    #     report_dir: test-blob-report
+    #     job_name: ${{ inputs.bot-name }}
