@@ -16,12 +16,28 @@
 
 import fs from 'fs';
 
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess, spawn, execSync } from 'child_process';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
+
+function killProcess(cp: ChildProcess | undefined) {
+  if (!cp || !cp.pid) return;
+
+  try {
+    if (process.platform === 'win32') {
+      // On Windows, use taskkill to force kill the process and its children
+      execSync(`taskkill /pid ${cp.pid} /T /F`, { stdio: 'ignore' });
+    } else {
+      // On POSIX systems, use SIGTERM
+      cp.kill('SIGTERM');
+    }
+  } catch (e) {
+    // Process might have already stopped, ignore errors
+  }
+}
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string, kill: () => void }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
@@ -55,11 +71,11 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       }));
 
       return { url: new URL(url), stderr: () => stderr, kill: () => {
-        cp?.kill('SIGTERM');
+        killProcess(cp);
         cp = undefined;
       } };
     });
-    cp?.kill('SIGTERM');
+    killProcess(cp);
   },
 });
 

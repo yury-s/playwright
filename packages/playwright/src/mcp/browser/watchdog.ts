@@ -19,7 +19,9 @@ import { Context } from './context';
 
 export function setupExitWatchdog() {
   let isExiting = false;
+  console.error('*** setupExitWatchdog', isExiting);
   const handleExit = async () => {
+    console.error('*** handleExit', isExiting);
     if (isExiting)
       return;
     isExiting = true;
@@ -32,6 +34,7 @@ export function setupExitWatchdog() {
   };
 
   process.stdin.on('close', handleExit);
+  process.stdin.on('end', handleExit);
   process.on('SIGINT', handleExit);
   process.on('SIGTERM', handleExit);
 }

@@ -16,13 +16,31 @@
 
 import fs from 'fs';
 
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess, spawn, execSync } from 'child_process';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import { ListRootsRequestSchema } from 'packages/playwright/lib/mcp/sdk/bundle';
+
+function killProcess(cp: ChildProcess | undefined) {
+  if (!cp || !cp.pid) return;
+
+  try {
+    if (process.platform === 'win32') {
+      // On Windows, use taskkill to force kill the process and its children
+      execSync(`taskkill /pid ${cp.pid} /T /F`, { stdio: 'ignore' });
+    } else {
+      // On POSIX systems, use SIGTERM
+      console.error('*** sending SIGTERM to', cp.pid);
+      // cp.kill('SIGTERM');
+      cp.stdin?.end();
+    }
+  } catch (e) {
+    // Process might have already stopped, ignore errors
+  }
+}
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string, kill: () => void }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
@@ -56,11 +74,11 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       }));
 
       return { url: new URL(url), stderr: () => stderr, kill: () => {
-        cp?.kill('SIGTERM');
+        killProcess(cp);
         cp = undefined;
       } };
     });
-    cp?.kill('SIGTERM');
+    killProcess(cp);
   },
 });
 
@@ -305,6 +323,8 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   }).toPass();
 
   kill();
+  await new Promise(resolve => setTimeout(resolve, 500));
+  console.error('*** output after timeout\n', stderr());
 
   await expect(async () => {
     const lines = stderr().split('\n');
