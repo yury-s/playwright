@@ -68,6 +68,8 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
         theme: terminalTheme,
       });
 
+      await document.fonts.ready;
+      console.log('Terminal fonts', getComputedStyle(element).fontFamily);
       const fitAddon = new FitAddon();
       newTerminal.loadAddon(fitAddon);
       for (const p of source.pending)
