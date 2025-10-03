@@ -44,6 +44,54 @@ test('list initial tabs', async ({ client }) => {
   });
 });
 
+test('new tab is current', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.HELLO_WORLD,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'list',
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})`,
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'new',
+    },
+  })).toHaveResponse({
+    tabs: `- 0: [Title] (${server.HELLO_WORLD})
+- 1: (current) [] (about:blank)`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'select',
+      index: 0,
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})
+- 1: [] (about:blank)`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'select',
+      index: 0,
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})
+- 1: [] (about:blank)`,
+  });
+});
+
 test('list first tab', async ({ client }) => {
   await createTab(client, 'Tab one', 'Body one');
   expect(await client.callTool({
