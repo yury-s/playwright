@@ -292,3 +292,56 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
     expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
   }).toPass();
 });
+
+test.only('new tab is current', async ({ server, serverEndpoint }) => {
+  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
+  const transport1 = new SSEClientTransport(new URL('/sse', url));
+  const client = new Client({ name: 'test1', version: '1.0.0' });
+  await client.connect(transport1);
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.HELLO_WORLD,
+    },
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'list',
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})`,
+  });
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'new',
+    },
+  })).toHaveResponse({
+    tabs: `- 0: [Title] (${server.HELLO_WORLD})
+- 1: (current) [] (about:blank)`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'select',
+      index: 0,
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})
+- 1: [] (about:blank)`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'select',
+      index: 0,
+    },
+  })).toHaveResponse({
+    tabs: `- 0: (current) [Title] (${server.HELLO_WORLD})
+- 1: [] (about:blank)`,
+  });
+});

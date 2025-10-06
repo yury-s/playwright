@@ -44,7 +44,8 @@ test('list initial tabs', async ({ client }) => {
   });
 });
 
-test('new tab is current', async ({ client, server }) => {
+test('new tab is current', async ({ server, startClient }) => {
+  const { client } = await startClient({ args: [`--shared-browser-context`] });
   await client.callTool({
     name: 'browser_navigate',
     arguments: {
