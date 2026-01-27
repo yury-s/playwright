@@ -93,7 +93,7 @@ class Session {
   }
 }
 
-type SessionManagerOptions = { config?: string, headed?: boolean };
+type SessionManagerOptions = { config?: string, headed?: boolean, extension?: boolean };
 
 class SessionManager {
   private _options: SessionManagerOptions;
@@ -216,6 +216,7 @@ class SessionManager {
     const configFile = resolveConfigFile(this._options.config);
     const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
     const headedArg = this._options.headed ? [`--daemon-headed`] : [];
+    const extensionArg = this._options.extension ? [`--extension`] : [];
 
     const outLog = path.join(daemonProfilesDir, 'out.log');
     const errLog = path.join(daemonProfilesDir, 'err.log');
@@ -229,6 +230,7 @@ class SessionManager {
       `--daemon-data-dir=${userDataDir}`,
       ...configArg,
       ...headedArg,
+      ...extensionArg,
     ], {
       detached: true,
       stdio: ['ignore', out, err],
@@ -372,10 +374,12 @@ const daemonProfilesDir = (() => {
 export async function program(options: { version: string }) {
   const argv = process.argv.slice(2);
   const args = require('minimist')(argv, {
-    boolean: ['help', 'version', 'headed'],
+    boolean: ['help', 'version', 'headed', 'extension'],
   });
   if (!argv.includes('--headed') && !argv.includes('--no-headed'))
     delete args.headed;
+  if (!argv.includes('--extension'))
+    delete args.extension;
 
   const help = require('./help.json');
   const commandName = args._[0];
