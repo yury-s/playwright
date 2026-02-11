@@ -132,12 +132,29 @@ body {
 
 .session-panel-url {
   font-size: 11px;
+  font-family: inherit;
   color: var(--fg-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 2px 8px;
+  height: 22px;
+  outline: none;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
   min-width: 0;
+}
+
+.session-panel-url:focus {
+  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.session-panel-url::selection {
+  background: #394457;
 }
 
 .session-panel-status {

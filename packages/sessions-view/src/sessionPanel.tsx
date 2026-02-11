@@ -192,7 +192,28 @@ export const SessionPanel: React.FC<{
       <div className='session-panel-header' onDoubleClick={onDoubleClick}>
         <span className='session-panel-name'>{session.name}</span>
         {session.browser && <span className='session-panel-browser'>{session.browser}</span>}
-        <span className='session-panel-url'>{url}</span>
+        <input
+          className='session-panel-url'
+          type='text'
+          spellCheck={false}
+          autoComplete='off'
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              let value = (e.target as HTMLInputElement).value.trim();
+              if (!/^https?:\/\//i.test(value))
+                value = 'https://' + value;
+              setUrl(value);
+              transportRef.current?.send('navigate', { url: value });
+              (e.target as HTMLInputElement).blur();
+            }
+            e.stopPropagation();
+          }}
+          onFocus={e => e.target.select()}
+          onClick={e => e.stopPropagation()}
+          onDoubleClick={e => e.stopPropagation()}
+        />
         <span className={'session-panel-status ' + statusClass}>{connectionStatus}</span>
         {expanded && (
           <button className='session-panel-collapse' title='Collapse' onClick={onDoubleClick}>
