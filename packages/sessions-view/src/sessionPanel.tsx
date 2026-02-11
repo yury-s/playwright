@@ -30,9 +30,11 @@ export type SessionInfo = {
 export const SessionPanel: React.FC<{
   session: SessionInfo;
   focused: boolean;
+  expanded: boolean;
   onFocus: () => void;
   onBlur: () => void;
-}> = ({ session, focused, onFocus, onBlur }) => {
+  onDoubleClick: () => void;
+}> = ({ session, focused, expanded, onFocus, onBlur, onDoubleClick }) => {
   const [connectionStatus, setConnectionStatus] = React.useState<string>('connecting');
   const [tabs, setTabs] = React.useState<TabInfo[]>([]);
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
@@ -186,12 +188,20 @@ export const SessionPanel: React.FC<{
   const statusClass = connectionStatus === 'connected' ? 'connected' : connectionStatus === 'disconnected' ? 'error' : '';
 
   return (
-    <div className={'session-panel' + (focused ? ' focused' : '')}>
-      <div className='session-panel-header'>
+    <div className={'session-panel' + (focused ? ' focused' : '') + (expanded ? ' expanded' : '')}>
+      <div className='session-panel-header' onDoubleClick={onDoubleClick}>
         <span className='session-panel-name'>{session.name}</span>
         {session.browser && <span className='session-panel-browser'>{session.browser}</span>}
         <span className='session-panel-url'>{url}</span>
         <span className={'session-panel-status ' + statusClass}>{connectionStatus}</span>
+        {expanded && (
+          <button className='session-panel-collapse' title='Collapse' onClick={onDoubleClick}>
+            <svg viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'>
+              <polyline points='4 6 8 2 12 6'/>
+              <polyline points='4 10 8 14 12 10'/>
+            </svg>
+          </button>
+        )}
       </div>
       {tabs.length > 0 && (
         <div className='session-panel-tabs'>

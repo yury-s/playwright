@@ -22,6 +22,7 @@ import type { SessionInfo } from './sessionPanel';
 export const SessionsView: React.FC = () => {
   const [sessions, setSessions] = React.useState<SessionInfo[]>([]);
   const [focusedSession, setFocusedSession] = React.useState<string | null>(null);
+  const [expandedSession, setExpandedSession] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -58,19 +59,27 @@ export const SessionsView: React.FC = () => {
         <div className='sessions-empty-hint'>Start a session with: playwright-cli open</div>
       </div>
     ) : (
-      <div className='sessions-grid'>
-        {sessions.map(session => (
-          <SessionPanel
-            key={session.name + ':' + session.workspace}
-            session={session}
-            focused={focusedSession === session.name + ':' + session.workspace}
-            onFocus={() => setFocusedSession(session.name + ':' + session.workspace)}
-            onBlur={() => {
-              if (focusedSession === session.name + ':' + session.workspace)
-                setFocusedSession(null);
-            }}
-          />
-        ))}
+      <div className={'sessions-grid' + (expandedSession ? ' has-expanded' : '')}>
+        {sessions.map(session => {
+          const key = session.name + ':' + session.workspace;
+          const isExpanded = expandedSession === key;
+          if (expandedSession && !isExpanded)
+            return null;
+          return (
+            <SessionPanel
+              key={key}
+              session={session}
+              focused={focusedSession === key}
+              expanded={isExpanded}
+              onFocus={() => setFocusedSession(key)}
+              onBlur={() => {
+                if (focusedSession === key)
+                  setFocusedSession(null);
+              }}
+              onDoubleClick={() => setExpandedSession(isExpanded ? null : key)}
+            />
+          );
+        })}
       </div>
     )}
   </>);

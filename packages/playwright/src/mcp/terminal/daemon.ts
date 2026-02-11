@@ -119,7 +119,7 @@ export async function startMcpDaemonServer(
         } else if (method === 'devtools-start') {
           if (!devtoolsUrl) {
             const result = await (browserContext as any)._devtoolsStart(params);
-            devtoolsUrl = result.url;
+``            devtoolsUrl = result.url;
           }
           await connection.send({ id, result: { url: devtoolsUrl } });
         } else {

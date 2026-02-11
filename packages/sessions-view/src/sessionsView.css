@@ -81,6 +81,13 @@ body {
   padding: 16px;
 }
 
+.sessions-grid.has-expanded {
+  grid-template-columns: 1fr;
+  height: calc(100vh - 48px);
+  padding: 0;
+  gap: 0;
+}
+
 /* -- Panel -- */
 .session-panel {
   background: var(--bg-elevated);
@@ -92,6 +99,13 @@ body {
 
 .session-panel.focused {
   border-color: var(--accent);
+}
+
+.session-panel.expanded {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0;
 }
 
 .session-panel-header {
@@ -141,6 +155,31 @@ body {
   color: var(--err);
 }
 
+.session-panel-collapse {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-panel-collapse:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--fg);
+}
+
+.session-panel-collapse svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* -- Panel tabs -- */
 .session-panel-tabs {
   display: flex;
@@ -185,6 +224,12 @@ body {
   background: #000;
   aspect-ratio: 16 / 10;
   cursor: pointer;
+}
+
+.session-panel.expanded .session-panel-screen {
+  aspect-ratio: unset;
+  flex: 1;
+  min-height: 0;
 }
 
 .session-panel-screen.captured {
