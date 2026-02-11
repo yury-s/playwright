@@ -535,7 +535,7 @@ steps.push(new ProgramStep({
 }));
 
 // Build/watch web packages.
-for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
+for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools', 'sessions-view']) {
   steps.push(new ProgramStep({
     command: 'npx',
     args: [
@@ -667,7 +667,7 @@ if (watchMode) {
     shell: true,
     concurrent: true,
   }));
-  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
+  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools', 'sessions-view']) {
     steps.push(new ProgramStep({
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],

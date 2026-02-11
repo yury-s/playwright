@@ -86,6 +86,8 @@ export async function startMcpDaemonServer(
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
+  let devtoolsUrl: string | undefined;
+
   const shutdown = (exitCode: number) => {
     daemonDebug(`shutting down daemon with exit code ${exitCode}`);
     server.close();
@@ -114,6 +116,12 @@ export async function startMcpDaemonServer(
             toolParams._meta = { cwd: params.cwd };
           const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
+        } else if (method === 'devtools-start') {
+          if (!devtoolsUrl) {
+            const result = await (browserContext as any)._devtoolsStart(params);
+            devtoolsUrl = result.url;
+          }
+          await connection.send({ id, result: { url: devtoolsUrl } });
         } else {
           throw new Error(`Unknown method: ${method}`);
         }

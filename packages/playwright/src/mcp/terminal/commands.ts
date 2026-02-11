@@ -793,6 +793,14 @@ const killAll = declareCommand({
   toolParams: () => ({}),
 });
 
+const sessionsView = declareCommand({
+  name: 'sessions-view',
+  description: 'Open sessions dashboard showing all browser sessions',
+  category: 'browsers',
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const deleteData = declareCommand({
   name: 'delete-data',
   description: 'Delete session data',
@@ -937,6 +945,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // Hidden commands
   tray,
+  sessionsView,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));

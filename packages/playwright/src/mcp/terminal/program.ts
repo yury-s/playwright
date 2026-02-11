@@ -455,6 +455,14 @@ export async function program() {
       await killAllDaemons();
       return;
     }
+    case 'sessions-view': {
+      const { SessionsViewController } = require('./sessionsViewController');
+      const controller = new SessionsViewController();
+      const url = await controller.start({ port: args.port ? Number(args.port) : undefined });
+      console.log(`Sessions view: ${url}`);
+      await new Promise(() => {});
+      return;
+    }
     case 'open': {
       const config = registry.config(clientInfo, sessionName);
       if (config)
