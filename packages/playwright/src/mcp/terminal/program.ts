@@ -30,6 +30,12 @@ import { baseDaemonDir, Registry } from './registry';
 import type { FullConfig } from '../browser/config';
 import type { Config } from '../config';
 import type { SessionConfig, ClientInfo } from './registry';
+import type { BrowserContext } from 'playwright-core';
+
+import { defaultConfig } from '../browser/config';
+import { startMcpDaemonServer } from './daemon';
+import { identityBrowserContextFactory } from '../browser/browserContextFactory';
+import { createGuid } from 'playwright-core/lib/utils';
 
 type MinimistArgs = {
   _: string[];
@@ -407,6 +413,15 @@ export async function program() {
     process.exit(0);
   }
 
+  if (commandName === 'in-process') {
+    const { chromium } = await import('playwright-core');
+    const browser = await chromium.launch({ headless: false });
+    const context = await browser.newContext();
+    console.log('context created');
+    await startMcpDaemonInProcess(context);
+    return;
+  }
+
   const command = commandName && help.commands[commandName];
   if (args.help || args.h) {
     if (command) {
@@ -751,4 +766,23 @@ async function parseResolvedConfig(errLog: string): Promise<FullConfig | null> {
   } catch {
     return null;
   }
+}
+
+export async function startMcpDaemonInProcess(context: BrowserContext) {
+  const clientInfo = createClientInfo();
+  const sessionConfig = sessionConfigFromArgs(clientInfo, createGuid().slice(0, 8), { _: [] });
+  const sessionConfigFile = path.resolve(clientInfo.daemonProfilesDir, `${sessionConfig.name}.session`);
+  await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
+  await fs.promises.writeFile(sessionConfigFile, JSON.stringify(sessionConfig, null, 2));
+  console.log('session config file', sessionConfigFile);
+  console.log('starting daemon in process', sessionConfig);
+
+  const socketPath = await startMcpDaemonServer({
+    ...defaultConfig,
+    outputMode: 'file',
+    snapshot: { mode: 'full', output: 'file' },
+    outputDir: path.resolve(process.cwd(), '.playwright-cli'),
+    sessionConfig,
+  }, identityBrowserContextFactory(context));
+  console.log('daemon started at', socketPath);
 }
