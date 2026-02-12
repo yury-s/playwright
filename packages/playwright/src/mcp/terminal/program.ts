@@ -770,6 +770,7 @@ async function parseResolvedConfig(errLog: string): Promise<FullConfig | null> {
 
 export async function startMcpDaemonInProcess(context: BrowserContext) {
   const clientInfo = createClientInfo();
+  clientInfo.version = '0.1.0';
   const sessionConfig = sessionConfigFromArgs(clientInfo, createGuid().slice(0, 8), { _: [] });
   const sessionConfigFile = path.resolve(clientInfo.daemonProfilesDir, `${sessionConfig.name}.session`);
   await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
