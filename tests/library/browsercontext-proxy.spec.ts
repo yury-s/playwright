@@ -297,6 +297,23 @@ it('should authenticate with empty password', async ({ contextFactory, server, p
   await context.close();
 });
 
+it('should not hang on redirect with proxy auth and no page.route', async ({ contextFactory, server, proxyServer }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40194' });
+  proxyServer.forwardTo(server.PORT);
+  proxyServer.setAuthHandler(req => !!req.headers['proxy-authorization']);
+  server.setRoute('/redirect.html', (req, res) => {
+    res.writeHead(302, { location: '/target.html' });
+    res.end();
+  });
+  const context = await contextFactory({
+    proxy: { server: proxyServer.HOST, username: 'user', password: 'secret' }
+  });
+  const page = await context.newPage();
+  await page.goto('http://non-existent.com/redirect.html');
+  expect(await page.title()).toBe('Served by the proxy');
+  await context.close();
+});
+
 it('should isolate proxy credentials between contexts', async ({ contextFactory, server, browserName, proxyServer }) => {
   proxyServer.forwardTo(server.PORT);
   let auth;
