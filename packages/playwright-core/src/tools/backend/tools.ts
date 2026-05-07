@@ -29,6 +29,7 @@ import mouse from './mouse';
 import navigate from './navigate';
 import network from './network';
 import pdf from './pdf';
+import react from './react';
 import route from './route';
 import runCode from './runCode';
 import snapshot from './snapshot';
@@ -38,6 +39,7 @@ import tabs from './tabs';
 import tracing from './tracing';
 import verify from './verify';
 import video from './video';
+import vitals from './vitals';
 import wait from './wait';
 import webstorage from './webstorage';
 
@@ -59,6 +61,7 @@ export const browserTools: Tool<any>[] = [
   ...navigate,
   ...network,
   ...pdf,
+  ...react,
   ...route,
   ...runCode,
   ...screenshot,
@@ -68,6 +71,7 @@ export const browserTools: Tool<any>[] = [
   ...tracing,
   ...verify,
   ...video,
+  ...vitals,
   ...wait,
   ...webstorage,
 ];

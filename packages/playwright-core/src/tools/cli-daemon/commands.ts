@@ -1092,6 +1092,63 @@ const installBrowser = declareCommand({
   toolParams: () => ({}),
 });
 
+const reactDevtoolsInstall = declareCommand({
+  name: 'react-devtools-install',
+  description: 'Install the React DevTools hook on the current browser context',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_react_devtools_install',
+  toolParams: () => ({}),
+});
+
+const reactTree = declareCommand({
+  name: 'react-tree',
+  description: 'Walk the React fiber tree and print the component hierarchy',
+  category: 'devtools',
+  args: z.object({}),
+  options: z.object({
+    filename: z.string().optional().describe('Save tree to a markdown file.'),
+  }),
+  toolName: 'browser_react_tree',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
+const reactInspect = declareCommand({
+  name: 'react-inspect',
+  description: 'Inspect props/state/hooks for a single fiber by id (from react-tree)',
+  category: 'devtools',
+  args: z.object({
+    id: numberArg.describe('Fiber id from react-tree.'),
+  }),
+  toolName: 'browser_react_inspect',
+  toolParams: ({ id }) => ({ id }),
+});
+
+const reactSuspense = declareCommand({
+  name: 'react-suspense',
+  description: 'List Suspense boundaries with their suspended state and reasons',
+  category: 'devtools',
+  args: z.object({}),
+  options: z.object({
+    ['only-dynamic']: z.boolean().optional().describe('Only return boundaries that are currently suspended or have suspendedBy data.'),
+    filename: z.string().optional().describe('Save report to a markdown file.'),
+  }),
+  toolName: 'browser_react_suspense',
+  toolParams: ({ ['only-dynamic']: onlyDynamic, filename }) => ({ onlyDynamic, filename }),
+});
+
+const vitals = declareCommand({
+  name: 'vitals',
+  description: 'Capture Core Web Vitals (LCP, CLS, FCP, INP, TTFB) for the current page',
+  category: 'devtools',
+  args: z.object({}),
+  options: z.object({
+    filename: z.string().optional().describe('Save report to a markdown file.'),
+  }),
+  toolName: 'browser_web_vitals',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
 const tray = declareCommand({
   name: 'tray',
   description: 'Run tray',
@@ -1204,6 +1261,11 @@ const commandsArray: AnyCommandSchema[] = [
   stepOver,
   generateLocator,
   highlight,
+  reactDevtoolsInstall,
+  reactTree,
+  reactInspect,
+  reactSuspense,
+  vitals,
 
   // session category
   sessionList,

@@ -1,6 +1,7 @@
 [*]
 ../../..
 ../..
+../../generated/
 @utils/**
 @utils/**
 @isomorphic/**

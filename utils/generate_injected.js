@@ -69,6 +69,18 @@ const injectedScripts = [
     true,
   ],
   [
+    path.join(ROOT, 'packages', 'injected', 'src', 'reactDevtools.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'injected', 'src', 'webVitals.ts'),
+    path.join(ROOT, 'packages', 'injected', 'lib'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
     path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'injected', 'index.ts'),
     path.join(ROOT, 'packages', 'playwright-ct-core', 'lib', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-ct-core', 'src', 'generated'),
@@ -144,6 +156,10 @@ const inlineCSSPlugin = {
     let content = await fs.promises.readFile(outFileJs, 'utf-8');
     if (hasExports)
       content = await replaceEsbuildHeader(content, outFileJs);
+    // Strip esbuild's per-file section comments like `// node_modules/<pkg>/...`
+    // - they leak literal `node_modules/` paths into the embedded source string,
+    // which trips the coreBundle path-leak check.
+    content = content.replace(/^\/\/ node_modules\/[^\n]*\n/gm, '');
     const newContent = `export const source = ${JSON.stringify(content)};`;
     await fs.promises.writeFile(path.join(generatedFolder, baseName.replace('.ts', 'Source.ts')), newContent);
   }
