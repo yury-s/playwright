@@ -136,6 +136,47 @@ const reactTree = defineTabTool({
   },
 });
 
+const reactClick = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_react_click',
+    title: 'Click a React component by fiber id',
+    description: 'Resolve a fiber id from browser_react_tree to its host DOM element and click it. Goes through the standard Playwright click path (actionability, real events). For components that render multiple host elements, the first is clicked.',
+    inputSchema: z.object({
+      id: z.number().int().describe('Fiber id from browser_react_tree.'),
+      doubleClick: z.boolean().optional().describe('Whether to perform a double click instead of a single click.'),
+      button: z.enum(['left', 'right', 'middle']).optional().describe('Mouse button. Defaults to left.'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    if (!(await ensureHookOrInstall(tab, response)))
+      return;
+    const handle = await tab.page.evaluateHandle<Element | null>(evaluateExpression('hostFor', String(params.id)));
+    try {
+      const element = handle.asElement();
+      if (!element) {
+        response.addError(`Fiber #${params.id} has no host element to click (component returned null or rendered no DOM).`);
+        return;
+      }
+      response.setIncludeSnapshot();
+      const options = { button: params.button, ...tab.actionTimeoutOptions };
+      await tab.waitForCompletion(async () => {
+        if (params.doubleClick)
+          await element.dblclick(options);
+        else
+          await element.click(options);
+      });
+      response.addCode(`/* clicked host of React fiber #${params.id} */`);
+    } catch (e) {
+      response.addError(e instanceof Error ? e.message : String(e));
+    } finally {
+      await handle.dispose().catch(() => {});
+    }
+  },
+});
+
 const reactInspect = defineTabTool({
   capability: 'core',
   schema: {
@@ -221,5 +262,6 @@ export default [
   reactDevtoolsInstall,
   reactTree,
   reactInspect,
+  reactClick,
   reactSuspense,
 ];

@@ -1126,6 +1126,21 @@ const reactInspect = declareCommand({
   toolParams: ({ id }) => ({ id }),
 });
 
+const reactClick = declareCommand({
+  name: 'react-click',
+  description: 'Click a React component by fiber id (from react-tree). Resolves to the host DOM element and uses the standard click path.',
+  category: 'devtools',
+  args: z.object({
+    id: numberArg.describe('Fiber id from react-tree.'),
+    button: z.string().optional().describe('Mouse button: left, right, middle. Defaults to left.'),
+  }),
+  options: z.object({
+    dblclick: z.boolean().optional().describe('Perform a double click instead of a single click.'),
+  }),
+  toolName: 'browser_react_click',
+  toolParams: ({ id, button, dblclick }) => ({ id, button, doubleClick: dblclick }),
+});
+
 const reactSuspense = declareCommand({
   name: 'react-suspense',
   description: 'List Suspense boundaries with their suspended state and reasons',
@@ -1266,6 +1281,7 @@ const commandsArray: AnyCommandSchema[] = [
   reactDevtoolsInstall,
   reactTree,
   reactInspect,
+  reactClick,
   reactSuspense,
   vitals,
 

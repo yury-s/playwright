@@ -209,6 +209,44 @@ test('browser_react_suspense returns empty report when no boundaries', async ({ 
   });
 });
 
+test('browser_react_click resolves a fiber id to a host element and clicks it', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  // Install a click counter on the body so we can prove the click fired and
+  // landed on the right element.
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => { window.__clicks = []; document.body.addEventListener("click", e => window.__clicks.push({ tag: e.target.tagName, txt: e.target.textContent || "" }), true); }',
+    },
+  });
+
+  // First ColorButton in the fixture has color="red", index 0, text "button 0".
+  const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  const colorButtonLine = tree.split('\n').find(line => / ColorButton(\s|$|#)/.test(line))!;
+  const id = Number(colorButtonLine.match(/#(\d+)/)![1]);
+
+  await client.callTool({ name: 'browser_react_click', arguments: { id } });
+
+  const result = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => window.__clicks' },
+  });
+  expect(result).toHaveResponse({
+    result: expect.stringContaining('"BUTTON"'),
+  });
+  expect(result).toHaveResponse({
+    result: expect.stringContaining('"button 0"'),
+  });
+});
+
+test('browser_react_click on missing id reports a clear error', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  expect(await client.callTool({ name: 'browser_react_click', arguments: { id: 999999 } })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('not found'),
+  });
+});
+
 test('browser_react_inspect on missing id reports a clear error', async ({ client, server }) => {
   await setupReactApp(client, server, '18');
   expect(await client.callTool({ name: 'browser_react_inspect', arguments: { id: 999999 } })).toHaveResponse({

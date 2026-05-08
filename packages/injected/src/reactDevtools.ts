@@ -49,6 +49,9 @@ type RendererInterface = {
   hasElementWithId(id: number): boolean;
   getDisplayNameForElementID(id: number): string | null;
   inspectElement(requestID: number, id: number, path: unknown, forceFullData: boolean): InspectResult | null | undefined;
+  // Returns the DOM nodes (or native nodes on RN) that the fiber currently
+  // renders. May be null/undefined if the renderer doesn't track this id.
+  findHostInstancesForElementID(id: number): Element[] | null | undefined;
 };
 
 type DevToolsHook = {
@@ -410,6 +413,22 @@ export class ReactDevtools {
     if (v.owners?.length)
       lines.push('rendered by: ' + v.owners.map(o => o.displayName).filter(Boolean).join(' > '));
     return { text: lines.join('\n'), source: sourceToPreview(v.source) };
+  }
+
+  // Resolve a fiber id to its first host DOM element. Returns null if the
+  // fiber does not exist, has no host instance (e.g. it returned null), or
+  // the renderer interface is unavailable. Called via page.evaluateHandle so
+  // the server side gets back an ElementHandle it can drive through the
+  // standard Playwright action path.
+  hostFor(id: number): Element | null {
+    const hook = getHook();
+    const ri = getRenderer(hook);
+    if (!ri.hasElementWithId(id))
+      throw new Error(`element ${id} not found (page reloaded?)`);
+    const nodes = ri.findHostInstancesForElementID(id);
+    if (!nodes || nodes.length === 0)
+      return null;
+    return nodes[0];
   }
 
   async suspense(): Promise<SuspenseBoundary[]> {

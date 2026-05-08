@@ -109,6 +109,27 @@ test('react-inspect surfaces props of a fiber by id', async ({ cli, server }) =>
   expect(output).toMatch(/rendered by:.*App/);
 });
 
+test('react-click resolves a fiber id to a host element and clicks it', async ({ cli, server }) => {
+  await setupReactApp(cli, '18', server);
+  await cli('eval', '() => { window.__clicks = []; document.body.addEventListener("click", e => window.__clicks.push({ tag: e.target.tagName, txt: e.target.textContent || "" }), true); }');
+
+  const { output: tree } = await cli('react-tree');
+  const colorButtonLine = tree.split('\n').find(line => / ColorButton(\s|$|#)/.test(line))!;
+  const id = colorButtonLine.match(/#(\d+)/)![1];
+
+  await cli('react-click', id);
+
+  const { output } = await cli('eval', '() => window.__clicks');
+  expect(output).toContain('"BUTTON"');
+  expect(output).toContain('"button 0"');
+});
+
+test('react-click on missing id reports a clear error', async ({ cli, server }) => {
+  await setupReactApp(cli, '18', server);
+  const { output } = await cli('react-click', '999999');
+  expect(output).toContain('not found');
+});
+
 test('react-inspect on missing id returns a clear error', async ({ cli, server }) => {
   await setupReactApp(cli, '18', server);
   const { output } = await cli('react-inspect', '999999');
