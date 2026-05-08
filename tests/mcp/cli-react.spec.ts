@@ -76,12 +76,21 @@ for (const version of ['16', '17', '18'] as const) {
   });
 }
 
+test('react-tree --include-hosts shows host DOM elements', async ({ cli, server }) => {
+  await setupReactApp(cli, '18', server);
+  const without = (await cli('react-tree')).output;
+  expect(without).not.toMatch(/^\s+button #/m);
+  const withHosts = (await cli('react-tree', '--include-hosts')).output;
+  expect(withHosts).toMatch(/^\s+button #/m);
+  expect(withHosts).toMatch(/^\s+div #/m);
+});
+
 test('react-inspect surfaces props of a fiber by id', async ({ cli, server }) => {
   await setupReactApp(cli, '18', server);
   const { output: tree } = await cli('react-tree');
-  const colorButtonLine = tree.split('\n').find(line => / ColorButton(\s|$)/.test(line));
+  const colorButtonLine = tree.split('\n').find(line => / ColorButton(\s|$|#)/.test(line));
   expect(colorButtonLine, 'tree has a ColorButton fiber').toBeDefined();
-  const id = colorButtonLine!.split(' ')[1];
+  const id = colorButtonLine!.match(/#(\d+)/)![1];
 
   const { output, exitCode } = await cli('react-inspect', id);
   expect(exitCode).toBe(0);

@@ -68,7 +68,12 @@ const reactDevtoolsInstall = defineTabTool({
   },
 });
 
-function formatTree(nodes: TreeNode[]): string {
+// ElementType code from react-devtools-shared/src/frontend/types.js. We only
+// care about the host-component case here for filtering; the full set lives in
+// packages/injected/src/reactDevtoolsConstants.ts.
+const ELEMENT_TYPE_HOST_COMPONENT = 7;
+
+function formatTree(nodes: TreeNode[], includeHosts: boolean): string {
   const childrenByParent = new Map<number, TreeNode[]>();
   for (const n of nodes) {
     if (!childrenByParent.has(n.parent))
@@ -79,15 +84,24 @@ function formatTree(nodes: TreeNode[]): string {
   const roots = nodes.filter(n => !ids.has(n.parent));
   const lines: string[] = [
     '# React component tree',
-    '# Columns: depth id parent name [key=...]',
+    '# Format: <indent><name> #<id> [key="..."]; indent reflects component depth.',
     '# Use browser_react_inspect with the id for props/state/hooks. IDs are valid until the next navigation.',
   ];
+  if (!includeHosts)
+    lines.push('# Host DOM elements (div, span, svg, ...) are hidden. Pass include-hosts to show them.');
+
   function emit(node: TreeNode, depth: number) {
-    const parent = node.parent ? String(node.parent) : '-';
-    const key = node.key ? ` key=${JSON.stringify(node.key)}` : '';
-    lines.push(`${depth} ${node.id} ${parent} ${node.name ?? '(anonymous)'}${key}`);
+    const skip = !includeHosts && node.type === ELEMENT_TYPE_HOST_COMPONENT;
+    if (!skip) {
+      const indent = '  '.repeat(depth);
+      const key = node.key ? ` key=${JSON.stringify(node.key)}` : '';
+      lines.push(`${indent}${node.name ?? '(anonymous)'} #${node.id}${key}`);
+    }
+    // When skipping a host, descend at the same depth so the visible component
+    // tree stays connected (host children remain under the host's parent).
+    const childDepth = skip ? depth : depth + 1;
     for (const child of childrenByParent.get(node.id) ?? [])
-      emit(child, depth + 1);
+      emit(child, childDepth);
   }
   for (const root of roots)
     emit(root, 0);
@@ -101,6 +115,7 @@ const reactTree = defineTabTool({
     title: 'React component tree',
     description: 'Walk the React fiber tree via the DevTools hook and return the component hierarchy. Requires browser_react_devtools_install to have been run before the page loaded.',
     inputSchema: z.object({
+      includeHosts: z.boolean().optional().describe('Include host DOM elements (div, span, svg, etc.) in the tree. Defaults to false; the React component graph is much shorter and more readable without them.'),
       filename: z.string().optional().describe('Save tree to a markdown file instead of returning it inline.'),
     }),
     type: 'readOnly',
@@ -111,7 +126,7 @@ const reactTree = defineTabTool({
       return;
     try {
       const nodes = await tab.page.evaluate<TreeNode[]>(evaluateExpression('tree'));
-      await response.addResult('React tree', formatTree(nodes), { prefix: 'react-tree', ext: 'md', suggestedFilename: params.filename });
+      await response.addResult('React tree', formatTree(nodes, !!params.includeHosts), { prefix: 'react-tree', ext: 'md', suggestedFilename: params.filename });
     } catch (e) {
       response.addError(e instanceof Error ? e.message : String(e));
     }

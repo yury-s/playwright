@@ -90,15 +90,37 @@ for (const version of ['16', '17', '18'] as const) {
   });
 }
 
+test('browser_react_tree hides host DOM elements by default', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  // Components are present.
+  expect(tree).toContain(' App');
+  expect(tree).toContain(' BookList');
+  expect(tree).toContain(' ColorButton');
+  // Host elements rendered by those components are not.
+  expect(tree).not.toMatch(/^\s+div #/m);
+  expect(tree).not.toMatch(/^\s+button #/m);
+  expect(tree).not.toMatch(/^\s+h1 #/m);
+});
+
+test('browser_react_tree includeHosts shows host DOM elements', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: { includeHosts: true } })).content[0] as { text: string }).text;
+  // Hosts now appear under their owning components.
+  expect(tree).toMatch(/^\s+div #/m);
+  expect(tree).toMatch(/^\s+button #/m);
+  expect(tree).toMatch(/^\s+h1 #/m);
+});
+
 test('browser_react_inspect returns props for a fiber', async ({ client, server }) => {
   await setupReactApp(client, server, '18');
 
   const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
 
   // Find the first ColorButton fiber id from the tree dump.
-  const match = tree.split('\n').find(line => / ColorButton(\s|$)/.test(line));
+  const match = tree.split('\n').find(line => / ColorButton(\s|$|#)/.test(line));
   expect(match).toBeDefined();
-  const id = Number(match!.split(' ')[1]);
+  const id = Number(match!.match(/#(\d+)/)![1]);
   expect(Number.isFinite(id)).toBe(true);
 
   const inspect = await client.callTool({ name: 'browser_react_inspect', arguments: { id } });
@@ -117,9 +139,9 @@ test('browser_react_inspect surfaces class component state', async ({ client, se
   await setupReactApp(client, server, '18');
 
   const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
-  const appLine = tree.split('\n').find(line => / App(\s|$)/.test(line));
+  const appLine = tree.split('\n').find(line => / App(\s|$|#)/.test(line));
   expect(appLine).toBeDefined();
-  const id = Number(appLine!.split(' ')[1]);
+  const id = Number(appLine!.match(/#(\d+)/)![1]);
 
   const inspect = await client.callTool({ name: 'browser_react_inspect', arguments: { id } });
   const text = (inspect.content[0] as { text: string }).text;

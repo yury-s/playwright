@@ -1107,10 +1107,11 @@ const reactTree = declareCommand({
   category: 'devtools',
   args: z.object({}),
   options: z.object({
+    ['include-hosts']: z.boolean().optional().describe('Include host DOM elements (div, span, svg, etc.) in the tree.'),
     filename: z.string().optional().describe('Save tree to a markdown file.'),
   }),
   toolName: 'browser_react_tree',
-  toolParams: ({ filename }) => ({ filename }),
+  toolParams: ({ ['include-hosts']: includeHosts, filename }) => ({ includeHosts, filename }),
 });
 
 const reactInspect = declareCommand({
