@@ -76,6 +76,14 @@ for (const version of ['16', '17', '18'] as const) {
   });
 }
 
+test('react-tree --with-props shows compact props per component', async ({ cli, server }) => {
+  await setupReactApp(cli, '18', server);
+  const { output } = await cli('react-tree', '--with-props');
+  expect(output).toMatch(/AppHeader #\d+ \{[^}]*bookCount: 3/);
+  expect(output).toMatch(/BookItem #\d+ \{ name: "Pride and Prejudice" \}/);
+  expect(output).toMatch(/ColorButton #\d+ \{ color: "red", enabled: true, nested: \{index: 0/);
+});
+
 test('react-tree --include-hosts shows host DOM elements', async ({ cli, server }) => {
   await setupReactApp(cli, '18', server);
   const without = (await cli('react-tree')).output;

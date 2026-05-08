@@ -95,7 +95,8 @@ function formatTree(nodes: TreeNode[], includeHosts: boolean): string {
     if (!skip) {
       const indent = '  '.repeat(depth);
       const key = node.key ? ` key=${JSON.stringify(node.key)}` : '';
-      lines.push(`${indent}${node.name ?? '(anonymous)'} #${node.id}${key}`);
+      const props = node.propsPreview ? ` { ${node.propsPreview} }` : '';
+      lines.push(`${indent}${node.name ?? '(anonymous)'} #${node.id}${key}${props}`);
     }
     // When skipping a host, descend at the same depth so the visible component
     // tree stays connected (host children remain under the host's parent).
@@ -116,6 +117,7 @@ const reactTree = defineTabTool({
     description: 'Walk the React fiber tree via the DevTools hook and return the component hierarchy. Requires browser_react_devtools_install to have been run before the page loaded.',
     inputSchema: z.object({
       includeHosts: z.boolean().optional().describe('Include host DOM elements (div, span, svg, etc.) in the tree. Defaults to false; the React component graph is much shorter and more readable without them.'),
+      withProps: z.boolean().optional().describe('Show a compact props preview after each component, e.g. " { name: \\"World\\", count: 3 }". Calls inspectElement per fiber, so this is slower than a plain tree.'),
       filename: z.string().optional().describe('Save tree to a markdown file instead of returning it inline.'),
     }),
     type: 'readOnly',
@@ -125,7 +127,8 @@ const reactTree = defineTabTool({
     if (!(await ensureHookOrInstall(tab, response)))
       return;
     try {
-      const nodes = await tab.page.evaluate<TreeNode[]>(evaluateExpression('tree'));
+      const args = params.withProps ? '{ withProps: true }' : '';
+      const nodes = await tab.page.evaluate<TreeNode[]>(evaluateExpression('tree', args));
       await response.addResult('React tree', formatTree(nodes, !!params.includeHosts), { prefix: 'react-tree', ext: 'md', suggestedFilename: params.filename });
     } catch (e) {
       response.addError(e instanceof Error ? e.message : String(e));

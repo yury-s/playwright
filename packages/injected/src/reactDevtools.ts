@@ -87,6 +87,9 @@ export type TreeNode = {
   name: string | null;
   key: string | null;
   parent: number;
+  // Optional compact "key: value, key2: value2" string populated by tree({ withProps }).
+  // Only set when withProps is true and the fiber has at least one non-children prop.
+  propsPreview?: string;
 };
 
 export type SuspenseBoundary = {
@@ -348,11 +351,43 @@ function sourceToPreview(s: unknown): SourcePreview | null {
 }
 
 export class ReactDevtools {
-  async tree(): Promise<TreeNode[]> {
+  async tree(options?: { withProps?: boolean }): Promise<TreeNode[]> {
     const hook = getHook();
     const ri = getRenderer(hook);
     const batches = await captureInitialOperations(hook, ri);
-    return batches.flatMap(decodeTree);
+    const nodes = batches.flatMap(decodeTree);
+    if (options?.withProps) {
+      for (const node of nodes) {
+        const preview = this._previewProps(ri, node.id);
+        if (preview)
+          node.propsPreview = preview;
+      }
+    }
+    return nodes;
+  }
+
+  private _previewProps(ri: RendererInterface, id: number): string | undefined {
+    if (!ri.hasElementWithId(id))
+      return undefined;
+    let result;
+    try {
+      result = ri.inspectElement(1, id, null, true);
+    } catch {
+      return undefined;
+    }
+    if (!result || result.type !== 'full-data')
+      return undefined;
+    const props = unwrapData((result as InspectFullData).value.props ?? null) as Record<string, unknown> | null;
+    if (!props)
+      return undefined;
+    const entries = Object.entries(props)
+      // children are visualized by the tree itself; ref is typically synthetic.
+      .filter(([k]) => k !== 'children' && k !== 'ref')
+      .map(([k, val]) => `${k}: ${previewValue(val)}`);
+    if (!entries.length)
+      return undefined;
+    const joined = entries.join(', ');
+    return joined.length > 100 ? joined.slice(0, 97) + '...' : joined;
   }
 
   async inspect(id: number): Promise<InspectFiberResult> {

@@ -103,6 +103,26 @@ test('browser_react_tree hides host DOM elements by default', async ({ client, s
   expect(tree).not.toMatch(/^\s+h1 #/m);
 });
 
+test('browser_react_tree withProps shows a compact props preview per component', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: { withProps: true } })).content[0] as { text: string }).text;
+  // AppHeader is rendered with bookCount=3 by App.
+  expect(tree).toMatch(/AppHeader #\d+ \{[^}]*bookCount: 3/);
+  // Each BookItem carries its book name as a prop.
+  expect(tree).toMatch(/BookItem #\d+ \{ name: "Pride and Prejudice" \}/);
+  // ColorButton props match the fixture's nested object shape.
+  expect(tree).toMatch(/ColorButton #\d+ \{ color: "red", enabled: true, nested: \{index: 0/);
+  // children prop is filtered out — the tree visualizes children directly.
+  expect(tree).not.toMatch(/children:/);
+});
+
+test('browser_react_tree without withProps does not include any prop previews', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  // No "{ ... }" preview after a component name.
+  expect(tree).not.toMatch(/#\d+ \{/);
+});
+
 test('browser_react_tree includeHosts shows host DOM elements', async ({ client, server }) => {
   await setupReactApp(client, server, '18');
   const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: { includeHosts: true } })).content[0] as { text: string }).text;
