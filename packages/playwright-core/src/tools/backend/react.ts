@@ -127,6 +127,26 @@ const reactDevtoolsInstall = defineTabTool({
 // packages/injected/src/reactDevtoolsConstants.ts.
 const ELEMENT_TYPE_HOST_COMPONENT = 7;
 
+function subtreeFromRoot(nodes: TreeNode[], rootId: number): TreeNode[] | null {
+  const childrenByParent = new Map<number, TreeNode[]>();
+  for (const n of nodes) {
+    if (!childrenByParent.has(n.parent))
+      childrenByParent.set(n.parent, []);
+    childrenByParent.get(n.parent)!.push(n);
+  }
+  const root = nodes.find(n => n.id === rootId);
+  if (!root)
+    return null;
+  const out: TreeNode[] = [];
+  function walk(node: TreeNode) {
+    out.push(node);
+    for (const child of childrenByParent.get(node.id) ?? [])
+      walk(child);
+  }
+  walk(root);
+  return out;
+}
+
 function formatTree(nodes: TreeNode[], includeHosts: boolean): string {
   const childrenByParent = new Map<number, TreeNode[]>();
   for (const n of nodes) {
@@ -170,6 +190,7 @@ const reactTree = defineTabTool({
     title: 'React component tree',
     description: 'Walk the React fiber tree via the DevTools hook and return the component hierarchy. Requires browser_react_devtools_install to have been run before the page loaded.',
     inputSchema: z.object({
+      id: z.number().int().optional().describe('Fiber id to root the printed tree at. When omitted, prints the whole tree from the React root. Useful for zooming into one component\'s substructure.'),
       includeHosts: z.boolean().optional().describe('Include host DOM elements (div, span, svg, etc.) in the tree. Defaults to false; the React component graph is much shorter and more readable without them.'),
       withProps: z.boolean().optional().describe('Show a compact props preview after each component, e.g. " { name: \\"World\\", count: 3 }". Calls inspectElement per fiber, so this is slower than a plain tree.'),
       filename: z.string().optional().describe('Save tree to a markdown file instead of returning it inline.'),
@@ -182,7 +203,16 @@ const reactTree = defineTabTool({
       return;
     try {
       const args = params.withProps ? '{ withProps: true }' : '';
-      const nodes = await tab.page.evaluate<TreeNode[]>(evaluateExpression('tree', args));
+      const allNodes = await tab.page.evaluate<TreeNode[]>(evaluateExpression('tree', args));
+      let nodes = allNodes;
+      if (params.id !== undefined) {
+        const subtree = subtreeFromRoot(allNodes, params.id);
+        if (!subtree) {
+          response.addError(`Fiber #${params.id} not found in tree (page reloaded? run browser_react_tree with no id to see current ids).`);
+          return;
+        }
+        nodes = subtree;
+      }
       await response.addResult('React tree', formatTree(nodes, !!params.includeHosts), { prefix: 'react-tree', ext: 'md', suggestedFilename: params.filename });
     } catch (e) {
       response.addError(e instanceof Error ? e.message : String(e));

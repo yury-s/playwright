@@ -84,6 +84,18 @@ test('react-tree --with-props shows compact props per component', async ({ cli, 
   expect(output).toMatch(/ColorButton #\d+ \{ color: "red", enabled: true, nested: \{index: 0/);
 });
 
+test('react-tree <id> prints only the subtree', async ({ cli, server }) => {
+  await setupReactApp(cli, '18', server);
+  const { output: full } = await cli('react-tree');
+  const id = full.split('\n').find(l => / BookList(\s|$|#)/.test(l))!.match(/#(\d+)/)![1];
+  const { output, exitCode } = await cli('react-tree', id);
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`BookList #${id}`);
+  expect((output.match(/ BookItem(\s|$|#)/g) ?? []).length).toBe(3);
+  expect(output).not.toContain(' AppHeader');
+  expect(output).not.toContain(' ColorButton');
+});
+
 test('react-tree --include-hosts shows host DOM elements', async ({ cli, server }) => {
   await setupReactApp(cli, '18', server);
   const without = (await cli('react-tree')).output;

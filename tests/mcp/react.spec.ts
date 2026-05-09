@@ -90,6 +90,44 @@ for (const version of ['16', '17', '18'] as const) {
   });
 }
 
+test('browser_react_tree id parameter prints only the subtree', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const fullTree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  // Pick BookList — has 3 BookItem children.
+  const bookListLine = fullTree.split('\n').find(line => / BookList(\s|$|#)/.test(line))!;
+  const bookListId = Number(bookListLine.match(/#(\d+)/)![1]);
+
+  const subtree = ((await client.callTool({ name: 'browser_react_tree', arguments: { id: bookListId } })).content[0] as { text: string }).text;
+  // Subtree starts at BookList and contains its children.
+  expect(subtree).toContain(`BookList #${bookListId}`);
+  expect((subtree.match(/ BookItem(\s|$|#)/g) ?? []).length).toBe(3);
+  // Sibling subtrees are excluded.
+  expect(subtree).not.toContain(' AppHeader');
+  expect(subtree).not.toContain(' NewBook');
+  expect(subtree).not.toContain(' ButtonGrid');
+  expect(subtree).not.toContain(' ColorButton');
+});
+
+test('browser_react_tree ids are stable across calls until React commits', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  const a = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  const b = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;
+  // The decoder remounts on every flushInitialOperations; the page-side cache
+  // keeps ids stable across our calls. Two back-to-back tree calls without a
+  // commit in between should agree on the BookList fiber id.
+  const idA = a.split('\n').find(l => / BookList(\s|#)/.test(l))!.match(/#(\d+)/)![1];
+  const idB = b.split('\n').find(l => / BookList(\s|#)/.test(l))!.match(/#(\d+)/)![1];
+  expect(idA).toBe(idB);
+});
+
+test('browser_react_tree id parameter rejects unknown ids', async ({ client, server }) => {
+  await setupReactApp(client, server, '18');
+  expect(await client.callTool({ name: 'browser_react_tree', arguments: { id: 999999 } })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('not found'),
+  });
+});
+
 test('browser_react_tree hides host DOM elements by default', async ({ client, server }) => {
   await setupReactApp(client, server, '18');
   const tree = ((await client.callTool({ name: 'browser_react_tree', arguments: {} })).content[0] as { text: string }).text;

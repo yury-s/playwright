@@ -57,6 +57,7 @@ type RendererInterface = {
 type DevToolsHook = {
   rendererInterfaces?: { get(id: number): RendererInterface | undefined };
   emit: (event: string, payload: OperationsPayload) => void;
+  onCommitFiberRoot?: (...args: unknown[]) => unknown;
 };
 
 type InspectFullData = { type: 'full-data'; value: InspectValue };
@@ -353,20 +354,54 @@ function sourceToPreview(s: unknown): SourcePreview | null {
   return { name: typeof s[1] === 'string' ? s[1] : '(unknown)', line: typeof s[2] === 'number' ? s[2] : 0, column: typeof s[3] === 'number' ? s[3] : 0 };
 }
 
+// Page-side cache key for the most recent decoded tree. flushInitialOperations
+// allocates fresh fiber IDs on every call (see upstream
+// react-devtools-shared/src/backend/fiber/renderer.js — it calls
+// createFiberInstance per root and remounts recursively each invocation).
+// Caching keeps IDs stable across multiple tool calls so subtree / inspect /
+// click can all use ids the agent just saw. Cache is invalidated on each
+// React commit so we observe state changes triggered by react-click.
+const CACHED_TREE_KEY = '__pw_react_tree_cache__';
+const COMMIT_HOOK_KEY = '__pw_react_tree_commit_hook_installed__';
+
 export class ReactDevtools {
   async tree(options?: { withProps?: boolean }): Promise<TreeNode[]> {
     const hook = getHook();
     const ri = getRenderer(hook);
-    const batches = await captureInitialOperations(hook, ri);
-    const nodes = batches.flatMap(decodeTree);
+    // eslint-disable-next-line no-restricted-globals
+    const g = globalThis as unknown as Record<string, unknown>;
+    let nodes = g[CACHED_TREE_KEY] as TreeNode[] | undefined;
+    if (!nodes) {
+      const batches = await captureInitialOperations(hook, ri);
+      nodes = batches.flatMap(decodeTree);
+      g[CACHED_TREE_KEY] = nodes;
+      this._ensureCommitInvalidator(hook, g);
+    }
     if (options?.withProps) {
       for (const node of nodes) {
+        if (node.propsPreview !== undefined)
+          continue;
         const preview = this._previewProps(ri, node.id);
         if (preview)
           node.propsPreview = preview;
       }
     }
     return nodes;
+  }
+
+  // Wrap onCommitFiberRoot so that any React commit (state change, props
+  // update, etc.) invalidates the cached tree. The next tree() call will
+  // re-flush and get fresh ids reflecting the new state. Idempotent.
+  private _ensureCommitInvalidator(hook: DevToolsHook, g: Record<string, unknown>) {
+    if (g[COMMIT_HOOK_KEY])
+      return;
+    g[COMMIT_HOOK_KEY] = true;
+    const orig = hook.onCommitFiberRoot;
+    hook.onCommitFiberRoot = function(...args: unknown[]) {
+      delete g[CACHED_TREE_KEY];
+      if (typeof orig === 'function')
+        return orig.apply(hook, args);
+    };
   }
 
   private _previewProps(ri: RendererInterface, id: number): string | undefined {

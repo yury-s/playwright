@@ -33,6 +33,23 @@ const numberArg = z.preprocess((val, ctx) => {
   return number;
 }, z.number());
 
+// For optional positional numeric arguments — the parser leaves missing
+// positional slots as `undefined`, and the preprocess above would treat that
+// as NaN. This variant short-circuits when the input is undefined.
+const optionalNumberArg = z.preprocess((val, ctx) => {
+  if (val === undefined || val === null)
+    return undefined;
+  const number = Number(val);
+  if (Number.isNaN(number)) {
+    ctx.issues.push({
+      code: 'custom',
+      message: `expected number, received '${val}'`,
+      input: val,
+    });
+  }
+  return number;
+}, z.number().optional());
+
 // Navigation commands
 
 const open = declareCommand({
@@ -1103,16 +1120,18 @@ const reactDevtoolsInstall = declareCommand({
 
 const reactTree = declareCommand({
   name: 'react-tree',
-  description: 'Walk the React fiber tree and print the component hierarchy',
+  description: 'Walk the React fiber tree and print the component hierarchy. Pass an id to print only that fiber\'s subtree.',
   category: 'devtools',
-  args: z.object({}),
+  args: z.object({
+    id: optionalNumberArg.describe('Fiber id from a prior react-tree call. When given, only that fiber and its descendants are printed.'),
+  }),
   options: z.object({
     ['include-hosts']: z.boolean().optional().describe('Include host DOM elements (div, span, svg, etc.) in the tree.'),
     ['with-props']: z.boolean().optional().describe('Show a compact props preview after each component.'),
     filename: z.string().optional().describe('Save tree to a markdown file.'),
   }),
   toolName: 'browser_react_tree',
-  toolParams: ({ ['include-hosts']: includeHosts, ['with-props']: withProps, filename }) => ({ includeHosts, withProps, filename }),
+  toolParams: ({ id, ['include-hosts']: includeHosts, ['with-props']: withProps, filename }) => ({ id, includeHosts, withProps, filename }),
 });
 
 const reactInspect = declareCommand({
