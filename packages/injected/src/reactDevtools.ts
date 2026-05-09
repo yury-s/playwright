@@ -383,10 +383,10 @@ export class ReactDevtools {
     const props = unwrapData((result as InspectFullData).value.props ?? null) as Record<string, unknown> | null;
     if (!props)
       return undefined;
+    // children are visualized by the tree itself; ref is typically synthetic.
     const entries = Object.entries(props)
-      // children are visualized by the tree itself; ref is typically synthetic.
-      .filter(([k]) => k !== 'children' && k !== 'ref')
-      .map(([k, val]) => `${k}: ${previewValue(val)}`);
+        .filter(([k]) => k !== 'children' && k !== 'ref')
+        .map(([k, val]) => `${k}: ${previewValue(val)}`);
     if (!entries.length)
       return undefined;
     const joined = entries.join(', ');

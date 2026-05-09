@@ -19,6 +19,7 @@ import fs from 'fs';
 import * as z from 'zod';
 
 import { libPath } from '../../package';
+import { playwright } from '../../inprocess';
 import { defineTabTool } from './tool';
 import * as rawReactDevtoolsSource from '../../generated/reactDevtoolsSource';
 
@@ -29,6 +30,54 @@ import type { InspectFiberResult, SuspenseBoundary, TreeNode } from '../../../..
 const INSTALL_HOOK_JS = fs.readFileSync(libPath('tools', 'backend', 'installHook.js'), 'utf8');
 const REACT_DEVTOOLS_SOURCE = rawReactDevtoolsSource.source;
 const HOOK_MISSING_MESSAGE = 'React DevTools hook not present. Run browser_react_devtools_install and reload the page.';
+const REACT_FIBER_SELECTOR = '_react-fiber';
+
+// Custom selector engine: `_react-fiber=42` resolves to the first host DOM
+// element of fiber #42 by querying the React DevTools renderer interface.
+// Re-evaluated on every locator action attempt, so it survives in-place
+// re-renders. After unmount/remount the fiber id is invalidated upstream and
+// the engine returns null, which fails the locator with a clear error.
+//
+// The function below is serialized to source via Function.prototype.toString
+// when registered, so it must not capture any outer scope variables.
+const reactFiberEngine = () => ({
+  query(root: Element | Document, selector: string): Element | null {
+    const id = parseInt(selector, 10);
+    if (!Number.isFinite(id))
+      return null;
+    const win = (root.ownerDocument ?? (root as Document)).defaultView as (Window & { __REACT_DEVTOOLS_GLOBAL_HOOK__?: any }) | null;
+    const hook = win?.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    const ri = hook?.rendererInterfaces?.get(1);
+    if (!ri || !ri.hasElementWithId(id))
+      return null;
+    const nodes: Element[] | null | undefined = ri.findHostInstancesForElementID(id);
+    return (nodes && nodes[0]) || null;
+  },
+  queryAll(root: Element | Document, selector: string): Element[] {
+    const id = parseInt(selector, 10);
+    if (!Number.isFinite(id))
+      return [];
+    const win = (root.ownerDocument ?? (root as Document)).defaultView as (Window & { __REACT_DEVTOOLS_GLOBAL_HOOK__?: any }) | null;
+    const hook = win?.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    const ri = hook?.rendererInterfaces?.get(1);
+    if (!ri || !ri.hasElementWithId(id))
+      return [];
+    return ri.findHostInstancesForElementID(id) || [];
+  },
+});
+
+let _selectorEngineRegistered = false;
+async function ensureReactFiberEngineRegistered(): Promise<void> {
+  if (_selectorEngineRegistered)
+    return;
+  _selectorEngineRegistered = true;
+  try {
+    await playwright.selectors.register(REACT_FIBER_SELECTOR, reactFiberEngine);
+  } catch (e) {
+    // Already registered (e.g. from a prior MCP session sharing this Node
+    // process). Safe to ignore — the engine is unique-by-name.
+  }
+}
 
 function evaluateExpression(method: string, args: string = ''): string {
   // The bundled source populates `module.exports.ReactDevtools` with the class.
@@ -42,6 +91,11 @@ function evaluateExpression(method: string, args: string = ''): string {
 }
 
 async function ensureHookOrInstall(tab: Tab, response: Response): Promise<boolean> {
+  // Register the fiber-id selector engine eagerly. Registration is idempotent
+  // and cheap; doing it here means any subsequent browser_react_click can
+  // immediately use `page.locator('_react-fiber=N')` without a per-tool
+  // setup step.
+  await ensureReactFiberEngineRegistered();
   const present = await tab.page.evaluate('!!window.__REACT_DEVTOOLS_GLOBAL_HOOK__').catch(() => false);
   if (present)
     return true;
@@ -153,26 +207,32 @@ const reactClick = defineTabTool({
   handle: async (tab, params, response) => {
     if (!(await ensureHookOrInstall(tab, response)))
       return;
-    const handle = await tab.page.evaluateHandle<Element | null>(evaluateExpression('hostFor', String(params.id)));
+
+    // Validate the fiber id up front so the failure mode points at the cause
+    // rather than the locator timing out generically.
+    const exists = await tab.page.evaluate(`(id => {
+      const ri = window.__REACT_DEVTOOLS_GLOBAL_HOOK__?.rendererInterfaces?.get(1);
+      return !!ri && ri.hasElementWithId(id);
+    })(${params.id})`).catch(() => false);
+    if (!exists) {
+      response.addError(`Fiber #${params.id} not found (page reloaded? run browser_react_tree to refresh ids).`);
+      return;
+    }
+
+    const selector = `${REACT_FIBER_SELECTOR}=${params.id}`;
+    const locator = tab.page.locator(selector);
+    response.setIncludeSnapshot();
+    const options = { button: params.button, ...tab.actionTimeoutOptions };
     try {
-      const element = handle.asElement();
-      if (!element) {
-        response.addError(`Fiber #${params.id} has no host element to click (component returned null or rendered no DOM).`);
-        return;
-      }
-      response.setIncludeSnapshot();
-      const options = { button: params.button, ...tab.actionTimeoutOptions };
       await tab.waitForCompletion(async () => {
         if (params.doubleClick)
-          await element.dblclick(options);
+          await locator.dblclick(options);
         else
-          await element.click(options);
+          await locator.click(options);
       });
-      response.addCode(`/* clicked host of React fiber #${params.id} */`);
+      response.addCode(`await page.locator('${selector}').${params.doubleClick ? 'dblclick' : 'click'}();`);
     } catch (e) {
       response.addError(e instanceof Error ? e.message : String(e));
-    } finally {
-      await handle.dispose().catch(() => {});
     }
   },
 });
