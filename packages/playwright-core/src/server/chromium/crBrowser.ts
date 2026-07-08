@@ -358,6 +358,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
         eventsEnabled: true,
       }));
     }
+    promises.push(this.extendInjectedScript(`module.exports = { default: () => class C {} };`));
     await Promise.all(promises);
   }
 
