@@ -52,6 +52,14 @@ const disabledFeatures = [
 ].filter(Boolean);
 
 export const chromiumSwitches = (options?: { android?: boolean }) => [
+  // Experimental: only produce frames when explicitly requested via HeadlessExperimental.beginFrame.
+  // Effectively disables rendering in the headless shell (screenshots/video will not work).
+  // Linux/Windows only: the mac headless shell does not implement BeginFrameControl and
+  // crashes with SIGTRAP when these switches are combined.
+  // See https://source.chromium.org/chromium/chromium/src/+/main:headless/public/switches.h
+  process.env.PW_EXPERIMENTAL_BEGIN_FRAME_CONTROL && process.platform !== 'darwin' ? '--enable-begin-frame-control' : '',
+  // Required for HeadlessExperimental.beginFrame, see https://goo.gle/chrome-headless-rendering.
+  process.env.PW_EXPERIMENTAL_BEGIN_FRAME_CONTROL && process.platform !== 'darwin' ? '--run-all-compositor-stages-before-draw' : '',
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',

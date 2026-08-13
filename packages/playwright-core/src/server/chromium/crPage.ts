@@ -125,6 +125,25 @@ export class CRPage implements PageDelegate {
     this._mainFrameSession._initialize(bits.hasUIWindow).then(
         () => this._page.reportAsNew(this._opener?._page, undefined),
         error => this._page.reportAsNew(this._opener?._page, error));
+
+    // Experimental: when frames are only produced on demand (--enable-begin-frame-control),
+    // pump BeginFrames so that rAF-driven logic (e.g. actionability checks) still runs.
+    // With noDisplayUpdates, layout and animations run, but commit/raster/draw are skipped.
+    if (process.env.PW_EXPERIMENTAL_BEGIN_FRAME_CONTROL && process.env.PW_EXPERIMENTAL_BEGIN_FRAME_PUMP)
+      this._startBeginFramePump(+process.env.PW_EXPERIMENTAL_BEGIN_FRAME_PUMP || 16);
+  }
+
+  private async _startBeginFramePump(intervalMs: number): Promise<void> {
+    const noDisplayUpdates = !process.env.PW_EXPERIMENTAL_BEGIN_FRAME_PUMP_DISPLAY;
+    while (!this._page.isClosed()) {
+      try {
+        await this._mainFrameSession._client.send('HeadlessExperimental.beginFrame', { noDisplayUpdates });
+      } catch (e) {
+        if (this._page.isClosed())
+          return;
+      }
+      await new Promise(f => setTimeout(f, intervalMs));
+    }
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {

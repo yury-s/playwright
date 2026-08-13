@@ -84,6 +84,9 @@ export type InjectedScriptOptions = {
   testIdAttributeName: string;
   stableRafCount: number;
   browserName: string;
+  // Frames may never be produced (--enable-begin-frame-control without a frame source),
+  // so nothing may rely on the frame lifecycle: rAF and IntersectionObserver never fire.
+  noFrames?: boolean;
   shouldPrependErrorPrefix?: boolean;
   isUtilityWorld?: boolean;
   customEngines: { name: string, source: string }[];
@@ -93,6 +96,7 @@ export class InjectedScript {
   private _engines: Map<string, SelectorEngine>;
   readonly _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
+  private _noFrames: boolean;
   private _browserName: string;
   private _shouldPrependErrorPrefix: boolean;
   private _isUtilityWorld: boolean;
@@ -248,6 +252,7 @@ export class InjectedScript {
       this._engines.set(name, this.eval(source));
 
     this._stableRafCount = options.stableRafCount;
+    this._noFrames = !!options.noFrames;
     this._browserName = options.browserName;
     this._shouldPrependErrorPrefix = !!options.shouldPrependErrorPrefix;
     this._isUtilityWorld = !!options.isUtilityWorld;
@@ -606,6 +611,22 @@ export class InjectedScript {
   }
 
   async viewportRatio(element: Element): Promise<number> {
+    if (this._noFrames) {
+      // IntersectionObserver notifications are delivered as part of the frame
+      // lifecycle and never fire without frames. Approximate geometrically;
+      // unlike IntersectionObserver, this ignores clipping by scrollable ancestors.
+      const rect = element.getBoundingClientRect();
+      const view = element.ownerDocument?.defaultView;
+      if (!view)
+        return 0;
+      const width = Math.min(rect.right, view.innerWidth) - Math.max(rect.left, 0);
+      const height = Math.min(rect.bottom, view.innerHeight) - Math.max(rect.top, 0);
+      if (!rect.width || !rect.height)
+        return width >= 0 && height >= 0 ? 1 : 0;
+      if (width <= 0 || height <= 0)
+        return 0;
+      return (width * height) / (rect.width * rect.height);
+    }
     return await new Promise(resolve => {
       const observer = new IntersectionObserver(entries => {
         resolve(entries[0].intersectionRatio);
@@ -717,18 +738,27 @@ export class InjectedScript {
     let reject: (error: Error) => void;
     const result = new Promise<'error:notconnected' | boolean>((f, r) => { fulfill = f; reject = r; });
 
+    const schedule = (callback: () => void) => {
+      if (this._noFrames)
+        this.utils.builtins.setTimeout(callback, 16);
+      else
+        this.utils.builtins.requestAnimationFrame(callback);
+    };
     const raf = () => {
       try {
         const success = check();
         if (success !== continuePolling)
           fulfill(success);
         else
-          this.utils.builtins.requestAnimationFrame(raf);
+          schedule(raf);
       } catch (e) {
         reject(e);
       }
     };
-    this.utils.builtins.requestAnimationFrame(raf);
+    if (this._noFrames)
+      raf(); // No frame to align the first sample with — take it immediately.
+    else
+      schedule(raf);
 
     return result;
   }

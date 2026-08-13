@@ -88,13 +88,17 @@ export class FrameExecutionContext extends js.ExecutionContext {
       for (const [name, { source }] of selectorsRegistry._engines)
         customEngines.push({ name, source: `(${source})` });
       const sdkLanguage = this.frame._page.browserContext._browser.sdkLanguage();
+      const browserName = this.frame._page.browserContext._browser.options.name;
       const options: InjectedScriptOptions = {
         isUnderTest: isUnderTest(),
         sdkLanguage,
         frameSeq: this.frame.seq,
         testIdAttributeName: selectorsRegistry.testIdAttributeName(),
         stableRafCount: this.frame._page.delegate.rafCountForStablePosition(),
-        browserName: this.frame._page.browserContext._browser.options.name,
+        // Experimental no-render mode, see chromiumSwitches.ts. Frames are never
+        // produced, so the injected script must not wait on the frame lifecycle.
+        noFrames: !!process.env.PW_EXPERIMENTAL_BEGIN_FRAME_CONTROL && process.platform !== 'darwin' && browserName === 'chromium',
+        browserName,
         shouldPrependErrorPrefix: this.delegate.shouldPrependErrorPrefix(),
         isUtilityWorld: this.world === 'utility',
         customEngines,

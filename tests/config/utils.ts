@@ -197,6 +197,13 @@ export function waitForTestLog<T>(page: Page, prefix: string): Promise<T> {
 
 export async function rafraf(target: Page | Frame, count = 1) {
   for (let i = 0; i < count; i++) {
+    // In the experimental no-render mode frames are never produced, so rAF never fires.
+    if (process.env.PW_EXPERIMENTAL_BEGIN_FRAME_CONTROL) {
+      await target.evaluate(async () => {
+        await new Promise(f => window.builtins.setTimeout(f, 32));
+      });
+      continue;
+    }
     await target.evaluate(async () => {
       await new Promise(f => window.builtins.requestAnimationFrame(() => window.builtins.requestAnimationFrame(f)));
     });
