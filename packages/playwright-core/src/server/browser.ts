@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
-import { makeSocketPath } from '@utils/fileUtils';
-import { createGuid } from '@utils/crypto';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Download } from './download';
 import { SdkObject } from './instrumentation';
 import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
-import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
-import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
-import { BrowserInfo, serverRegistry } from '../serverRegistry';
-import { nullProgress } from './progress';
 import { TargetClosedError } from './errors';
 
 import type * as types from './types';
@@ -36,7 +28,7 @@ import type * as channels from './channels';
 import type { ChildProcess } from 'child_process';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Progress } from './progress';
-import type * as playwright from '../..';
+import type { BrowserServer } from './browserServer';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -81,14 +73,13 @@ export abstract class Browser extends SdkObject {
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
   _isBrowserCollocatedWithServer: boolean = true;
-  private _server: BrowserServer;
+  private _server: BrowserServer | undefined;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
     super(parent, 'browser');
     this.attribution.browser = this;
     this.options = options;
     this.instrumentation.onBrowserOpen(this);
-    this._server = new BrowserServer(this);
   }
 
   abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
@@ -163,11 +154,16 @@ export abstract class Browser extends SdkObject {
   }
 
   async startServer(progress: Progress, title: string, options: channels.BrowserStartServerOptions): Promise<{ endpoint: string }> {
+    if (!this._server) {
+      const { BrowserServer } = await import('./browserServer');
+      this._server = new BrowserServer(this);
+    }
     return await progress.race(this._server.start(title, options));
   }
 
   async stopServer(progress: Progress): Promise<void> {
-    await progress.race(this._server.stop());
+    if (this._server)
+      await progress.race(this._server.stop());
   }
 
   protected didClose() {
@@ -177,7 +173,7 @@ export abstract class Browser extends SdkObject {
       this._defaultContext.browserClosed();
     for (const download of this._downloads.values())
       download.artifact.reportFinished(new TargetClosedError(undefined));
-    this.stopServer(nullProgress).catch(() => {});
+    void this._server?.stop().catch(() => {});
     this.emit(Browser.Events.Disconnected);
     this.instrumentation.onBrowserClose(this);
   }
@@ -202,70 +198,4 @@ export abstract class Browser extends SdkObject {
     if (this.isConnected())
       await progress.race(new Promise(x => this.once(Browser.Events.Disconnected, x)));
   }
-}
-
-export class BrowserServer {
-  private _browser: Browser;
-  private _pipeServer?: PlaywrightPipeServer;
-  private _wsServer?: PlaywrightWebSocketServer;
-  private _pipeSocketPath?: string;
-  private _isStarted = false;
-
-  constructor(browser: Browser) {
-    this._browser = browser;
-  }
-
-  async start(title: string, options: channels.BrowserStartServerOptions): Promise<{ endpoint: string }> {
-    if (this._isStarted)
-      throw new Error(`Server is already started.`);
-    this._isStarted = true;
-
-    let endpoint: string;
-    if (options.host !== undefined || options.port !== undefined) {
-      this._wsServer = new PlaywrightWebSocketServer(this._browser, '/' + createGuid());
-      endpoint = await this._wsServer.listen(options.port ?? 0, options.host);
-    } else {
-      this._pipeServer = new PlaywrightPipeServer(this._browser);
-      this._pipeSocketPath = await this._socketPath();
-      await this._pipeServer.listen(this._pipeSocketPath);
-      endpoint = this._pipeSocketPath;
-    }
-
-    const browserInfo: BrowserInfo = {
-      guid: this._browser.guid,
-      browserName: this._browser.options.browserType,
-      launchOptions: asClientLaunchOptions(this._browser.options.originalLaunchOptions),
-      userDataDir: this._browser.options.userDataDir,
-    };
-    await serverRegistry.create(browserInfo, {
-      title,
-      endpoint,
-      workspaceDir: options.workspaceDir,
-      metadata: options.metadata,
-    });
-    return { endpoint };
-  }
-
-  async stop() {
-    if (!this._browser.options.userDataDir)
-      await serverRegistry.delete(this._browser.guid);
-    if (this._pipeSocketPath && process.platform !== 'win32')
-      await fs.promises.unlink(this._pipeSocketPath).catch(() => {});
-    await this._pipeServer?.close();
-    await this._wsServer?.close();
-    this._pipeServer = undefined;
-    this._wsServer = undefined;
-    this._isStarted = false;
-  }
-
-  private async _socketPath() {
-    return makeSocketPath('browser', this._browser.guid.slice(0, 14));
-  }
-}
-
-function asClientLaunchOptions(serverOptions: types.LaunchOptions): playwright.LaunchOptions {
-  return {
-    ...serverOptions,
-    env: serverOptions.env ? Object.fromEntries(serverOptions.env.map(({ name, value }) => [name, value])) : undefined,
-  };
 }

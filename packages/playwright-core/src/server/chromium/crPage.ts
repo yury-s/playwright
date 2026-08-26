@@ -35,7 +35,6 @@ import { exceptionToError, releaseObject, stackTraceToLocation } from './crProto
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
-import { startAutomaticVideoRecording } from '../videoRecorder';
 import { nullProgress } from '../progress';
 
 import type { CRSession } from './crConnection';
@@ -476,8 +475,10 @@ class FrameSession {
       }
     }
 
-    if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage)
+    if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage && this._crPage._browserContext._options.recordVideo) {
+      const { startAutomaticVideoRecording } = await import('../videoRecorder');
       startAutomaticVideoRecording(this._crPage._page);
+    }
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())

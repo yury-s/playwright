@@ -25,7 +25,8 @@ type Status =
   | { type: 'error'; message: string }
   | { type: 'error'; versionMismatch: { extensionVersion: string; } };
 
-const SUPPORTED_PROTOCOL_VERSION = 2;
+const SUPPORTED_PROTOCOL_VERSIONS = new Set([2, 3]);
+const LATEST_PROTOCOL_VERSION = 3;
 
 // Client name comes from the URL and never changes for the lifetime of this page.
 const clientInfo = (() => {
@@ -74,7 +75,7 @@ const ConnectApp: React.FC = () => {
 
       const parsedVersion = parseInt(params.get('protocolVersion') ?? '', 10);
       const requestedVersion = isNaN(parsedVersion) ? 1 : parsedVersion;
-      if (requestedVersion > SUPPORTED_PROTOCOL_VERSION) {
+      if (requestedVersion > LATEST_PROTOCOL_VERSION) {
         const extensionVersion = chrome.runtime.getManifest().version;
         setShowTabList(false);
         setStatus({
@@ -85,13 +86,13 @@ const ConnectApp: React.FC = () => {
         });
         return;
       }
-      if (requestedVersion < SUPPORTED_PROTOCOL_VERSION) {
+      if (!SUPPORTED_PROTOCOL_VERSIONS.has(requestedVersion)) {
         setError('The client uses an unsupported protocol version. Update Playwright MCP or CLI to the latest version.');
         return;
       }
       // The background only records the relay URL; the WS to the relay opens
       // once the user clicks Allow.
-      await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl });
+      await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl: relayUrl, protocolVersion: requestedVersion });
 
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');

@@ -23,13 +23,14 @@ import type { BrowserContext } from 'playwright';
 
 // Connects without the approval dialog, so a test can start several clients
 // and tell them apart by name.
-async function connectWithName(browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string): Promise<Client> {
+async function connectWithName(browserWithExtension: BrowserWithExtension, startClient: StartClient, token: string, clientName: string, protocolVersion?: number): Promise<Client> {
   const { client } = await startClient({
     clientName,
     args: ['--extension'],
     env: {
       PLAYWRIGHT_MCP_EXTENSION_TOKEN: token,
       PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+      PLAYWRIGHT_EXTENSION_PROTOCOL: protocolVersion?.toString(),
     },
   });
   return client;
@@ -61,6 +62,36 @@ async function tabList(client: Client): Promise<string> {
   const response = await client.callTool({ name: 'browser_tabs', arguments: { action: 'list' } }) as any;
   return response.content?.[0]?.text ?? '';
 }
+
+test(`protocol v3 clients share one Playwright backend and tab group`, async ({ browserWithExtension, startClient, server }) => {
+  server.setContent('/second', '<title>Second</title><body>Second page</body>', 'text/html');
+
+  const browserContext = await browserWithExtension.launch();
+  const token = await readExtensionToken(browserContext);
+
+  const clientA = await connectWithName(browserWithExtension, startClient, token, 'client-a', 3);
+  expect(await clientA.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({ snapshot: expect.stringContaining('Hello, world!') });
+
+  const clientB = await connectWithName(browserWithExtension, startClient, token, 'client-b', 3);
+  await clientB.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new', url: server.PREFIX + '/second' },
+  });
+
+  for (const client of [clientA, clientB]) {
+    expect(await tabList(client)).toContain('Title');
+    expect(await tabList(client)).toContain('Second');
+  }
+  await expect.poll(() => playwrightGroups(browserContext)).toEqual([
+    { title: 'Playwright', color: 'green' },
+  ]);
+
+  await clientB.close();
+  expect(await tabList(clientA)).toContain('Second');
+});
 
 test(`two clients connect at the same time, each in its own tab group`, {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41838' },

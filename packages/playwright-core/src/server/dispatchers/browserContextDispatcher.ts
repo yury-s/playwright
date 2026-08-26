@@ -34,8 +34,6 @@ import { DisposableDispatcher } from './disposableDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
-import { Recorder } from '../recorder';
-import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { disposeAll } from '../disposable';
@@ -356,10 +354,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
+    const { RecorderApp } = await import('../recorder/recorderApp');
     await progress.race(RecorderApp.show(this._context, params));
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
+    const { Recorder } = await import('../recorder');
     const recorder = await progress.race(Recorder.existingForContext(this._context));
     if (recorder)
       await progress.race(recorder.setMode('none'));

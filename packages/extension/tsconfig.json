@@ -1,14 +1,15 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "module": "ESNext",
-    "rootDir": "src",
+    "rootDir": "..",
     "outDir": "./dist/lib",
     "resolveJsonModule": true,
-    "types": ["chrome"],
+    "types": ["chrome", "node"],
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "noEmit": true,

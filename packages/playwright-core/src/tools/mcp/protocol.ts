@@ -19,6 +19,34 @@
 // requesting a version it does not support.
 export const VERSION = 2;
 
+// Alternate relay strategy, opted into via PLAYWRIGHT_EXTENSION_PROTOCOL=3.
+// Instead of translating between the chrome.* dialect and CDP, the relay
+// forwards Playwright's own client<->server wire protocol frames unchanged
+// between the two WebSocket endpoints.
+export const CHANNEL_VERSION = 3;
+
+// Control-plane message sent by the extension immediately after it connects
+// under the channel protocol (v3), before the Playwright client connects.
+// Carries the extension's Playwright version so the relay can validate
+// compatibility before unblocking `establishExtensionConnection`. Consumed
+// by the relay and never forwarded to the Playwright client.
+export type ExtensionReadyMessage = {
+  method: 'extension.ready';
+  params: { playwrightVersion: string };
+};
+
+// Application keepalive exchanged over the extension socket under the
+// channel protocol (v3). The extension periodically sends 'extension.ping';
+// the relay replies with 'extension.pong' on the same socket. Neither is
+// forwarded to the Playwright client, and both are ignored for the purposes
+// of ordering normal Playwright channel frames.
+export type ExtensionPingMessage = {
+  method: 'extension.ping';
+};
+export type ExtensionPongMessage = {
+  method: 'extension.pong';
+};
+
 // Structural mirrors of @types/chrome shapes used over the wire. The extension
 // imports the real chrome.* types and they are structurally compatible.
 export type Debuggee = { tabId?: number; extensionId?: string; targetId?: string };

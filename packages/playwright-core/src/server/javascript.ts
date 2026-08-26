@@ -307,21 +307,34 @@ export function normalizeEvaluationExpression(expression: string, isFunction: bo
   expression = expression.trim();
 
   if (isFunction) {
+    let canValidate = true;
     try {
-      new Function('(' + expression + ')');
-    } catch (e1) {
-      // This means we might have a function shorthand. Try another
-      // time prefixing 'function '.
+      new Function('');
+    } catch {
+      canValidate = false;
+    }
+    if (canValidate) {
+      try {
+        new Function('(' + expression + ')');
+      } catch (e1) {
+        // This means we might have a function shorthand. Try another
+        // time prefixing 'function '.
+        if (expression.startsWith('async '))
+          expression = 'async function ' + expression.substring('async '.length);
+        else
+          expression = 'function ' + expression;
+        try {
+          new Function('(' + expression  + ')');
+        } catch (e2) {
+          // We tried hard to serialize, but there's a weird beast here.
+          throw new Error('Passed function is not well-serializable!');
+        }
+      }
+    } else if (!/^(async\s+)?function\b/.test(expression) && /^(async\s+)?\*?\s*[\w$]+\s*\([\s\S]*\)\s*\{/.test(expression)) {
       if (expression.startsWith('async '))
         expression = 'async function ' + expression.substring('async '.length);
       else
         expression = 'function ' + expression;
-      try {
-        new Function('(' + expression  + ')');
-      } catch (e2) {
-        // We tried hard to serialize, but there's a weird beast here.
-        throw new Error('Passed function is not well-serializable!');
-      }
     }
   }
 

@@ -32,7 +32,6 @@ import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
-import { VideoRecorder } from '../videoRecorder';
 import { nullProgress } from '../progress';
 
 import type { Artifact } from '../artifact';
@@ -52,6 +51,7 @@ import type { Progress } from '../progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
 import type { ScreencastClient } from '../screencast';
+import type { VideoRecorder } from '../videoRecorder';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_Page = true;
@@ -417,6 +417,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
     let artifact: Artifact | undefined;
     if (params.record) {
+      const { VideoRecorder } = await import('../videoRecorder');
       this._videoRecorder = new VideoRecorder(this._page.screencast);
       artifact = this._videoRecorder.start(params);
     }

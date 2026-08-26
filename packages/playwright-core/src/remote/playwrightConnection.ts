@@ -95,16 +95,24 @@ export class PlaywrightConnection {
       if (options.preLaunchedBrowser) {
         const browser = options.preLaunchedBrowser;
         browser.options.sdkLanguage = params.sdkLanguage;
-        browser.on(Browser.Events.Disconnected, () => {
+        const onDisconnected = () => {
           // Underlying browser did close for some reason - force disconnect the client.
-          this.close({ code: 1001, reason: 'Browser closed' });
+          void this.close({ code: 1001, reason: 'Browser closed' });
+        };
+        browser.on(Browser.Events.Disconnected, onDisconnected);
+        this._cleanups.push(async () => {
+          browser.removeListener(Browser.Events.Disconnected, onDisconnected);
         });
       }
       if (options.preLaunchedAndroidDevice) {
         const androidDevice = options.preLaunchedAndroidDevice;
-        androidDevice.on(AndroidDevice.Events.Close, () => {
+        const onClose = () => {
           // Underlying android device did close for some reason - force disconnect the client.
-          this.close({ code: 1001, reason: 'Android device disconnected' });
+          void this.close({ code: 1001, reason: 'Android device disconnected' });
+        };
+        androidDevice.on(AndroidDevice.Events.Close, onClose);
+        this._cleanups.push(async () => {
+          androidDevice.removeListener(AndroidDevice.Events.Close, onClose);
         });
       }
       if (options.dispose)

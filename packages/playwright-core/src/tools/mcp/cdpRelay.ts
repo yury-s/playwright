@@ -35,12 +35,13 @@ import { WSServer } from '@utils/wsServer';
 import { registry } from '../../server/registry/index';
 
 import { playwrightExtensionId } from '../utils/extension';
+import { getPlaywrightVersion } from '../../server/userAgent';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV2 } from './cdpRelayV2';
 import * as protocol from './protocol';
 
 import type websocket from 'ws';
-import type { ExtensionCommandV2, ExtensionEventsV2 } from './protocol';
+import type { ExtensionCommandV2, ExtensionEventsV2, ExtensionReadyMessage, ExtensionPongMessage } from './protocol';
 import type { CDPMessage } from './browserModel';
 import type { WebSocket } from 'ws';
 
@@ -70,6 +71,11 @@ export class CDPRelayServer {
   private _protocolVersion: number;
   private _handler: ExtensionProtocolV2;
   private _extensionConnectionPromise = new ManualPromise<void>();
+  // Channel protocol (v3) only: raw extension socket used for unmodified
+  // frame forwarding, and the readiness gate fulfilled by the extension's
+  // 'extension.ready' control message.
+  private _extensionSocket: WebSocket | null = null;
+  private _extensionReadyPromise = new ManualPromise<void>();
 
   constructor(browserChannel: string, executablePath?: string, customUserDataDir?: string, profileDirectory?: string) {
     this._browserChannel = browserChannel;
@@ -90,6 +96,7 @@ export class CDPRelayServer {
     this._extensionPath = `/extension/${uuid}`;
 
     void this._extensionConnectionPromise.catch(logUnhandledError);
+    void this._extensionReadyPromise.catch(logUnhandledError);
     this._wsServer = new WSServer({
       onRequest: (request, response) => {
         response.statusCode = 404;
@@ -121,12 +128,23 @@ export class CDPRelayServer {
     return `${this._wsHost}${this._extensionPath}`;
   }
 
+  // The only piece of relay-selection logic exposed to callers: whether the
+  // relay speaks the raw Playwright channel protocol (v3) instead of CDP, so
+  // extensionContextFactory knows to use `connect()` instead of
+  // `connectOverCDP()`.
+  get usesChannelProtocol(): boolean {
+    return this._protocolVersion === protocol.CHANNEL_VERSION;
+  }
+
   async establishExtensionConnection(clientName: string) {
     debugLogger('Establishing extension connection');
     await this._openConnectPageInBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
     await this._extensionConnectionPromise;
-    await this._handler.ready();
+    if (this.usesChannelProtocol)
+      await this._extensionReadyPromise;
+    else
+      await this._handler.ready();
     debugLogger('Extension connection established');
   }
 
@@ -185,7 +203,7 @@ export class CDPRelayServer {
   }
 
   private _handlePlaywrightConnection(ws: WebSocket): void {
-    if (!this._extensionConnection) {
+    if (!this._extensionConnection && !this._extensionSocket) {
       debugLogger('Rejecting Playwright connection: extension not connected');
       ws.close(1000, 'Extension not connected');
       return;
@@ -196,14 +214,19 @@ export class CDPRelayServer {
       return;
     }
     this._cdpConnection = ws;
-    this._handler.connectOverCDP(msg => this._sendToCDPClient(msg));
-    ws.on('message', async data => {
-      try {
-        await this._handlePlaywrightMessage(JSON.parse(data.toString()));
-      } catch (error: any) {
-        debugLogger(`Error while handling Playwright message\n${data.toString()}\n`, error);
-      }
-    });
+    if (this.usesChannelProtocol) {
+      // v3: forward Playwright channel frames to the extension unchanged.
+      ws.on('message', data => this._forwardToExtension(data));
+    } else {
+      this._handler.connectOverCDP(msg => this._sendToCDPClient(msg));
+      ws.on('message', async data => {
+        try {
+          await this._handlePlaywrightMessage(JSON.parse(data.toString()));
+        } catch (error: any) {
+          debugLogger(`Error while handling Playwright message\n${data.toString()}\n`, error);
+        }
+      });
+    }
     ws.on('close', () => {
       this._closeExtensionConnection('Playwright client disconnected');
       debugLogger('Playwright WebSocket closed');
@@ -216,8 +239,12 @@ export class CDPRelayServer {
 
   private _closeExtensionConnection(reason: string) {
     this._extensionConnection?.close(reason);
+    if (this._extensionSocket?.readyState === ws.OPEN)
+      this._extensionSocket.close(1000, reason);
     if (!this._extensionConnectionPromise.isDone())
       this._extensionConnectionPromise.reject(new Error(reason));
+    if (!this._extensionReadyPromise.isDone())
+      this._extensionReadyPromise.reject(new Error(reason));
   }
 
   private _closeCDPConnection(reason: string) {
@@ -226,8 +253,12 @@ export class CDPRelayServer {
   }
 
   private _handleExtensionConnection(ws: WebSocket): void {
-    if (this._extensionConnection) {
+    if (this._extensionConnection || this._extensionSocket) {
       ws.close(1000, 'Another extension connection already established');
+      return;
+    }
+    if (this.usesChannelProtocol) {
+      this._handleExtensionConnectionChannel(ws);
       return;
     }
     this._extensionConnection = new ExtensionConnection(ws);
@@ -238,6 +269,109 @@ export class CDPRelayServer {
     };
     this._extensionConnection.onmessage = (method, params) => this._handler.handleExtensionEvent(method, params);
     this._extensionConnectionPromise.resolve();
+  }
+
+  // v3: the extension connection is a raw pass-through pipe. It interprets
+  // two things itself — the initial 'extension.ready' control frame and
+  // periodic 'extension.ping' keepalives — and forwards everything else to
+  // the Playwright client unchanged. Both are handled synchronously inside
+  // the 'message' handler so normal frame ordering is preserved.
+  private _handleExtensionConnectionChannel(ws: WebSocket): void {
+    this._extensionSocket = ws;
+    ws.on('message', data => {
+      const text = data.toString();
+      if (this._consumeExtensionKeepalive(text))
+        return;
+      if (!this._extensionReadyPromise.isDone())
+        this._handleExtensionControlMessage(text);
+      else
+        this._forwardToPlaywrightClient(text);
+    });
+    ws.on('close', (code, reason) => {
+      const reasonText = reason.toString();
+      debugLogger('Extension WebSocket closed:', reasonText);
+      this._extensionSocket = null;
+      if (!this._extensionReadyPromise.isDone())
+        this._extensionReadyPromise.reject(new Error(`Extension disconnected before it was ready: ${reasonText}`));
+      this._closeCDPConnection(`Extension disconnected: ${reasonText}`);
+    });
+    ws.on('error', error => {
+      debugLogger('Extension WebSocket error:', error);
+    });
+    this._extensionConnectionPromise.resolve();
+  }
+
+  // Consumes an 'extension.ping' application keepalive and replies with
+  // 'extension.pong' on the same socket, returning true. Returns false for
+  // anything else (including malformed JSON), leaving it to be handled by
+  // the caller as a control message or forwarded as a normal channel frame.
+  private _consumeExtensionKeepalive(text: string): boolean {
+    if (text.length > 64 || !text.includes('extension.ping'))
+      return false;
+    let message: any;
+    try {
+      message = JSON.parse(text);
+    } catch {
+      return false;
+    }
+    if (message?.method !== 'extension.ping')
+      return false;
+    const pong: ExtensionPongMessage = { method: 'extension.pong' };
+    this._extensionSocket?.send(JSON.stringify(pong));
+    return true;
+  }
+
+  private _handleExtensionControlMessage(text: string): void {
+    let message: ExtensionReadyMessage;
+    try {
+      message = JSON.parse(text);
+    } catch (e: any) {
+      this._failExtensionReadiness(`Malformed extension control message: ${text}`);
+      return;
+    }
+    if (message?.method !== 'extension.ready') {
+      this._failExtensionReadiness(`Expected 'extension.ready' control message, got: ${text}`);
+      return;
+    }
+    const mismatch = this._playwrightVersionMismatch(message.params?.playwrightVersion);
+    if (mismatch) {
+      this._failExtensionReadiness(mismatch);
+      return;
+    }
+    debugLogger('Extension ready:', text);
+    this._extensionReadyPromise.resolve();
+  }
+
+  private _failExtensionReadiness(message: string): void {
+    debugLogger(message);
+    this._extensionReadyPromise.reject(new Error(message));
+    this._extensionSocket?.close(1000, message);
+  }
+
+  private _playwrightVersionMismatch(advertised: string | undefined): string | undefined {
+    if (!advertised)
+      return 'Extension did not advertise a Playwright version in its \'extension.ready\' control message';
+    const expected = getPlaywrightVersion(true);
+    const received = advertised.split('.').slice(0, 2).join('.');
+    if (received !== expected)
+      return `Playwright version mismatch: extension is v${advertised}, expected v${expected}.x`;
+    return undefined;
+  }
+
+  private _forwardToPlaywrightClient(data: string): void {
+    if (!this._cdpConnection) {
+      debugLogger('Dropping extension message: no Playwright client connected', data);
+      return;
+    }
+    this._cdpConnection.send(data);
+  }
+
+  private _forwardToExtension(data: websocket.RawData): void {
+    if (!this._extensionSocket) {
+      debugLogger('Dropping Playwright message: no extension connected', data.toString());
+      return;
+    }
+    this._extensionSocket.send(data.toString());
   }
 
   private async _handlePlaywrightMessage(message: CDPCommand): Promise<void> {

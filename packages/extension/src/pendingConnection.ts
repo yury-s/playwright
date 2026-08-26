@@ -14,19 +14,29 @@
  * limitations under the License.
  */
 
-import { RelayConnection, debugLog } from './relayConnection';
+import { debugLog } from './relayConnection';
 
-// Relay URLs recorded by `connectionRequested`, keyed by the connect page tab
+export type PendingConnection = {
+  protocolVersion: number;
+  socket: WebSocket;
+};
+
+type PendingConnectionInfo = {
+  mcpRelayUrl: string;
+  protocolVersion: number;
+};
+
+// Relay requests recorded by `connectionRequested`, keyed by the connect page tab
 // id. The relay WebSocket opens lazily in `take` once the user clicks Allow.
 export class PendingConnections {
-  private _map = new Map<number, string>();
+  private _map = new Map<number, PendingConnectionInfo>();
 
   constructor() {
     chrome.tabs.onRemoved.addListener(tabId => this._map.delete(tabId));
   }
 
-  create(selectorTabId: number, mcpRelayUrl: string): void {
-    this._map.set(selectorTabId, mcpRelayUrl);
+  create(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): void {
+    this._map.set(selectorTabId, { mcpRelayUrl, protocolVersion });
   }
 
   // A connect page awaiting approval; no connection may claim its tab.
@@ -34,16 +44,19 @@ export class PendingConnections {
     return this._map.has(selectorTabId);
   }
 
-  async take(selectorTabId: number): Promise<RelayConnection | undefined> {
-    const mcpRelayUrl = this._map.get(selectorTabId);
-    if (mcpRelayUrl === undefined)
+  async take(selectorTabId: number): Promise<PendingConnection | undefined> {
+    const info = this._map.get(selectorTabId);
+    if (!info)
       return undefined;
     this._map.delete(selectorTabId);
-    return openRelayConnection(mcpRelayUrl);
+    return {
+      protocolVersion: info.protocolVersion,
+      socket: await openRelayConnection(info.mcpRelayUrl),
+    };
   }
 }
 
-async function openRelayConnection(mcpRelayUrl: string): Promise<RelayConnection> {
+async function openRelayConnection(mcpRelayUrl: string): Promise<WebSocket> {
   try {
     const socket = new WebSocket(mcpRelayUrl);
     await new Promise<void>((resolve, reject) => {
@@ -51,7 +64,7 @@ async function openRelayConnection(mcpRelayUrl: string): Promise<RelayConnection
       socket.onerror = () => reject(new Error('WebSocket error'));
       setTimeout(() => reject(new Error('Connection timeout')), 5000);
     });
-    return new RelayConnection(socket);
+    return socket;
   } catch (error: any) {
     const message = `Failed to connect to MCP relay: ${error.message}`;
     debugLog(message);

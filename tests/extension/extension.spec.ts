@@ -42,6 +42,38 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
+
+});
+
+test(`navigate with in-extension Playwright server`, async ({ startExtensionClient, server }) => {
+  const { browserContext, client } = await startExtensionClient({
+    PLAYWRIGHT_EXTENSION_PROTOCOL: '3',
+  });
+
+  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
+    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
+  });
+
+  const navigateResponse = client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const selectorPage = await confirmationPagePromise;
+  await clickAllowAndSelect(selectorPage, 'Welcome');
+
+  expect(await navigateResponse).toHaveResponse({
+    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_run_code_unsafe',
+    arguments: {
+      code: `async (page) => await page.evaluate(async () => document.title)`,
+    },
+  })).toHaveResponse({
+    result: expect.stringContaining('Title'),
+  });
 });
 
 test(`connect.html requests protocol version 2`, async ({ startExtensionClient, server }) => {

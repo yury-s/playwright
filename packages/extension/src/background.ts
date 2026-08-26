@@ -14,13 +14,26 @@
  * limitations under the License.
  */
 
+import './nodeStubs/processShim';
+import './nodeStubs/buffer';
+
 import { debugLog } from './relayConnection';
 import { PendingConnections } from './pendingConnection';
+import { RelayConnection } from './relayConnection';
 import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl, ungroupTabs, uniqueGroupStyle } from './connectedTabGroup';
+import { ExtensionPlaywrightServer } from './playwrightServer';
+
+import playwrightPackage from '../../playwright-core/package.json';
+
+import type { TabConnection } from './connectedTabGroup';
+
+const PLAYWRIGHT_PROTOCOL_VERSION = 3;
+const SHARED_GROUP_STYLE = { title: 'Playwright', color: 'green' } as const;
 
 type PageMessage = {
   type: 'connectionRequested';
   mcpRelayUrl: string;
+  protocolVersion: number;
 } | {
   type: 'getTabs';
 } | {
@@ -38,10 +51,77 @@ type PageMessage = {
   type: 'keepalive';
 };
 
+type ActiveConnection = {
+  shared?: boolean;
+  clientName: string | undefined;
+  connectedTabIds(): number[];
+  close(reason: string): void;
+  releaseTab(tabId: number): void;
+  groupStyle: { title: string; color: `${chrome.tabGroups.Color}` };
+};
+
+class SharedServerConnection implements TabConnection {
+  private _operation = Promise.resolve();
+  private _readyOperation = Promise.resolve();
+  private _closed = false;
+
+  onclose?: () => void;
+  ontabattached?: (tabId: number) => void;
+  ontabdetached?: (tabId: number) => void;
+
+  constructor(private _server: ExtensionPlaywrightServer) {
+    this._server.ontabattached = tabId => {
+      this.ontabattached?.(tabId);
+    };
+    this._server.ontabdetached = tabId => {
+      this.ontabdetached?.(tabId);
+    };
+    this._server.onstatechange = () => this._maybeCloseIfEmpty();
+  }
+
+  get attachedTabs(): ReadonlySet<number> {
+    return this._server.attachedTabs;
+  }
+
+  attachTab(tab: chrome.tabs.Tab): void {
+    this._readyOperation = this._operation.then(() => this._server.addTab(tab));
+    this._operation = this._readyOperation.catch(error => {
+      debugLog(`Failed to attach tab ${tab.id}:`, error);
+    });
+  }
+
+  detachTab(tabId: number): void {
+    this._server.removeTab(tabId);
+  }
+
+  didInitialize(): void {
+  }
+
+  close(reason: string): void {
+    if (this._closed)
+      return;
+    this._closed = true;
+    this._server.close(reason);
+    this.onclose?.();
+  }
+
+  async ready(): Promise<void> {
+    await this._readyOperation;
+  }
+
+  private _maybeCloseIfEmpty(): void {
+    if (!this._server.attachedTabs.size && !this._server.hasPendingReattach)
+      this.close('All controlled tabs detached');
+  }
+}
+
 class PlaywrightExtension {
-  private _connections = new Map<number, ConnectedTabGroup>();
+  private _connections = new Map<number, ActiveConnection>();
   private _lastConnectionId = 0;
   private _pendingConnections = new PendingConnections();
+  private _sharedServer: ExtensionPlaywrightServer | undefined;
+  private _sharedServerConnection: SharedServerConnection | undefined;
+  private _sharedTabGroup: ConnectedTabGroup | undefined;
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
   private _cleanupPromise: Promise<void>;
@@ -58,7 +138,7 @@ class PlaywrightExtension {
       case 'connectionRequested': {
         const selectorTabId = sender.tab!.id!;
         this._releaseConnectPage(selectorTabId).then(() => {
-          this._pendingConnections.create(selectorTabId, message.mcpRelayUrl);
+          this._pendingConnections.create(selectorTabId, message.mcpRelayUrl, message.protocolVersion);
           sendResponse({ success: true });
         });
         return true;
@@ -106,15 +186,14 @@ class PlaywrightExtension {
       if (tab.id !== selectorTabId && this._connectedTabIds().has(tab.id))
         throw new Error('This tab is already connected to another client');
 
-      const connection = await this._pendingConnections.take(selectorTabId);
-      if (!connection)
+      const pendingConnection = await this._pendingConnections.take(selectorTabId);
+      if (!pendingConnection)
         throw new Error('Pending client connection closed');
 
-      const id = ++this._lastConnectionId;
-      const taken = [...this._connections.values()].map(group => group.groupStyle);
-      const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId));
-      group.onclose = () => this._connections.delete(id);
-      this._connections.set(id, group);
+      if (pendingConnection.protocolVersion === PLAYWRIGHT_PROTOCOL_VERSION)
+        await this._connectPlaywrightClient(pendingConnection.socket, tab, clientName);
+      else
+        this._connectCDPClient(pendingConnection.socket, tab, clientName);
 
       await Promise.all([
         chrome.tabs.update(tab.id, { active: true }),
@@ -125,6 +204,79 @@ class PlaywrightExtension {
         await chrome.tabs.remove(selectorTabId).catch(() => {});
     } catch (error: any) {
       debugLog(`Failed to connect tab ${tab.id}:`, error.message);
+      throw error;
+    }
+  }
+
+  private _connectCDPClient(socket: WebSocket, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): void {
+    const id = ++this._lastConnectionId;
+    const connection = new RelayConnection(socket);
+    const taken = [...this._connections.values()].map(group => group.groupStyle);
+    const group = new ConnectedTabGroup(connection, tab, clientName, uniqueGroupStyle(clientName, taken), tabId => this._pendingConnections.has(tabId));
+    group.onclose = () => this._connections.delete(id);
+    this._connections.set(id, group);
+  }
+
+  private async _connectPlaywrightClient(socket: WebSocket, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
+    if (!this._sharedServer) {
+      this._sharedServer = new ExtensionPlaywrightServer();
+      this._sharedServerConnection = new SharedServerConnection(this._sharedServer);
+      this._sharedTabGroup = new ConnectedTabGroup(
+          this._sharedServerConnection,
+          tab,
+          undefined,
+          SHARED_GROUP_STYLE,
+          tabId => this._pendingConnections.has(tabId));
+      this._sharedTabGroup.onclose = () => {
+        this._sharedTabGroup = undefined;
+        this._sharedServerConnection = undefined;
+        this._sharedServer = undefined;
+      };
+      this._sharedServer.onempty = () => this._sharedServerConnection?.close('Last Playwright client disconnected');
+    } else {
+      this._sharedTabGroup!.addTab(tab);
+    }
+    const server = this._sharedServer;
+    const serverConnection = this._sharedServerConnection!;
+    let id: number | undefined;
+    let keepalive: ReturnType<typeof setInterval> | undefined;
+    try {
+      await serverConnection.ready();
+      if (this._sharedServer !== server || this._sharedServerConnection !== serverConnection)
+        throw new Error('Playwright extension server closed while accepting the connection');
+
+      id = ++this._lastConnectionId;
+      keepalive = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN)
+          socket.send(JSON.stringify({ method: 'extension.ping' }));
+      }, 20_000);
+      const connection: ActiveConnection = {
+        shared: true,
+        clientName,
+        connectedTabIds: () => this._sharedTabGroup?.connectedTabIds() ?? [],
+        close: reason => socket.close(1000, reason),
+        releaseTab: tabId => this._sharedTabGroup?.releaseTab(tabId),
+        groupStyle: SHARED_GROUP_STYLE,
+      };
+      this._connections.set(id, connection);
+      server.accept(socket, () => {
+        if (keepalive !== undefined)
+          clearInterval(keepalive);
+        this._connections.delete(id!);
+      });
+      socket.send(JSON.stringify({
+        method: 'extension.ready',
+        params: { playwrightVersion: playwrightPackage.version },
+      }));
+    } catch (error) {
+      if (keepalive !== undefined)
+        clearInterval(keepalive);
+      if (id !== undefined)
+        this._connections.delete(id);
+      if (socket.readyState === WebSocket.OPEN)
+        socket.close(1011, error instanceof Error ? error.message : String(error));
+      if (![...this._connections.values()].some(connection => connection.shared) && this._sharedServerConnection === serverConnection)
+        serverConnection.close('Failed to initialize Playwright extension server');
       throw error;
     }
   }

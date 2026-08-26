@@ -29,7 +29,6 @@ import { EventMap, SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
-import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
@@ -158,14 +157,18 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (shouldEnableDebugger) {
       this._debugger.setPauseAt();
       this._debugger.on(Debugger.Events.PausedStateChanged, () => {
-        if (this._debugger.isPaused())
-          RecorderApp.showInspectorNoReply(this);
+        if (this._debugger.isPaused()) {
+          void import('./recorder/recorderApp').then(({ RecorderApp }) => {
+            RecorderApp.showInspectorNoReply(this);
+          });
+        }
       });
     }
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector') {
       this._debugger.setPauseAt({ next: true });
+      const { RecorderApp } = await import('./recorder/recorderApp');
       await RecorderApp.show(this, { pauseOnNextStatement: true });
     }
 

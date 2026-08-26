@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { RelayConnection, debugLog } from './relayConnection';
+import { debugLog } from './relayConnection';
 
 const PLAYWRIGHT_GROUP_TITLE = 'Playwright';
 const PLAYWRIGHT_GROUP_TITLE_PREFIX = `${PLAYWRIGHT_GROUP_TITLE} · `;
@@ -33,6 +33,19 @@ export type GroupStyle = {
   title: string;
   color: GroupColor;
 };
+
+export interface TabConnection {
+  readonly attachedTabs: ReadonlySet<number>;
+  onclose?: () => void;
+  ontabattached?: (tabId: number) => void;
+  ontabdetached?: (tabId: number) => void;
+  attachTab(tab: chrome.tabs.Tab): void;
+  detachTab(tabId: number): void;
+  didInitialize(): void;
+  close(reason: string): void;
+}
+
+type TabChangeInfo = Parameters<Parameters<typeof chrome.tabs.onUpdated.addListener>[0]>[1];
 
 export function uniqueGroupStyle(clientName: string | undefined, taken: readonly GroupStyle[]): GroupStyle {
   const titles = new Set(taken.map(style => style.title));
@@ -72,16 +85,16 @@ export async function cleanupStalePlaywrightGroups(): Promise<void> {
 export class ConnectedTabGroup {
   readonly clientName: string | undefined;
   readonly groupStyle: GroupStyle;
-  private _connection: RelayConnection;
+  private _connection: TabConnection;
   private _isTabReserved: (tabId: number) => boolean;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
-  private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
+  private _onTabUpdatedListener: (tabId: number, changeInfo: TabChangeInfo, tab: chrome.tabs.Tab) => void;
   private _onTabRemovedListener: (tabId: number) => void;
 
   onclose?: () => void;
 
-  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab, clientName: string | undefined, groupStyle: GroupStyle, isTabReserved: (tabId: number) => boolean) {
+  constructor(connection: TabConnection, selectedTab: chrome.tabs.Tab, clientName: string | undefined, groupStyle: GroupStyle, isTabReserved: (tabId: number) => boolean) {
     this.clientName = clientName;
     this.groupStyle = groupStyle;
     this._isTabReserved = isTabReserved;
@@ -105,6 +118,10 @@ export class ConnectedTabGroup {
     return [...this._groupTabIds];
   }
 
+  addTab(tab: chrome.tabs.Tab): void {
+    this._connection.attachTab(tab);
+  }
+
   close(reason: string): void {
     this._connection.close(reason);
   }
@@ -116,7 +133,7 @@ export class ConnectedTabGroup {
     this._connection.detachTab(tabId);
   }
 
-  private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
+  private _onTabUpdated(tabId: number, changeInfo: TabChangeInfo, tab: chrome.tabs.Tab): void {
     if (changeInfo.groupId !== undefined)
       this._onTabGroupChanged(tabId, tab);
     if (changeInfo.url === undefined)
@@ -217,8 +234,10 @@ export class ConnectedTabGroup {
 }
 
 export async function ungroupTabs(tabIds: number[]): Promise<void> {
+  if (!tabIds.length)
+    return;
   try {
-    await retryOnDrag(() => chrome.tabs.ungroup(tabIds));
+    await retryOnDrag(() => chrome.tabs.ungroup(tabIds as [number, ...number[]]));
   } catch (error: any) {
     debugLog('Error ungrouping tabs:', error);
   }
