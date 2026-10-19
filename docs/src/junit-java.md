@@ -78,29 +78,25 @@ Here is a list of the pre-defined fixtures:
 
 ## Customizing options
 
-To customize fixture options, you should implement an `OptionsFactory` and specify the class in the `@UsePlaywright()` annotation.
+To customize fixture options, annotate a static field or method of type `Options` in your test class with `@PlaywrightOptions`.
 
 You can easily override launch options for [`method: BrowserType.launch`], or context options for [`method: Browser.newContext`] and [`method: APIRequest.newContext`]. See the following example:
 
 ```java
 import com.microsoft.playwright.junit.Options;
-import com.microsoft.playwright.junit.OptionsFactory;
+import com.microsoft.playwright.junit.PlaywrightOptions;
 import com.microsoft.playwright.junit.UsePlaywright;
 
-@UsePlaywright(MyTest.CustomOptions.class)
+@UsePlaywright
 public class MyTest {
 
-  public static class CustomOptions implements OptionsFactory {
-    @Override
-    public Options getOptions() {
-      return new Options()
-          .setHeadless(false)
-          .setContextOption(new Browser.NewContextOptions()
-              .setBaseURL("https://github.com"))
-          .setApiRequestOptions(new APIRequest.NewContextOptions()
-              .setBaseURL("https://playwright.dev"));
-    }
-  }
+  @PlaywrightOptions
+  static final Options options = new Options()
+      .setHeadless(false)
+      .setContextOptions(new Browser.NewContextOptions()
+          .setBaseURL("https://github.com"))
+      .setApiRequestOptions(new APIRequest.NewContextOptions()
+          .setBaseURL("https://playwright.dev"));
 
   @Test
   public void testWithCustomOptions(Page page, APIRequestContext request) {
@@ -112,6 +108,31 @@ public class MyTest {
   }
 }
 ```
+
+### Options that depend on the test instance
+
+A non-static `@PlaywrightOptions` field or method is read for every test instance, so the options can depend on its state. This is useful when the application under test is started by a dependency injection framework such as Spring Boot, Micronaut or Quarkus and injected into the test:
+
+```java
+@UsePlaywright
+@MicronautTest
+public class MyTest {
+  @Inject
+  EmbeddedServer server;
+
+  @PlaywrightOptions
+  Options options() {
+    return new Options().setBaseUrl(server.getURL().toString());
+  }
+
+  @Test
+  void testWithEmbeddedServer(Page page) {
+    page.navigate("/");
+  }
+}
+```
+
+[Playwright] and [Browser] are shared between the tests of a class, so they are created with the options of the first test instance; only the options of [BrowserContext] and [APIRequestContext] take effect for every test instance. When the options are non-static, Playwright fixtures cannot be requested in `@BeforeAll` methods unless the test class uses `@TestInstance(TestInstance.Lifecycle.PER_CLASS)`.
 
 ## Running Tests in Parallel
 
