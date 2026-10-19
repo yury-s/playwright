@@ -132,7 +132,37 @@ public class MyTest {
 }
 ```
 
-[Playwright] and [Browser] are shared between the tests of a class, so they are created with the options of the first test instance; only the options of [BrowserContext] and [APIRequestContext] take effect for every test instance. When the options are non-static, Playwright fixtures cannot be requested in `@BeforeAll` methods unless the test class uses `@TestInstance(TestInstance.Lifecycle.PER_CLASS)`.
+When the options are non-static, Playwright fixtures cannot be requested in `@BeforeAll` methods unless the test class uses `@TestInstance(TestInstance.Lifecycle.PER_CLASS)`.
+
+### Different options for a group of tests
+
+A `@Nested` class can declare its own `@PlaywrightOptions` member to run its tests with different options, while the other tests of the class keep using the options of the enclosing class:
+
+```java
+@UsePlaywright
+public class MyTest {
+  @PlaywrightOptions
+  static final Options options = new Options().setBaseUrl("https://example.com");
+
+  @Test
+  void testOnDesktop(Page page) {
+    page.navigate("/");
+  }
+
+  @Nested
+  class Mobile {
+    @PlaywrightOptions
+    Options options = new Options().setBaseUrl("https://m.example.com").setDeviceName("iPhone 14");
+
+    @Test
+    void testOnMobile(Page page) {
+      page.navigate("/");
+    }
+  }
+}
+```
+
+[Playwright] and [Browser] are shared between the tests of a class, so they are created with the options in effect for the first test. Only the options of [BrowserContext] and [APIRequestContext] (base URL, device, context and API request options, timeout, tracing) take effect for every test instance and nested class.
 
 ## Running Tests in Parallel
 
