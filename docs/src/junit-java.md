@@ -78,7 +78,7 @@ Here is a list of the pre-defined fixtures:
 
 ## Customizing options
 
-To customize fixture options, annotate a static field or method of type `Options` in your test class with `@PlaywrightOptions`.
+To customize fixture options, annotate a static field or method of your test class with `@PlaywrightOptions`. A member of type `Options` configures all fixtures.
 
 You can easily override launch options for [`method: BrowserType.launch`], or context options for [`method: Browser.newContext`] and [`method: APIRequest.newContext`]. See the following example:
 
@@ -109,6 +109,19 @@ public class MyTest {
 }
 ```
 
+A member of type `BrowserType.LaunchOptions`, `Browser.NewContextOptions` or `APIRequest.NewContextOptions` configures only the browser launch, the browser context or the API request context and overrides the corresponding part of `Options`. A test class may have one member of each type:
+
+```java
+@UsePlaywright
+public class MyTest {
+  @PlaywrightOptions
+  static final BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions().setHeadless(false);
+
+  @PlaywrightOptions
+  static final Browser.NewContextOptions contextOptions = new Browser.NewContextOptions().setBaseURL("https://github.com");
+}
+```
+
 ### Options that depend on the test instance
 
 A non-static `@PlaywrightOptions` field or method is read for every test instance, so the options can depend on its state. This is useful when the application under test is started by a dependency injection framework such as Spring Boot, Micronaut or Quarkus and injected into the test:
@@ -121,8 +134,8 @@ public class MyTest {
   EmbeddedServer server;
 
   @PlaywrightOptions
-  Options options() {
-    return new Options().setBaseUrl(server.getURL().toString());
+  Browser.NewContextOptions contextOptions() {
+    return new Browser.NewContextOptions().setBaseURL(server.getURL().toString());
   }
 
   @Test
@@ -136,7 +149,7 @@ When the options are non-static, Playwright fixtures cannot be requested in `@Be
 
 ### Different options for a group of tests
 
-A `@Nested` class can declare its own `@PlaywrightOptions` member to run its tests with different options, while the other tests of the class keep using the options of the enclosing class:
+A `@Nested` class can declare its own `@PlaywrightOptions` members to run its tests with different options. The members of other types declared in the enclosing class still apply:
 
 ```java
 @UsePlaywright
@@ -145,17 +158,17 @@ public class MyTest {
   static final Options options = new Options().setBaseUrl("https://example.com");
 
   @Test
-  void testOnDesktop(Page page) {
+  void testInEnglish(Page page) {
     page.navigate("/");
   }
 
   @Nested
-  class Mobile {
+  class InGerman {
     @PlaywrightOptions
-    Options options = new Options().setBaseUrl("https://m.example.com").setDeviceName("iPhone 14");
+    Browser.NewContextOptions contextOptions = new Browser.NewContextOptions().setLocale("de-DE");
 
     @Test
-    void testOnMobile(Page page) {
+    void testInGerman(Page page) {
       page.navigate("/");
     }
   }
