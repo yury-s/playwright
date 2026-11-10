@@ -4244,6 +4244,7 @@ subsystem, add a row to the Subsystems table. Then update this file:
 | `PR-045` | `library/fetch-proxy.spec.ts` | should use socks proxy |
 | `PR-046` | `library/fetch-proxy.spec.ts` | should send correct ALPN protocol to HTTPS proxy |
 | `PR-047` | `library/fetch-proxy.spec.ts` | should apply proxy.bypass to redirect targets |
+| `PR-048` | `library/fetch-proxy.spec.ts` | should fail the request when HTTPS proxy closes the connection during TLS handshake |
 
 ### PS — Parser
 

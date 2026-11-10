@@ -673,6 +673,36 @@ steps.push(new EsbuildStep({
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
 const commonUtilsSrc = [filePath('packages/protocol/src'), filePath('packages/utils'), filePath('packages/isomorphic')];
 
+// Keeps the "error" listener after "end", so that a TLS error that follows "end"
+// fails the request and does not crash the process. Remove when the bundled
+// https-proxy-agent has https://github.com/TooTallNate/proxy-agents/pull/539.
+const httpsProxyAgentPatchPlugin = {
+  name: 'patch-https-proxy-agent',
+  setup: build => build.onLoad({ filter: /https-proxy-agent[\\/]dist[\\/]parse-proxy-response\.js$/ }, async args => {
+    const original = `
+        function onend() {
+            cleanup();
+            debug('onend');
+            reject(new Error('Proxy connection ended before receiving CONNECT response'));
+        }`;
+    const patched = `
+        function onend() {
+            debug('onend');
+            socket.removeListener('end', onend);
+            socket.removeListener('readable', read);
+            socket.once('close', () => {
+                cleanup();
+                reject(new Error('Proxy connection ended before receiving CONNECT response'));
+            });
+            socket.destroy();
+        }`;
+    const contents = await fs.promises.readFile(args.path, 'utf8');
+    if (!contents.includes(original))
+      throw new Error(`Cannot patch ${args.path}: the code has changed. Update or remove httpsProxyAgentPatchPlugin.`);
+    return { contents: contents.replace(original, patched), loader: 'js' };
+  }),
+};
+
 // playwright-core/lib/utilsBundle.js — bundled npm utilities barrel.
 steps.push(new EsbuildStep({
   bundle: true,
@@ -682,6 +712,7 @@ steps.push(new EsbuildStep({
   alias: {
     'raw-body': filePath('utils/build/raw-body.ts'),
   },
+  plugins: [httpsProxyAgentPatchPlugin],
 }, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts')]));
 
 // Build playwright-core as a single bundle.

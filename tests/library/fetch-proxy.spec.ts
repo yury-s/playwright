@@ -15,6 +15,7 @@
  */
 
 import https from 'node:https';
+import net from 'node:net';
 import { contextTest as it, expect } from '../config/browserTest';
 import { TestServer } from '../config/testserver';
 
@@ -199,4 +200,19 @@ it('PR-047 should apply proxy.bypass to redirect targets', { annotation: { type:
     expect(await response.json()).toEqual({ foo: 'bar' });
     expect(proxyServer.connectHosts).toEqual([crossProcessHost]);
   }
+});
+
+it('PR-048 should fail the request when HTTPS proxy closes the connection during TLS handshake', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/43996' } }, async ({ playwright, server }) => {
+  const proxy = net.createServer(socket => {
+    socket.on('error', () => {});
+    socket.once('data', () => socket.end());
+  });
+  await new Promise<void>(resolve => proxy.listen(0, resolve));
+  const request = await playwright.request.newContext({
+    proxy: { server: `https://localhost:${(proxy.address() as net.AddressInfo).port}` },
+  });
+  const error = await request.get(server.EMPTY_PAGE).catch(e => e);
+  expect(error.message).toContain('Client network socket disconnected before secure TLS connection was established');
+  await request.dispose();
+  proxy.close();
 });
