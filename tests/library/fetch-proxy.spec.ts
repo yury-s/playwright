@@ -207,12 +207,21 @@ it('PR-048 should fail the request when HTTPS proxy closes the connection during
     socket.on('error', () => {});
     socket.once('data', () => socket.end());
   });
-  await new Promise<void>(resolve => proxy.listen(0, resolve));
-  const request = await playwright.request.newContext({
-    proxy: { server: `https://localhost:${(proxy.address() as net.AddressInfo).port}` },
+
+  const port = await new Promise<number>(resolve => {
+    proxy.listen(0, () => {
+      const { port } = proxy.address() as net.AddressInfo;
+      resolve(port);
+    });
   });
+
+  const request = await playwright.request.newContext({
+    proxy: { server: `https://localhost:${port}` },
+  });
+
   const error = await request.get(server.EMPTY_PAGE).catch(e => e);
   expect(error.message).toContain('Client network socket disconnected before secure TLS connection was established');
-  await request.dispose();
+
   proxy.close();
+  await request.dispose();
 });
